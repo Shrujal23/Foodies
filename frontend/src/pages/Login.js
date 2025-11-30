@@ -1,3 +1,4 @@
+// src/pages/Login.js
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -62,9 +63,10 @@ export default function Login() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
+                  {/* This now correctly links to your ForgotPassword page */}
                   <Link
                     to="/forgot-password"
-                    className="text-sm text-orange-600 hover:text-orange-500 font-medium"
+                    className="text-sm text-orange-600 hover:text-orange-500 font-medium transition"
                   >
                     Forgot?
                   </Link>
