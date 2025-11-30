@@ -1,14 +1,16 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
-  const quickLinks = [
+    const quickLinks = [
     { name: 'Home', href: '/' },
     { name: 'Browse Recipes', href: '/search' },
     { name: 'Add Recipe', href: '/recipes/add' },
     { name: 'My Cookbook', href: '/dashboard' },
     { name: 'Community', href: '/my-recipes' },
+    { name: 'About Us', href: '/about' },
   ];
 
   const companyLinks = [
@@ -39,15 +41,15 @@ const Footer = () => {
           {/* Quick Links */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-5">Explore</h3>
-            <ul className="space-y-3">
+                        <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
+                  <Link
+                    to={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200 text-sm font-medium"
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -56,15 +58,15 @@ const Footer = () => {
           {/* Company */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-5">Company</h3>
-            <ul className="space-y-3">
+                        <ul className="space-y-3">
               {companyLinks.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
+                  <Link
+                    to={link.href}
                     className="text-gray-400 hover:text-white transition-colors duration-200 text-sm font-medium"
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
