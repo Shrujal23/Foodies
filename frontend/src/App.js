@@ -18,6 +18,9 @@ import Register from './pages/Register';
 import AddRecipe from './pages/AddRecipe';
 import MyRecipes from './pages/MyRecipes';
 import UserRecipeDetail from './pages/UserRecipeDetail';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
 
@@ -39,6 +42,9 @@ function App() {
               <Route path="/recipes/add" element={<AddRecipe />} />
               <Route path="/my-recipes" element={<MyRecipes />} />
               <Route path="/recipes/user/:id" element={<UserRecipeDetail />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Routes>
           </main>
 
