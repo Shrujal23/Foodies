@@ -12,6 +12,8 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Add Recipe', href: '/recipes/add' },
   { name: 'My Recipes', href: '/my-recipes' },
+  { name: 'About Us', href: '/about' },
+  { name: 'Contact Us', href: '/contact' },
 ];
 
 function classNames(...classes) {
