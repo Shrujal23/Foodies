@@ -10,6 +10,7 @@ import {
   HeartIcon,
   SparklesIcon,
   UsersIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { API_BASE_URL, ASSET_BASE_URL } from '../config';
 import { getFeaturedRecipes } from '../services/edamamService';
@@ -273,12 +274,13 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-24">
+                {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-24">
           {[
             { to: "/search", icon: MagnifyingGlassIcon, label: "Search Recipes", gradient: "from-orange-500 to-pink-600" },
             { to: "/recipes/add", icon: PlusCircleIcon, label: "Add Your Recipe", gradient: "from-emerald-500 to-teal-600" },
             { to: "/favorites", icon: HeartIcon, label: "My Favorites", gradient: "from-rose-500 to-pink-600" },
+            { to: "/about", icon: InformationCircleIcon, label: "About Us", gradient: "from-purple-500 to-indigo-600" },
           ].map((item) => (
             <Link
               key={item.label}
