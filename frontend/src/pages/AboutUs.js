@@ -246,7 +246,7 @@ function AboutUs() {
         {/* FEATURES */}
         <section className="mb-32">
           <div className="text-center mb-20">
-            <h2 className="text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">
+            <h2 className="text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent ">
               What Makes Us Special
             </h2>
             <p className="text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
@@ -318,13 +318,13 @@ function AboutUs() {
 
         {/* CTA SECTION */}
         <section className="bg-gradient-to-r from-orange-600 via-pink-600 to-rose-600 rounded-3xl p-16 lg:p-24 text-center text-white shadow-3xl">
-          <FireIcon className="w-24 h-24 mx-auto mb-8 animate-pulse" />
+          <FireIcon className="w-24 h-24 mx-auto mb-8 animate-pulse " />
           
-          <h2 className="text-5xl lg:text-6xl font-extrabold mb-6">
+          <h2 className="text-5xl lg:text-6xl font-extrabold mb-6 ">
             Ready to Join the Community?
           </h2>
           
-          <p className="text-2xl lg:text-3xl mb-12 max-w-3xl mx-auto opacity-90">
+          <p className="text-2xl lg:text-3xl mb-12 max-w-3xl mx-auto">
             Start your culinary adventure today. Share your recipes, discover new favorites, 
             and connect with food lovers worldwide.
           </p>
@@ -339,7 +339,7 @@ function AboutUs() {
             </Link>
             <Link
               to="/search"
-              className="inline-flex items-center gap-3 px-12 py-6 bg-white/20 backdrop-blur text-white font-bold text-xl rounded-2xl hover:bg-white/30 transform hover:scale-105 transition-all duration-300 border-2 border-white/30 shadow-2xl"
+              className="inline-flex items-center gap-3 px-12 py-6 bg-white/20 backdrop-blur text-white font-bold text-xl rounded-2xl hover:bg-white/30 transform hover:scale-105 transition-all duration-300 border-2 border-white/30 shadow-2xl hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-3"
             >
               Explore Now
               <SparklesIcon className="w-7 h-7" />
