@@ -12,6 +12,7 @@ export default function SaveButton({ recipe }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkSaveStatus();
   }, [recipe.uri, user]);

@@ -18,6 +18,7 @@ const ReviewsSection = ({ recipeId }) => {
   const [formData, setFormData] = useState({ rating: 5, title: '', comment: '' });
   const [submitLoading, setSubmitLoading] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchReviews();
   }, [recipeId, sortBy, page]);

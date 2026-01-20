@@ -11,6 +11,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
   const [loading, setLoading] = useState(false);
   const [defaultCollection, setDefaultCollection] = useState(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) {
       checkBookmarkStatus();
