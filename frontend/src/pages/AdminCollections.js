@@ -8,7 +8,6 @@ const AdminCollections = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [collections, setCollections] = useState([]);
-  const [selectedCollection, setSelectedCollection] = useState(null);
   const [collectionItems, setCollectionItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [expandedCollection, setExpandedCollection] = useState(null);
