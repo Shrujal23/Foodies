@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS user_recipes (
   instructions JSON NOT NULL,
   image VARCHAR(500),
   difficulty ENUM('Easy', 'Medium', 'Hard') DEFAULT 'Medium',
+  cuisine VARCHAR(100) DEFAULT 'international',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_user_id (user_id),

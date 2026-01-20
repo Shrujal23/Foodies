@@ -1,34 +1,248 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { API_BASE_URL, ASSET_BASE_URL } from '../config';
+import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
+import toast from 'react-hot-toast';
 
 const MyRecipes = () => {
   const [recipes, setRecipes] = useState([]);
+  const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCuisine, setFilterCuisine] = useState('all');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [cuisines, setCuisines] = useState([]);
+  const [savedRecipes, setSavedRecipes] = useState([]);
 
   useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/recipes/user-recipes`);
-        if (!response.ok) throw new Error('Failed to load');
+    fetchAllRecipes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        const data = await response.json();
-        const processed = data.map(recipe => ({
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        fetchAllRecipes();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    applyFiltersAndSort();
+  }, [recipes, searchQuery, filterCuisine, filterDifficulty, sortBy]);
+
+  const fetchAllRecipes = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Fetching recipes - Search query:', searchQuery);
+      
+      // If search query exists, use the backend search endpoint
+      if (searchQuery.trim()) {
+        try {
+          const params = new URLSearchParams({
+            query: searchQuery,
+            page: 1,
+            limit: 50,
+            source: 'all'
+          });
+          
+          console.log('🔍 Searching:', `${API_BASE_URL}/recipes/search?${params}`);
+          const res = await fetch(`${API_BASE_URL}/recipes/search?${params}`);
+          
+          if (res.ok) {
+            const response = await res.json();
+            console.log('✅ Search response:', response);
+            
+            // Handle both formats: direct data object or wrapped in 'data' property
+            const responseData = response.data || response;
+            const userRecipes = Array.isArray(responseData.userRecipes) ? responseData.userRecipes : [];
+            const edamamRecipes = Array.isArray(responseData.edamamRecipes) ? responseData.edamamRecipes : [];
+            const allRecipes = [...userRecipes, ...edamamRecipes];
+            
+            console.log('📊 User recipes:', userRecipes.length, 'Edamam recipes:', edamamRecipes.length);
+            
+            if (allRecipes.length > 0) {
+              processRecipes(allRecipes);
+              return;
+            }
+          } else {
+            console.warn('⚠️ Search returned status:', res.status);
+          }
+        } catch (searchError) {
+          console.error('❌ Search error:', searchError);
+        }
+      }
+      
+      // Load default: user recipes + popular from Edamam
+      try {
+        console.log('📥 Loading user recipes...');
+        const userRes = await fetch(`${API_BASE_URL}/recipes/user-recipes`);
+        const userData = userRes.ok ? await userRes.json() : [];
+        console.log('👤 User recipes loaded:', Array.isArray(userData) ? userData.length : 0);
+        
+        // If we have user recipes, show them
+        if (Array.isArray(userData) && userData.length > 0) {
+          console.log('✅ Using user recipes');
+          processRecipes(userData);
+          return;
+        }
+        
+        // If no user recipes, try to get popular recipes
+        try {
+          console.log('🌟 Loading popular recipes...');
+          const apiRes = await fetch(`${API_BASE_URL}/recipes/search?query=popular&limit=20&source=all`);
+          
+          if (apiRes.ok) {
+            const response = await apiRes.json();
+            console.log('✅ Popular response:', response);
+            
+            // Handle both formats: direct data object or wrapped in 'data' property
+            const responseData = response.data || response;
+            const userRecipes = Array.isArray(responseData.userRecipes) ? responseData.userRecipes : [];
+            const edamamRecipes = Array.isArray(responseData.edamamRecipes) ? responseData.edamamRecipes : [];
+            const allRecipes = [...userRecipes, ...edamamRecipes];
+            
+            console.log('📊 Popular recipes found - User:', userRecipes.length, 'Edamam:', edamamRecipes.length);
+            
+            if (allRecipes.length > 0) {
+              console.log('✅ Using popular recipes');
+              processRecipes(allRecipes);
+            } else {
+              // No recipes found at all
+              console.warn('⚠️ No recipes available from any source');
+              setRecipes([]);
+              setFilteredRecipes([]);
+              setCuisines([]);
+              toast.error('No recipes available at the moment');
+            }
+          } else {
+            throw new Error(`API returned status ${apiRes.status}`);
+          }
+        } catch (apiError) {
+          console.error('❌ Popular recipes fetch error:', apiError);
+          // Show user recipes if we have them, even if popular search fails
+          if (userData.length > 0) {
+            console.log('✅ Using user recipes as fallback');
+            processRecipes(userData);
+          } else {
+            setRecipes([]);
+            setFilteredRecipes([]);
+            setCuisines([]);
+            toast.error('Failed to load recipes. Please try again.');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch recipes:', error);
+        toast.error('Failed to load recipes. Please try again.');
+        setRecipes([]);
+        setFilteredRecipes([]);
+        setCuisines([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processRecipes = (recipeList) => {
+    const processed = (Array.isArray(recipeList) ? recipeList : [])
+      .filter(recipe => recipe && recipe.title) // Filter out invalid recipes
+      .map(recipe => {
+        // Handle both user recipes and Edamam API recipes
+        const isUserRecipe = recipe._id || (!recipe.uri && recipe.id);
+        
+        return {
           ...recipe,
+          id: recipe._id || recipe.id || recipe.uri || Math.random().toString(36).substr(2, 9),
+          source: isUserRecipe ? 'user' : 'api',
           image: recipe.image && !recipe.image.startsWith('http')
             ? `${ASSET_BASE_URL}${recipe.image}`
-            : recipe.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-        }));
-        setRecipes(processed);
-      } catch (err) {
-        console.error('Failed to fetch recipes:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+            : recipe.image || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80',
+          title: recipe.title || recipe.label || 'Unknown Recipe',
+          prepTime: recipe.prepTime || recipe.totalTime,
+          cuisine: recipe.cuisine || recipe.cuisineType?.[0] || recipe.cuisineType || 'international',
+          difficulty: recipe.difficulty || 'Medium',
+          rating: recipe.rating || 0,
+          description: recipe.description || recipe.source || recipe.label || '',
+        };
+      });
 
-    fetchRecipes();
-  }, []);
+    setRecipes(processed);
+
+    // Extract unique cuisines - handle both string and array cuisines
+    const cuisineSet = new Set();
+    processed.forEach(r => {
+      const cuisine = r.cuisine;
+      if (cuisine) {
+        if (Array.isArray(cuisine)) {
+          cuisine.forEach(c => cuisineSet.add(c.toLowerCase()));
+        } else if (typeof cuisine === 'string') {
+          cuisineSet.add(cuisine.toLowerCase());
+        }
+      }
+    });
+
+    const uniqueCuisines = Array.from(cuisineSet).sort();
+    console.log('Unique cuisines found:', uniqueCuisines);
+    setCuisines(uniqueCuisines);
+
+    // Load saved recipes from localStorage
+    const saved = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+    setSavedRecipes(saved);
+  };
+
+  const applyFiltersAndSort = () => {
+    let filtered = recipes.filter(recipe => {
+      // Search filter
+      const matchesSearch = 
+        !searchQuery || 
+        recipe.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.ingredientLines?.some(ing => ing.toLowerCase?.().includes(searchQuery.toLowerCase()));
+
+      // Cuisine filter
+      const matchesCuisine = 
+        filterCuisine === 'all' || 
+        (recipe.cuisine?.toLowerCase?.() === filterCuisine.toLowerCase()) ||
+        (Array.isArray(recipe.cuisineType) && recipe.cuisineType.some(c => c.toLowerCase() === filterCuisine.toLowerCase()));
+
+      // Difficulty filter
+      const matchesDifficulty = 
+        filterDifficulty === 'all' || 
+        recipe.difficulty?.toLowerCase() === filterDifficulty.toLowerCase();
+
+      return matchesSearch && matchesCuisine && matchesDifficulty;
+    });
+
+    // Sort
+    if (sortBy === 'newest') {
+      filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    } else if (sortBy === 'rating') {
+      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sortBy === 'title') {
+      filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    }
+
+    setFilteredRecipes(filtered);
+  };
+
+  const handleSaveRecipe = (recipe) => {
+    const recipeId = recipe.id;
+    const isSaved = savedRecipes.includes(recipeId);
+    
+    const updated = isSaved
+      ? savedRecipes.filter(id => id !== recipeId)
+      : [...savedRecipes, recipeId];
+    
+    setSavedRecipes(updated);
+    localStorage.setItem('savedRecipes', JSON.stringify(updated));
+    toast.success(isSaved ? 'Removed from saved' : 'Added to saved');
+  };
 
   if (loading) {
     return (
@@ -43,111 +257,117 @@ const MyRecipes = () => {
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-              My Recipes
-            </h1>
-            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-              {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection
-            </p>
-          </div>
-
-          <Link
-            to="/recipes/add"
-            className="inline-flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-          >
-            Add New Recipe
-          </Link>
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Recipes
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Explore {filteredRecipes.length} amazing recipes from our community and trusted sources
+          </p>
         </div>
 
-        {/* Empty State */}
-        {recipes.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-8xl mb-6">Cooking Pot</div>
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-3">
-              No recipes yet
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-8">
-              Your culinary journey starts here. Share your first recipe with the community!
-            </p>
-            <Link
-              to="/recipes/add"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all shadow-lg"
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search recipes, ingredients, cuisines..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </div>
+
+        {/* Filters & Sort */}
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Cuisine Filter */}
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+              Cuisine
+            </label>
+            <select
+              value={filterCuisine}
+              onChange={(e) => setFilterCuisine(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
-              Create Your First Recipe
-            </Link>
+              <option value="all">All Cuisines</option>
+              {cuisines.map(cuisine => (
+                <option key={cuisine} value={cuisine}>
+                  {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Difficulty Filter */}
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+              Difficulty
+            </label>
+            <select
+              value={filterDifficulty}
+              onChange={(e) => setFilterDifficulty(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">All Levels</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="sm:col-span-2 lg:col-span-2">
+            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="newest">Newest First</option>
+              <option value="rating">Top Rated</option>
+              <option value="title">Alphabetical</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-gray-600 dark:text-gray-400">
+            Showing <span className="font-semibold">{filteredRecipes.length}</span> recipes
+          </p>
+          {(searchQuery || filterCuisine !== 'all' || filterDifficulty !== 'all') && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setFilterCuisine('all');
+                setFilterDifficulty('all');
+              }}
+              className="text-orange-500 hover:text-orange-600 text-sm font-semibold"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Recipes Grid */}
+        {filteredRecipes.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">No recipes found. Try adjusting your filters.</p>
           </div>
         ) : (
-          /* Recipe Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {recipes.map((recipe) => (
-              <div
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredRecipes.map(recipe => (
+              <RecipeCardEnhanced
                 key={recipe.id}
-                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-              >
-                <Link to={`/recipes/user/${recipe.id}`}>
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={recipe.image}
-                      alt={recipe.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    {/* Difficulty Badge */}
-                    <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg
-                      bg-green-500" 
-                      style={{
-                        backgroundColor:
-                          recipe.difficulty === 'Easy' ? '#10b981' :
-                          recipe.difficulty === 'Medium' ? '#f59e0b' :
-                          '#ef4444'
-                      }}
-                    >
-                      {recipe.difficulty}
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                      {recipe.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4">
-                      {recipe.description || 'A delicious homemade creation'}
-                    </p>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-1.5">
-                        Clock
-                        <span className="font-medium">
-                          {recipe.prep_time + recipe.cook_time} mins
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        Users
-                        <span className="font-medium">{recipe.servings} servings</span>
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-5 flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        {new Date(recipe.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </span>
-                      <span className="text-orange-600 font-medium text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                        View Recipe
-                        Right Arrow
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+                recipe={recipe}
+                onSave={() => handleSaveRecipe(recipe)}
+                isSaved={savedRecipes.includes(recipe.id)}
+              />
             ))}
           </div>
         )}

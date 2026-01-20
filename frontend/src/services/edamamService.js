@@ -47,7 +47,11 @@ const transformRecipeData = (recipe) => {
   };
 };
 
-export const searchRecipes = async (query = '', filters = {}) => {
+/**
+ * Search Edamam recipes from external API
+ * This is the legacy search function that only searches Edamam
+ */
+export const searchEdamamRecipes = async (query = '', filters = {}) => {
   try {
     const params = new URLSearchParams({
       type: 'public',
@@ -113,7 +117,7 @@ export const searchRecipes = async (query = '', filters = {}) => {
     });
     const data = await response.json();
 
-    console.log('API Response:', data); // Debug log
+    console.log('Edamam API Response:', data); // Debug log
 
     if (!response.ok) {
       console.error('API Error Response:', data);
@@ -136,14 +140,15 @@ export const searchRecipes = async (query = '', filters = {}) => {
 };
 
 export const getFeaturedRecipes = async () => {
-    // Get a mix of different cuisine types for featured recipes
+  // Get a mix of different cuisine types for featured recipes
   const cuisines = ['pasta', 'chicken', 'salad', 'burger'];
   const promises = cuisines.map(cuisine => 
-    searchRecipes(cuisine).then(data => {
+    searchEdamamRecipes(cuisine).then(data => {
       console.log(`Got data for ${cuisine}:`, data);
       return data.recipes[0];
     })
-  );  try {
+  );
+  try {
     const recipes = await Promise.all(promises);
     return recipes.filter(Boolean); // Remove any null values
   } catch (error) {
@@ -154,7 +159,7 @@ export const getFeaturedRecipes = async () => {
 
 export const getRecipesByCategory = async (category) => {
   try {
-    const { recipes } = await searchRecipes('', category);
+    const { recipes } = await searchEdamamRecipes('', category);
     return recipes.slice(0, 8); // Return top 8 recipes for the category
   } catch (error) {
     console.error(`Error fetching ${category} recipes:`, error);

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getCurrentUser } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
+import AuthWarningModal from '../components/common/AuthWarningModal';
 import { API_BASE_URL } from '../config';
 
 const AddRecipe = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [recipe, setRecipe] = useState({
     title: '',
     description: '',
@@ -13,6 +16,7 @@ const AddRecipe = () => {
     cookTime: '',
     servings: '',
     difficulty: 'Medium',
+    cuisine: 'international',
     ingredients: [''],
     instructions: [''],
     image: null,
@@ -20,12 +24,12 @@ const AddRecipe = () => {
   });
 
   useEffect(() => {
-    const user = getCurrentUser();
+    if (authLoading) return;
+    
     if (!user) {
-      toast.error('Please log in to create a recipe');
-      setTimeout(() => navigate('/login'), 1500);
+      setShowAuthWarning(true);
     }
-  }, [navigate]);
+  }, [user, authLoading]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +71,7 @@ const AddRecipe = () => {
     fd.append('cookTime', recipe.cookTime || '0');
     fd.append('servings', recipe.servings || '1');
     fd.append('difficulty', recipe.difficulty);
+    fd.append('cuisine', recipe.cuisine || 'international');
     fd.append('ingredients', JSON.stringify(recipe.ingredients.filter(i => i.trim())));
     fd.append('instructions', JSON.stringify(recipe.instructions.filter(i => i.trim())));
     if (recipe.image) fd.append('image', recipe.image);
@@ -93,8 +98,22 @@ const AddRecipe = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
-      <div className="max-w-5xl mx-auto px-6">
+    <>
+      <AuthWarningModal
+        isOpen={showAuthWarning}
+        onClose={() => navigate(-1)}
+        onSignIn={() => navigate('/login', { state: { from: '/recipes/add' } })}
+      />
+
+      {authLoading ? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : !user ? (
+        <div className="min-h-screen" />
+      ) : (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
+          <div className="max-w-5xl mx-auto px-6">
 
         {/* Header */}
         <div className="text-center mb-12">
@@ -226,6 +245,31 @@ const AddRecipe = () => {
                     <option>Hard</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cuisine</label>
+                  <select
+                    name="cuisine"
+                    value={recipe.cuisine}
+                    onChange={handleChange}
+                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
+                  >
+                    <option value="international">International</option>
+                    <option value="italian">Italian</option>
+                    <option value="mexican">Mexican</option>
+                    <option value="indian">Indian</option>
+                    <option value="chinese">Chinese</option>
+                    <option value="american">American</option>
+                    <option value="japanese">Japanese</option>
+                    <option value="french">French</option>
+                    <option value="mediterranean">Mediterranean</option>
+                    <option value="thai">Thai</option>
+                    <option value="korean">Korean</option>
+                    <option value="spanish">Spanish</option>
+                    <option value="greek">Greek</option>
+                    <option value="middle_eastern">Middle Eastern</option>
+                    <option value="vietnamese">Vietnamese</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -322,6 +366,8 @@ const AddRecipe = () => {
         </form>
       </div>
     </div>
+      )}
+    </>
   );
 };
 

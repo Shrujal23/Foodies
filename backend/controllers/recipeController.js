@@ -1,34 +1,125 @@
 const edamamService = require('../services/edamamService');
 const { pool } = require('../db/database');
 
-async function searchRecipes(req, res) {
+/**
+ * Search both Edamam recipes and user-created recipes
+ * Returns combined results with user recipes appearing first if they match
+ */
+async function searchRecipes(req, res, next) {
   try {
-    const { query, page = 1, limit = 20 } = req.query;
+    const { 
+      query, 
+      page = 1, 
+      limit = 20, 
+      source = 'all',
+      // Filter parameters
+      diet = '',
+      health = '',
+      cuisineType = '',
+      mealType = '',
+      cookingTime = '',
+      sortBy = 'relevance'
+    } = req.query;
     
-    if (!query) {
-      return res.status(400).json({ error: 'Search query is required' });
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: 'Search query is required'
+      });
     }
 
-    const result = await edamamService.searchRecipes(query, {
-      from: (page - 1) * limit,
-      to: page * limit
-    });
+    const searchQuery = query.trim().toLowerCase();
+    let results = {
+      userRecipes: [],
+      edamamRecipes: [],
+      total: 0
+    };
 
-    res.json(result);
+    // Search user-created recipes from database
+    if (source === 'all' || source === 'user') {
+      try {
+        const [userRecipes] = await pool.execute(`
+          SELECT ur.*, u.username, u.display_name, u.avatar_url,
+                 (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count,
+                 (SELECT COUNT(*) FROM recipe_comments WHERE recipe_id = ur.id) as comment_count
+          FROM user_recipes ur
+          LEFT JOIN users u ON ur.user_id = u.id
+          WHERE LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?
+          ORDER BY ur.created_at DESC
+          LIMIT ?
+        `, [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`, limit]);
+
+        results.userRecipes = userRecipes.map(recipe => ({
+          ...recipe,
+          source: 'user',
+          _id: recipe.id,
+          title: recipe.title,
+          image: recipe.image,
+          prepTime: recipe.prep_time,
+          cookTime: recipe.cook_time,
+          author: {
+            name: recipe.display_name || recipe.username || 'Anonymous',
+            avatar: recipe.avatar_url
+          }
+        }));
+      } catch (error) {
+        console.error('User recipe search error:', error);
+      }
+    }
+
+    // Search Edamam recipes with filters
+    if (source === 'all' || source === 'edamam') {
+      try {
+        const filters = {};
+        
+        // Apply filters only if they have values
+        if (diet) filters.diet = diet;
+        if (health) filters.health = health;
+        if (cuisineType) filters.cuisineType = cuisineType;
+        if (mealType) filters.mealType = mealType;
+        if (cookingTime) filters.cookingTime = cookingTime;
+        if (sortBy && sortBy !== 'relevance') filters.sortBy = sortBy;
+
+        const edamamResult = await edamamService.searchRecipes(searchQuery, {
+          from: (page - 1) * limit,
+          to: page * limit,
+          ...filters
+        });
+
+        results.edamamRecipes = edamamResult.recipes || [];
+      } catch (error) {
+        console.error('Edamam search error:', error);
+        // Don't fail completely if Edamam is unavailable
+      }
+    }
+
+    results.total = results.userRecipes.length + results.edamamRecipes.length;
+
+    res.json({
+      success: true,
+      statusCode: 200,
+      message: 'Search completed',
+      data: results
+    });
   } catch (error) {
     console.error('Search Error:', error);
-    res.status(500).json({ error: 'Failed to search recipes' });
+    next(error);
   }
 }
 
-async function getRecipeById(req, res) {
+async function getRecipeById(req, res, next) {
   try {
     const { id } = req.params;
     const recipe = await edamamService.getRecipeById(id);
-    res.json(recipe);
+    res.json({
+      success: true,
+      statusCode: 200,
+      data: recipe
+    });
   } catch (error) {
     console.error('Get Recipe Error:', error);
-    res.status(500).json({ error: 'Failed to get recipe details' });
+    next(error);
   }
 }
 
@@ -152,6 +243,7 @@ async function createUserRecipe(req, res) {
     const ingredients = req.body.ingredients ? JSON.parse(req.body.ingredients) : [];
     const instructions = req.body.instructions ? JSON.parse(req.body.instructions) : [];
     const difficulty = req.body.difficulty;
+    const cuisine = req.body.cuisine;
     // image may be provided via file upload (req.file) or as a string
     const imageFromBody = req.body.image;
     const image = req.file ? `/uploads/${req.file.filename}` : (imageFromBody || null);
@@ -166,6 +258,7 @@ async function createUserRecipe(req, res) {
       ingredients,
       instructions,
       difficulty,
+      cuisine,
       image
     });
 
@@ -183,6 +276,7 @@ async function createUserRecipe(req, res) {
   const instructionsJson = JSON.stringify(instructions || []);
   const imageValue = (typeof image === 'string' && image.length > 0) ? image : null;
     const difficultyValue = difficulty || 'Medium';
+    const cuisineValue = cuisine || 'international';
 
     const params = [
       req.user.id,
@@ -194,14 +288,15 @@ async function createUserRecipe(req, res) {
       ingredientsJson,
       instructionsJson,
       imageValue,
-      difficultyValue
+      difficultyValue,
+      cuisineValue
     ];
 
   console.log('DB insert params:', params);
 
     const [result] = await pool.execute(
-      `INSERT INTO user_recipes (user_id, title, description, prep_time, cook_time, servings, ingredients, instructions, image, difficulty)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO user_recipes (user_id, title, description, prep_time, cook_time, servings, ingredients, instructions, image, difficulty, cuisine)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       params
     );
 
@@ -365,6 +460,35 @@ async function deleteUserRecipe(req, res) {
   }
 }
 
+async function getFeaturedRecipes(req, res) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 6, 20);
+    const [rows] = await pool.execute(
+      `SELECT ur.*, u.username, u.display_name, u.avatar_url,
+              (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count,
+              (SELECT COUNT(*) FROM recipe_comments WHERE recipe_id = ur.id) as comment_count
+       FROM user_recipes ur
+       JOIN users u ON ur.user_id = u.id
+       ORDER BY ur.created_at DESC
+       LIMIT ?`,
+      [limit]
+    );
+    
+    res.json(rows.map(recipe => ({
+      ...recipe,
+      _id: recipe.id,
+      source: 'user',
+      rating: 4.5, // Default rating
+      servings: recipe.servings || 4,
+      prepTime: recipe.prep_time,
+      cookTime: recipe.cook_time
+    })));
+  } catch (error) {
+    console.error('Get Featured Recipes Error:', error);
+    res.status(500).json({ error: 'Failed to get featured recipes' });
+  }
+}
+
 module.exports = {
   searchRecipes,
   getRecipeById,
@@ -377,5 +501,6 @@ module.exports = {
   getAllPublicUserRecipes,
   getPublicUserRecipeById,
   updateUserRecipe,
-  deleteUserRecipe
+  deleteUserRecipe,
+  getFeaturedRecipes
 };

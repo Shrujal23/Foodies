@@ -5,14 +5,18 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('./config/passport');
+const swaggerUi = require('swagger-ui-express');
+const swaggerConfig = require('./swaggerConfig');
 
 const app = express();
 
-// Debug middleware to log all requests
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+// Import middleware
+const requestLogger = require('./middleware/logger');
+const { apiLimiter, strictLimiter, searchLimiter } = require('./middleware/rateLimiter');
+const { errorHandler } = require('./middleware/errorHandler');
+
+// Request logging middleware (should be early)
+app.use(requestLogger);
 
 // Middleware - ORDER IS IMPORTANT!
 app.use(cors({
@@ -21,8 +25,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Apply rate limiting globally
+app.use('/api/', apiLimiter);
 
 // Ensure required secrets exist
 if (!process.env.JWT_SECRET) {
@@ -50,6 +57,12 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Swagger API documentation
+const specs = swaggerConfig;
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui { padding: 20px; }'
+}));
+
 // Database connection
 const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
@@ -67,30 +80,41 @@ const authRoutes = require('./routes/auth');
 const recipesRoutes = require('./routes/recipes');
 const userRoutes = require('./routes/users');
 const commentRoutes = require('./routes/comments');
+const reviewRoutes = require('./routes/reviews');
+const adminRoutes = require('./routes/admin');
+const bookmarkRoutes = require('./routes/bookmarks');
+
+// Apply stricter rate limiting to auth routes
+app.use('/api/auth/login', strictLimiter);
+app.use('/api/auth/register', strictLimiter);
+
+// Apply search rate limiter
+app.use('/api/recipes/search', searchLimiter);
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipesRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/recipes', reviewRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', bookmarkRoutes);
 
 // Serve uploaded files (recipe images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Debug route to check authentication
-app.get('/api/debug-auth', (req, res) => {
-  res.json({
-    authenticated: req.isAuthenticated(),
-    user: req.user,
-    sessionId: req.sessionID,
-    session: req.session
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    statusCode: 404,
+    message: 'Endpoint not found',
+    path: req.path
   });
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Foodies API' });
-});
+// Centralized error handling middleware (MUST be last)
+app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;

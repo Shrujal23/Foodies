@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, ASSET_BASE_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
+import ReviewsSection from '../components/recipes/ReviewsSection';
+import ServingsMultiplier from '../components/recipes/ServingsMultiplier';
+import BookmarkButton from '../components/recipes/BookmarkButton';
 import {
   FacebookShareButton,
   TwitterShareButton,
@@ -22,9 +25,6 @@ const UserRecipeDetail = () => {
   const { user } = useAuth();
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
 
   const shareUrl = window.location.href;
 
@@ -39,11 +39,6 @@ const UserRecipeDetail = () => {
           recipeData.image = `${ASSET_BASE_URL}${recipeData.image}`;
         }
         setRecipe(recipeData);
-
-        const commentsRes = await fetch(`${API_BASE_URL}/recipes/${id}/comments`);
-        if (commentsRes.ok) {
-          setComments(await commentsRes.json());
-        }
       } catch (err) {
         toast.error('Recipe not found');
         navigate('/my-recipes');
@@ -54,50 +49,8 @@ const UserRecipeDetail = () => {
     fetchData();
   }, [id, navigate]);
 
-  const handleSubmitComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-
-    setSubmittingComment(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/recipes/${id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ content: newComment }),
-      });
-
-      if (res.ok) {
-        const comment = await res.json();
-        setComments([comment, ...comments]);
-        setNewComment('');
-        toast.success('Comment added!');
-      }
-    } catch (err) {
-      toast.error('Failed to post comment');
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Delete this comment?')) return;   {/* Fixed */}
-    try {
-      const res = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setComments(comments.filter(c => c.id !== commentId));
-        toast.success('Comment deleted');
-      }
-    } catch (err) {
-      toast.error('Failed to delete');
-    }
-  };
-
   const handleDeleteRecipe = async () => {
-    if (!window.confirm('Delete this recipe permanently?')) return;   {/* Fixed */}
+    if (!window.confirm('Delete this recipe permanently?')) return;
     try {
       const res = await fetch(`${API_BASE_URL}/recipes/user/${id}`, {
         method: 'DELETE',
@@ -166,24 +119,32 @@ const UserRecipeDetail = () => {
 
         {/* Top Actions */}
         <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-gray-700 dark:text-gray-300 font-medium">Share this recipe:</span>
-            <div className="flex gap-3">
-              <FacebookShareButton url={shareUrl} quote={recipe.title}>
-                <FacebookIcon size={40} round />
-              </FacebookShareButton>
-              <TwitterShareButton url={shareUrl} title={recipe.title}>
-                <TwitterIcon size={40} round />
-              </TwitterShareButton>
-              <WhatsappShareButton url={shareUrl} title={recipe.title}>
-                <WhatsappIcon size={40} round />
-              </WhatsappShareButton>
-              <PinterestShareButton url={shareUrl} media={recipe.image} description={recipe.title}>
-                <PinterestIcon size={40} round />
-              </PinterestShareButton>
-              <EmailShareButton url={shareUrl} subject={recipe.title}>
-                <EmailIcon size={40} round />
-              </EmailShareButton>
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-gray-700 dark:text-gray-300 font-medium">Share this recipe:</span>
+              <div className="flex gap-3">
+                <FacebookShareButton url={shareUrl} quote={recipe.title}>
+                  <FacebookIcon size={40} round />
+                </FacebookShareButton>
+                <TwitterShareButton url={shareUrl} title={recipe.title}>
+                  <TwitterIcon size={40} round />
+                </TwitterShareButton>
+                <WhatsappShareButton url={shareUrl} title={recipe.title}>
+                  <WhatsappIcon size={40} round />
+                </WhatsappShareButton>
+                <PinterestShareButton url={shareUrl} media={recipe.image} description={recipe.title}>
+                  <PinterestIcon size={40} round />
+                </PinterestShareButton>
+                <EmailShareButton url={shareUrl} subject={recipe.title}>
+                  <EmailIcon size={40} round />
+                </EmailShareButton>
+              </div>
+            </div>
+
+            {/* Bookmark Button */}
+            <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-700 pl-6">
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Save to collection:</span>
+              <BookmarkButton recipeId={recipe.id} />
             </div>
           </div>
 
@@ -237,12 +198,18 @@ const UserRecipeDetail = () => {
               </div>
             </div>
 
+            {/* Adjustable Servings */}
+            <ServingsMultiplier 
+              originalServings={recipe.servings || 1}
+              ingredients={ingredients}
+            />
+
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8">
               <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Ingredients</h2>
               <ul className="space-y-4">
                 {ingredients.map((ing, i) => (
                   <li key={i} className="flex items-start gap-4">
-                    <div className="w-10 h-liberal h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                       {i + 1}
                     </div>
                     <span className="text-lg text-gray-700 dark:text-gray-300 pt-1.5">{ing}</span>
@@ -289,64 +256,9 @@ const UserRecipeDetail = () => {
           </div>
         </div>
 
-        {/* Comments Section */}
-        <div className="mt-20 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
-          <h2 className="text-3xl font-bold mb-10 text-gray-900 dark:text-white">Comments ({comments.length})</h2>
-
-          <form onSubmit={handleSubmitComment} className="mb-12">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your thoughts about this recipe..."
-              className="w-full px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition"
-              rows="4"
-              required
-            />
-            <button
-              type="submit"
-              disabled={submittingComment || !newComment.trim()}
-              className="mt-4 px-8 py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 disabled:opacity-50 transition shadow-lg"
-            >
-              {submittingComment ? 'Posting...' : 'Post Comment'}
-            </button>
-          </form>
-
-          <div className="space-y-8">
-            {comments.length === 0 ? (
-              <p className="text-center text-gray-500 py-12">No comments yet. Be the first!</p>
-            ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex gap-5 pb-8 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                  <img
-                    src={comment.avatar_url || `https://ui-avatars.com/api/?name=${comment.display_name || comment.username}&background=fdba74&color=fff`}
-                    alt={comment.display_name || comment.username}
-                    className="w-12 h-12 rounded-full ring-4 ring-orange-100"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          {comment.display_name || comment.username}
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          {new Date(comment.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {user && comment.user_id === user.id && (
-                        <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="text-red-600 hover:text-red-700 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{comment.content}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+        {/* Reviews and Ratings Section */}
+        <div className="mt-20">
+          <ReviewsSection recipeId={id} />
         </div>
       </div>
     </div>

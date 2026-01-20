@@ -1,19 +1,21 @@
 import { Fragment } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 import { logout } from '../../services/authService';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Search', href: '/search' },
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Add Recipe', href: '/recipes/add' },
-  { name: 'My Recipes', href: '/my-recipes' },
-  { name: 'About Us', href: '/about' },
-  { name: 'Contact Us', href: '/contact' },
+  { name: 'Home', href: '/', protected: false },
+  { name: 'Dashboard', href: '/dashboard', protected: true },
+  { name: 'Add Recipe', href: '/recipes/add', protected: true },
+  { name: 'Recipes', href: '/my-recipes', protected: false },
+  { name: 'Collections', href: '/collections', protected: true },
+  { name: 'About Us', href: '/about', protected: false },
+  { name: 'Contact Us', href: '/contact', protected: false },
+  {name: 'Subscriptions', href: '/subscriptions', protected: false}
 ];
 
 function classNames(...classes) {
@@ -31,6 +33,17 @@ export default function Navbar() {
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const handleProtectedClick = (e, href) => {
+    if (!user) {
+      e.preventDefault();
+      toast.error('Please sign in to access this feature', {
+        icon: <LockClosedIcon className="h-5 w-5" />,
+        duration: 2000,
+      });
+      setTimeout(() => navigate('/login'), 1000);
     }
   };
 
@@ -59,14 +72,23 @@ export default function Navbar() {
                   <Link
                     key={item.name}
                     to={item.href}
+                    onClick={(e) => item.protected && handleProtectedClick(e, item.href)}
                     className={classNames(
                       currentPath === item.href
                         ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-orange-600 dark:hover:text-orange-400',
-                      'px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200'
+                      item.protected && !user 
+                        ? 'opacity-50 cursor-not-allowed hover:bg-transparent' 
+                        : '',
+                      'px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group'
                     )}
                   >
                     {item.name}
+                    {item.protected && !user && (
+                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-700 text-white text-xs py-1 px-2 rounded whitespace-nowrap pointer-events-none">
+                        Sign in required
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -144,6 +166,24 @@ export default function Navbar() {
                             </Link>
                           )}
                         </Menu.Item>
+
+                        {user.role === 'admin' && (
+                          <>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  to="/admin/collections"
+                                  className={classNames(
+                                    active ? 'bg-gray-50 dark:bg-gray-700' : '',
+                                    'block px-4 py-3 text-sm text-purple-600 dark:text-purple-400 font-medium hover:text-purple-700'
+                                  )}
+                                >
+                                  🔧 Manage Collections
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          </>
+                        )}
 
                         <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
 

@@ -16,6 +16,11 @@ class EdamamService {
           app_id: this.appId,
           app_key: this.appKey,
           ...options
+        },
+        headers: {
+          'User-Agent': 'Foodies-App/1.0',
+          'Accept': 'application/json',
+          'Edamam-Account-User': this.appId
         }
       });
 
@@ -33,6 +38,11 @@ class EdamamService {
           type: 'public',
           app_id: this.appId,
           app_key: this.appKey
+        },
+        headers: {
+          'User-Agent': 'Foodies-App/1.0',
+          'Accept': 'application/json',
+          'Edamam-Account-User': this.appId
         }
       });
 
