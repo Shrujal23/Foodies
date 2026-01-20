@@ -1,5 +1,12 @@
 # Foodies - Recipe Sharing Platform
 
+[![React](https://img.shields.io/badge/React-19.1.1-blue?logo=react)](https://reactjs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)](https://nodejs.org)
+[![MySQL](https://img.shields.io/badge/MySQL-Database-orange?logo=mysql)](https://www.mysql.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?logo=tailwind-css)](https://tailwindcss.com)
+[![JWT](https://img.shields.io/badge/JWT-Auth-red?logo=json-web-tokens)](https://jwt.io)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 A full-stack web application for food enthusiasts to discover, share, and manage recipes. Users can create accounts, upload their own recipes, explore community recipes, save favorites, and engage with the community through comments.
 
 ## 🚀 Features
@@ -254,6 +261,7 @@ SOFTWARE.
 
 - Built with Create React App
 - Icons provided by Heroicons
+- **Transparency**: This project was developed with the assistance of AI tools to accelerate development and implementation of features.
 - UI components from Headless UI
 - Styling with Tailwind CSS
 
