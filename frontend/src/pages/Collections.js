@@ -9,7 +9,6 @@ const Collections = () => {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
 
@@ -21,7 +20,6 @@ const Collections = () => {
 
   const fetchCollections = async () => {
     try {
-      setLoading(true);
       const res = await fetch(`${API_BASE_URL}/collections`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -39,8 +37,6 @@ const Collections = () => {
     } catch (error) {
       console.error('Error fetching collections:', error);
       toast.error('Failed to load collections');
-    } finally {
-      setLoading(false);
     }
   };
 
