@@ -1,6 +1,0 @@
-backend/
-node_modules/
-.git/
-.env.local
-.DS_Store
-*.md
