@@ -1,6 +1,13 @@
 const express = require('express');
 const passport = require('passport');
-const { createUserWithPassword, findUserByEmail, verifyPassword } = require('../db/database');
+const jwt = require('jsonwebtoken');
+
+const {
+  createUserWithPassword,
+  findUserByEmail,
+  verifyPassword,
+  findUserById
+} = require('../db/database');
 const { validateLogin, validateRegister } = require('../middleware/validation');
 const router = express.Router();
 
@@ -16,6 +23,7 @@ const router = express.Router();
  *       200:
  *         description: Authentication status
  */
+// ====================== AUTH STATUS ======================
 router.get('/status', async (req, res) => {
   const authHeader = req.headers.authorization;
   
@@ -26,40 +34,36 @@ router.get('/status', async (req, res) => {
       user: null
     });
   }
-
-  const token = authHeader.split(' ')[1];
   
   try {
-    const decoded = require('jsonwebtoken').verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    const user = await require('../db/database').findUserById(decoded.userId);
+    const user = await findUserById(decoded.userId);
     
     if (user) {
       const { password_hash, ...userWithoutPassword } = user;
-      res.json({
+      return res.json({
         success: true,
         isAuthenticated: true,
         user: userWithoutPassword
       });
-    } else {
-      res.json({
-        success: true,
-        isAuthenticated: false,
-        user: null
-      });
+    // } else {
+    //   // If user not found, still return isAuthenticated: false
+    //   return res.json({ success: true, isAuthenticated: false, user: null });
+    // }
     }
   } catch (err) {
-    console.error('Auth status error:', err);
-    res.status(401).json({
-      success: false,
-      statusCode: 401,
-      message: 'Invalid token'
-    });
+    console.error('Auth status error:', err.message);
+    // For any token error, treat as unauthenticated
   }
-});
+
+  res.json({
+    success: true,
+    isAuthenticated: false,
+    user: null
+  }
+,);})
 
 /**
  * @swagger
@@ -82,15 +86,13 @@ router.get('/status', async (req, res) => {
  *       200:
  *         description: Login successful
  */
-router.post('/login', validateLogin, async (req, res, next) => {
+router.post('/login', validateLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await findUserByEmail(email);
     if (!user || !user.password_hash) {
-      return res.status(401).json({
-        success: false,
-        statusCode: 401,
+      return res.status(401).json({ success: false,
         message: 'Invalid email or password'
       });
     }
@@ -99,15 +101,14 @@ router.post('/login', validateLogin, async (req, res, next) => {
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
-        statusCode: 401,
         message: 'Invalid email or password'
       });
     }
 
     const { password_hash, ...userWithoutPassword } = user;
 
-    const token = require('jsonwebtoken').sign(
-      { userId: user.id },
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -118,12 +119,12 @@ router.post('/login', validateLogin, async (req, res, next) => {
       user: userWithoutPassword,
       token
     });
+
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({
       success: false,
-      statusCode: 500,
-      message: 'Login failed'
+      message: 'Login failed. Please try again.'
     });
   }
 });
@@ -151,15 +152,22 @@ router.post('/login', validateLogin, async (req, res, next) => {
  *       201:
  *         description: Registration successful
  */
-router.post('/register', validateRegister, async (req, res, next) => {
+router.post('/register', validateRegister, async (req, res) => {
   try {
     const { username, email, password } = req.body;
+
+    // Password strength validation (already done in middleware, but double-check here)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ success: false,
+        message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
+      });
+    }
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        statusCode: 409,
         message: 'User with this email already exists'
       });
     }
@@ -168,7 +176,7 @@ router.post('/register', validateRegister, async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: 'Account created successfully!',
       user: {
         id: user.id,
         username: user.username,
@@ -179,8 +187,7 @@ router.post('/register', validateRegister, async (req, res, next) => {
     console.error('Register error:', error);
     return res.status(500).json({
       success: false,
-      statusCode: 500,
-      message: 'Registration failed'
+      message: 'Registration failed. Please try again.'
     });
   }
 });
@@ -192,9 +199,9 @@ router.get('/github',
 
 // GitHub OAuth callback route
 router.get('/github/callback',
-  passport.authenticate('github', { failureRedirect: 'http://localhost:3000/login' }),
+  passport.authenticate('github', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('http://localhost:3000/dashboard');
+    res.redirect('/dashboard');
   }
 );
 
@@ -205,26 +212,19 @@ router.get('/google',
 
 // Google OAuth callback route
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: 'http://localhost:3000/login' }),
+  passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('http://localhost:3000/dashboard');
+    res.redirect('/dashboard');
   }
 );
 
-// Logout route
+// Logout
 router.get('/logout', (req, res) => {
   req.logout(function(err) {
     if (err) {
-      return res.status(500).json({
-        success: false,
-        statusCode: 500,
-        message: 'Error during logout'
-      });
+      return res.status(500).json({ success: false, message: 'Logout failed' });
     }
-    res.json({
-      success: true,
-      message: 'Logout successful'
-    });
+    res.json({ success: true, message: 'Logged out successfully' });
   });
 });
 

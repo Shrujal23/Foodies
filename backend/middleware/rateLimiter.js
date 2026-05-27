@@ -1,52 +1,81 @@
 /**
- * Rate limiting middleware
- * Prevents brute force attacks on sensitive endpoints
+ * Rate Limiting Middleware
  */
 
 const rateLimit = require('express-rate-limit');
 
-// General API rate limiter: 100 requests per 15 minutes
-const apiLimiter = rateLimit({
+
+const { ipKeyGenerator } = require('express-rate-limit');
+
+const createLimiter = (options = {}) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: options.max || 100,
+    message: {
+      success: false,
+      statusCode: 429,
+      message: options.message || 'Too many requests from this IP, please try again later.',
+    },
+
+    standardHeaders: true,
+    legacyHeaders: false,
+
+    
+    keyGenerator: (req) => {
+      // Prioritize user ID if logged in
+      if (req.user?.id) {
+        return `user:${req.user.id}`;
+      }
+      // Fallback to IP with proper IPv6 handling
+      return ipKeyGenerator(req);
+    },
+
+    skip: (req) => {
+      return process.env.NODE_ENV === 'development' || 
+             req.user?.role === 'admin';
+    },
+
+    handler: (req, res) => {
+      console.warn(`[Rate Limit] Exceeded → IP: ${req.ip} | Path: ${req.path}`);
+      res.status(429).json({
+        success: false,
+        statusCode: 429,
+        message: options.message || 'Too many requests. Please try again later.'
+      });
+    }
+  });
+};
+
+// ==================== RATE LIMITERS ====================
+
+const apiLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: {
-    success: false,
-    statusCode: 429,
-    message: 'Too many requests from this IP, please try again later'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
+  max: 150,
 });
 
-// Strict rate limiter: 5 requests per 15 minutes (for login, register, etc.)
-const strictLimiter = rateLimit({
+const strictLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: {
-    success: false,
-    statusCode: 429,
-    message: 'Too many attempts, please try again later'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+  max: 8,
+  message: 'Too many login/register attempts. Please try again later.',
   skipSuccessfulRequests: true
 });
 
-// Search rate limiter: 30 requests per minute
-const searchLimiter = rateLimit({
+const searchLimiter = createLimiter({
   windowMs: 60 * 1000,
-  max: 30,
-  message: {
-    success: false,
-    statusCode: 429,
-    message: 'Too many search requests, please try again later'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
+  max: 25,
+  message: 'Too many search requests. Please slow down.'
+});
+
+const uploadLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: 'Too many upload attempts. Please try again later.'
 });
 
 module.exports = {
   apiLimiter,
   strictLimiter,
-  searchLimiter
+  searchLimiter,
+  uploadLimiter,
+  createLimiter
 };
