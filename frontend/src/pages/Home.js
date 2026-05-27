@@ -207,32 +207,31 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             {
-              icon: '👨‍🍳',
               title: 'Curated Collections',
               description: 'Organize and save your favorite recipes into personalized collections for easy access.'
             },
             {
-              icon: '⭐',
+              
               title: 'Community Reviews',
               description: 'Read detailed reviews and ratings from home cooks who have tested the recipes.'
             },
             {
-              icon: '🔄',
+              
               title: 'Adjustable Servings',
               description: 'Automatically scale ingredient quantities based on the number of servings you need.'
             },
             {
-              icon: '📱',
+              
               title: 'Mobile Friendly',
               description: 'Access your recipes anytime, anywhere with our fully responsive design.'
             },
             {
-              icon: '🌍',
+              
               title: 'Global Cuisine',
               description: 'Explore recipes from cuisines around the world, from Italian to Asian fusion.'
             },
             {
-              icon: '💾',
+              
               title: 'Save & Share',
               description: 'Bookmark recipes and share them with friends and family instantly.'
             }
@@ -429,7 +428,6 @@ export default function Home() {
           />
         ) : (
           <EmptyState
-            icon="👥"
             title="No community recipes yet"
             description="Be the first to share your culinary creation with the Foodies community"
             actions={[

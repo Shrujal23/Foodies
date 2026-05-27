@@ -2,24 +2,31 @@ const userService = require('../services/userService');
 
 async function getUserDashboard(req, res) {
   try {
-    if (!req.user) {
+    if (!req.user?.id) {
       // Return safe empty defaults for unauthenticated users
       return res.json({
-        totalFavorites: 0,
-        recentFavorites: [],
-        recentActivity: [],
-        collections: [],
-        topCategories: []
+        success: true,
+        isAuthenticated: false,
+        message: "Please log in to view your dashboard"
       });
     }
+    
 
     const stats = await userService.getUserStats(req.user.id);
-    return res.json(stats);
+
+    return res.json({
+      success: true,
+      isAuthenticated: true,
+      ...stats
+    });
   } catch (error) {
     console.error('Dashboard Error:', error);
     // Always return safe defaults on error
     return res.json({
-      totalFavorites: 0,
+      success: true,
+      isAuthenticated: false,
+      message: "Failed to load dashboard",
+      totalFavorites:0,
       recentFavorites: [],
       recentActivity: [],
       collections: [],

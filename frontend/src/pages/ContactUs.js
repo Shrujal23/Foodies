@@ -11,29 +11,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 
-// Custom SVG Icons (inline for perfect styling)
-// const CurryBowlIcon = () => (
-//   <svg className="w-16 h-16" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-//     <path d="M16 32h32v12a8 8 0 01-16 0v-4a4 4 0 00-8 0v4a8 8 0 01-16 0V32z" fill="currentColor"/>
-//     <path d="M12 28h40a4 4 0 014 4v4H8v-4a4 4 0 014-4z" fill="currentColor" opacity="0.8"/>
-//     <circle cx="32" cy="20" r="8" fill="currentColor"/>
-//     <path d="M24 16a8 8 0 0116 0" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-//   </svg>
-// );
-
-// const IndianFlagIcon = () => (
-//   <svg className="w-20 h-20 drop-shadow-lg" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
-//     <rect width="640" height="160" fill="#FF9933"/>
-//     <rect y="160" width="640" height="160" fill="#FFFFFF"/>
-//     <rect y="320" width="640" height="160" fill="#138808"/>
-//     <circle cx="320" cy="240" r="80" fill="#000080"/>
-//     <circle cx="320" cy="240" r="72" fill="#FFFFFF" stroke="#000080" strokeWidth="4"/>
-//     {[0,15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270,285,300,315,330,345].map(i => (
-//       <line key={i} x1="320" y1="240" x2="320" y2="168" stroke="#000080" strokeWidth="3"
-//             transform={`rotate(${i} 320 240)`}/>
-//     ))}
-//   </svg>
-// );
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({

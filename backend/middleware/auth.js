@@ -6,7 +6,11 @@ async function isAuthenticated(req, res, next) {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ 
+        success: false,
+        statusCode: 401,
+        message: 'No token provided' 
+      });
     }
 
     const token = authHeader.split(' ')[1];
@@ -15,7 +19,11 @@ async function isAuthenticated(req, res, next) {
     const user = await findUserById(decoded.userId);
     
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ 
+        success: false,
+        statusCode: 401,
+        message: 'User not found' 
+      });
     }
 
     // Remove sensitive data
@@ -23,8 +31,22 @@ async function isAuthenticated(req, res, next) {
     req.user = userWithoutPassword;
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err);
-    return res.status(401).json({ error: 'Invalid token' });
+    console.error('Auth middleware error:', err.name, err.message);
+
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ 
+        success: false,
+        statusCode: 401,
+        message: 'Token expired' 
+      });
+    }
+
+    // Fallback for generic token errors (prevents hanging requests)
+    return res.status(401).json({
+      success: false,
+      statusCode: 401,
+      message: 'Invalid token'
+    });
   }
 }
 

@@ -11,7 +11,6 @@ export default function Subscriptions() {
       id: 'free',
       name: 'Free',
       price: 0,
-      icon: '🍽️',
       description: 'Perfect for recipe enthusiasts',
       features: [
         'Browse unlimited recipes',
@@ -35,7 +34,6 @@ export default function Subscriptions() {
       id: 'pro',
       name: 'Pro',
       price: billingCycle === 'monthly' ? 4.99 : 49.99,
-      icon: '⭐',
       description: 'For serious home cooks',
       features: [
         'Everything in Free',
@@ -62,7 +60,6 @@ export default function Subscriptions() {
       id: 'chef',
       name: 'Chef Elite',
       price: billingCycle === 'monthly' ? 9.99 : 99.99,
-      icon: '👨‍🍳',
       description: 'For culinary professionals',
       features: [
         'Everything in Pro',
@@ -88,7 +85,6 @@ export default function Subscriptions() {
       id: 1,
       title: 'Video Cooking Tutorials',
       description: 'Learn cooking techniques from professional chefs with step-by-step video guides.',
-      icon: '🎥',
       releaseDate: 'Coming Feb 2026',
       availability: 'Pro+',
     },
@@ -96,7 +92,6 @@ export default function Subscriptions() {
       id: 2,
       title: 'AI Recipe Generator',
       description: 'Generate unique recipes based on ingredients you have at home using AI.',
-      icon: '🤖',
       releaseDate: 'Coming Mar 2026',
       availability: 'Pro+',
     },
@@ -104,7 +99,6 @@ export default function Subscriptions() {
       id: 3,
       title: 'Meal Planning Assistant',
       description: 'Create personalized weekly meal plans with automated shopping lists.',
-      icon: '📅',
       releaseDate: 'Coming Mar 2026',
       availability: 'Chef Elite',
     },
@@ -112,7 +106,6 @@ export default function Subscriptions() {
       id: 4,
       title: 'Grocery Delivery Integration',
       description: 'Order ingredients directly from partnered grocery stores.',
-      icon: '🛒',
       releaseDate: 'Coming Apr 2026',
       availability: 'Chef Elite',
     },
@@ -120,7 +113,6 @@ export default function Subscriptions() {
       id: 5,
       title: 'Social Cooking Events',
       description: 'Connect with other foodies and join virtual cooking sessions.',
-      icon: '👥',
       releaseDate: 'Coming May 2026',
       availability: 'Pro+',
     },
@@ -128,7 +120,6 @@ export default function Subscriptions() {
       id: 6,
       title: 'Recipe Monetization',
       description: 'Earn money by sharing your unique recipes with the community.',
-      icon: '💰',
       releaseDate: 'Coming Jun 2026',
       availability: 'All Users',
     },
@@ -371,7 +362,7 @@ export default function Subscriptions() {
         {/* Upcoming Features */}
         <div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-            🚀 Exciting Features Coming Soon
+            Exciting Features Coming Soon, Stay tuned!!!
           </h2>
           <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
             We're constantly innovating to enhance your cooking experience. Here's what's on our roadmap.
