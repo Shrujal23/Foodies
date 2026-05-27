@@ -463,17 +463,19 @@ async function deleteUserRecipe(req, res) {
 async function getFeaturedRecipes(req, res) {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 6, 20);
-    const [rows] = await pool.execute(
-      `SELECT ur.*, u.username, u.display_name, u.avatar_url,
-              (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count,
-              (SELECT COUNT(*) FROM recipe_comments WHERE recipe_id = ur.id) as comment_count
+    const query = `
+                 SELECT ur.*,
+                 u.username, 
+                 u.display_name, 
+                 u.avatar_url,
+                (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count,
+                (SELECT COUNT(*) FROM recipe_comments WHERE recipe_id = ur.id) as comment_count
        FROM user_recipes ur
        JOIN users u ON ur.user_id = u.id
        ORDER BY ur.created_at DESC
-       LIMIT ?`,
-      [limit]
-    );
-    
+       LIMIT ?`
+    ;
+    const[rows] = await pool.execute(query, [limit]);
     res.json(rows.map(recipe => ({
       ...recipe,
       _id: recipe.id,

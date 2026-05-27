@@ -93,8 +93,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-white dark:from-gray-950 flex items-center justify-center px-6">
         <EmptyState
-          icon="⚠️"
-          title="Oops! Something went wrong"
+          title="Oops! Something went wrong!!!"
           description={error}
           actions={[
             { label: 'Try Again', onClick: () => window.location.reload(), primary: true },
@@ -125,34 +124,30 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - Animated */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-5 sm:grid-cols-2 lg:grid-cols-1 gap-14 mb-20">
           <AnimatedStatCard 
             value={dashboardData?.totalFavorites || 0} 
             label="Saved Recipes" 
-            icon="❤️"
             color="pink"
-            duration={2000}
+            duration={1800}
           />
           <AnimatedStatCard 
             value={dashboardData?.collections?.length || 0} 
-            label="Collections" 
-            icon="📁"
+            label="Collections"             
             color="orange"
-            duration={2000}
+            duration={1800}
           />
           <AnimatedStatCard 
             value={dashboardData?.recentActivity?.filter(a => a.activity_type === 'search').length || 0} 
             label="Searches"
-            icon="🔍"
             color="blue"
-            duration={2000}
+            duration={1800}
           />
           <AnimatedStatCard 
             value={dashboardData?.recentFavorites?.length || 0}
             label="Recent Favorites" 
-            icon="⭐"
             color="emerald"
-            duration={2000}
+            duration={1800}
           />
         </div>
 
@@ -160,17 +155,18 @@ export default function Dashboard() {
         {dashboardData?.recentFavorites?.length > 0 && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Recent Favorites</h2>
+              <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">
+                Your Recent Favorites</h2>
               <button
                 onClick={() => navigate('/favorites')}
-                className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-2"
+                className="text-orange-800 hover:text-orange-700 font-medium flex items-center gap-2 group"
               >
                 View all <span aria-hidden="true">→</span>
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {dashboardData.recentFavorites.map((recipe) => (
-                <div key={recipe.recipe_id} className="transform hover:scale-105 transition-all duration-500">
+                <div key={recipe.recipe_id} className="hover:scale-[1.03] transition-transform duration-300">
                   <RecipeCard recipe={recipe} initialFavorite={true} />
                 </div>
               ))}
@@ -181,12 +177,12 @@ export default function Dashboard() {
         {/* Collections */}
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Collections</h2>
+            <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">Your Collections</h2>
             <button 
               onClick={() => toastConfig.info('Create Collection feature coming soon!')}
-              className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold rounded-2xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-xl"
+              className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold rounded-2xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all active:scale-95 shadow-lg"
             >
-              <PlusIcon className="w-6 h-6" />
+              <PlusIcon className="w-5 h-5" />
               New Collection
             </button>
           </div>
@@ -210,8 +206,8 @@ export default function Dashboard() {
                         <p className="text-sm text-gray-600 dark:text-gray-400">{collection.recipe_count} recipes</p>
                       </div>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {collection.description || 'No description'}
+                    <p className="text-gray-600 dark:text-gray-400 line-clamp-3 text-[15px]">
+                      {collection.description || 'No description provided'}
                     </p>
                   </div>
                 </div>
@@ -221,9 +217,11 @@ export default function Dashboard() {
             <EmptyState
               icon="📁"
               title="No Collections Yet"
-              description="Organize your favorite recipes into beautiful collections"
+              description="Create collections to organize your favorite recipes"
               actions={[
-                { label: 'Create Your First Collection', onClick: () => toastConfig.info('Create Collection feature coming soon!'), primary: true }
+                { label: 'Create Your First Collection',
+                  onClick: () => toastConfig.info('This feature is coming soon!')
+                  ,primary: true }
               ]}
               className="py-16 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl"
             />
