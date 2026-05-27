@@ -1,75 +1,75 @@
 import * as edamamService from './edamamService';
 import { API_BASE_URL } from '../config';
 
-/**
- * Combined search that searches both user-created recipes and external Edamam recipes
- * User recipes appear first in results if they match the query
- * Supports filtering by diet, health, cuisine, meal type, cooking time, and sorting
- */
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('Authentication required');
+  
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
+
+// ====================== MAIN SEARCH ======================
 export async function searchRecipes(query, filters = {}) {
   try {
+    if (!query?.trim()) throw new Error('Search query is required');
+
     const params = new URLSearchParams({
       query: query.trim(),
-      source: 'all' // Search both user and edamam recipes
+      source: 'all'
     });
 
-    // Add filter parameters if they have values
-    if (filters.diet) params.append('diet', filters.diet);
-    if (filters.health) params.append('health', filters.health);
-    if (filters.cuisineType) params.append('cuisineType', filters.cuisineType);
-    if (filters.mealType) params.append('mealType', filters.mealType);
-    if (filters.cookingTime) params.append('cookingTime', filters.cookingTime);
-    if (filters.sortBy) params.append('sortBy', filters.sortBy);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit || 20);
+    // Add optional filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
 
     const response = await fetch(`${API_BASE_URL}/recipes/search?${params.toString()}`);
-    if (!response.ok) throw new Error('Failed to search recipes');
     
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.status}`);
+    }
+
     const result = await response.json();
     
-    // Combine and return results
     return {
+      success: true,
       hits: [
         ...(result.data?.userRecipes || []),
         ...(result.data?.edamamRecipes || [])
-      ].map(recipe => ({
-        recipe: recipe
-      }))
+      ].map(recipe => ({ recipe }))
     };
+
   } catch (error) {
     console.error('Search error:', error);
-    throw new Error('Failed to search recipes');
+    throw new Error(error.message || 'Failed to search recipes');
   }
 }
 
-/**
- * Search only external Edamam recipes (legacy function)
- */
-export async function searchEdamamOnly(query, filters = {}) {
+// ====================== FEATURED RECIPES ======================
+export async function getFeaturedRecipes(limit = 8) {
   try {
-    const result = await edamamService.searchEdamamRecipes(query, filters);
-    return {
-      hits: result.recipes.map(recipe => ({
-        recipe: recipe
-      }))
-    };
+    const response = await fetch(`${API_BASE_URL}/recipes/featured?limit=${limit}`);
+    
+    if (!response.ok) throw new Error('Failed to fetch featured recipes');
+    
+    return await response.json();
   } catch (error) {
-    console.error('Edamam search error:', error);
-    throw new Error('Failed to search recipes');
+    console.error('Get featured recipes error:', error);
+    throw error;
   }
 }
 
+// ====================== FAVORITES ======================
 export async function getFavorites() {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No authentication token found');
-
     const response = await fetch(`${API_BASE_URL}/recipes/favorites`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: getAuthHeaders()
     });
+
     if (!response.ok) throw new Error('Failed to get favorites');
     return await response.json();
   } catch (error) {
@@ -80,17 +80,12 @@ export async function getFavorites() {
 
 export async function addToFavorites(recipe) {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No authentication token found');
-
     const response = await fetch(`${API_BASE_URL}/recipes/favorites`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ recipe })
     });
+
     if (!response.ok) throw new Error('Failed to add to favorites');
     return await response.json();
   } catch (error) {
@@ -101,15 +96,11 @@ export async function addToFavorites(recipe) {
 
 export async function removeFromFavorites(recipeId) {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No authentication token found');
-
     const response = await fetch(`${API_BASE_URL}/recipes/favorites/${recipeId}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: getAuthHeaders()
     });
+
     if (!response.ok) throw new Error('Failed to remove from favorites');
     return await response.json();
   } catch (error) {
@@ -120,14 +111,10 @@ export async function removeFromFavorites(recipeId) {
 
 export async function checkFavoriteStatus(recipeId) {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No authentication token found');
-
     const response = await fetch(`${API_BASE_URL}/recipes/favorites/${recipeId}/status`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: getAuthHeaders()
     });
+
     if (!response.ok) throw new Error('Failed to check favorite status');
     return await response.json();
   } catch (error) {
@@ -136,9 +123,7 @@ export async function checkFavoriteStatus(recipeId) {
   }
 }
 
-/**
- * Get all public user recipes (accessible to unauth users)
- */
+// ====================== PUBLIC RECIPES ======================
 export async function getAllPublicRecipes() {
   try {
     const response = await fetch(`${API_BASE_URL}/recipes/user-recipes`);
@@ -150,16 +135,16 @@ export async function getAllPublicRecipes() {
   }
 }
 
-/**
- * Get featured user recipes (accessible to unauth users)
- */
-export async function getFeaturedRecipes(limit = 6) {
+// Legacy Edamam only search
+export async function searchEdamamOnly(query, filters = {}) {
   try {
-    const response = await fetch(`${API_BASE_URL}/recipes/featured?limit=${limit}`);
-    if (!response.ok) throw new Error('Failed to fetch featured recipes');
-    return await response.json();
+    const result = await edamamService.searchEdamamRecipes(query, filters);
+    return {
+      success: true,
+      hits: result.recipes?.map(recipe => ({ recipe })) || []
+    };
   } catch (error) {
-    console.error('Get featured recipes error:', error);
-    throw error;
+    console.error('Edamam search error:', error);
+    throw new Error('Failed to search Edamam recipes');
   }
 }

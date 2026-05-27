@@ -1,48 +1,63 @@
 /**
- * Centralized error handling middleware
- * This should be the last middleware registered in the app
+ * Centralized Error Handling Middleware
+ * Should be registered as the LAST middleware in server.js
  */
 
 class AppError extends Error {
-  constructor(message, statusCode = 500) {
+  constructor(message, statusCode = 500, errorCode = null) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = true;
+    this.errorCode = errorCode;
+    this.isOperational = true; // Errors we can predict and handle
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
 const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.message = err.message || 'Internal Server Error';
+  let error = { ...err };
+  error.message = err.message || 'Internal Server Error';
+  error.statusCode = err.statusCode || 500;
 
-  // Log error details (in production, use a logging service)
+  // Log error (you can later connect this to Winston or Sentry)
   console.error({
     timestamp: new Date().toISOString(),
     method: req.method,
     path: req.path,
-    statusCode: err.statusCode,
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    statusCode: error.statusCode,
+    message: error.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    ip: req.ip,
+    userId: req.user?.id || null
   });
 
-  // Duplicate key error
+  // ==================== DATABASE ERRORS ====================
   if (err.code === 'ER_DUP_ENTRY') {
-    const field = err.message.match(/for key '(.+?)'/)?.[1] || 'field';
-    return res.status(400).json({
+    const fieldMatch = err.message.match(/for key '(.+?)'/);
+    const field = fieldMatch ? fieldMatch[1].split('.').pop() : 'field';
+    
+    return res.status(409).json({
       success: false,
-      statusCode: 400,
-      message: `This ${field} already exists`,
-      error: field
+      statusCode: 409,
+      message: `This ${field} is already taken`,
+      error: 'DuplicateEntry'
     });
   }
 
-  // JWT errors
+  if (err.code === 'ER_NO_SUCH_TABLE') {
+    return res.status(500).json({
+      success: false,
+      statusCode: 500,
+      message: 'Database configuration error',
+      error: 'DatabaseError'
+    });
+  }
+
+  // ==================== JWT ERRORS ====================
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
       statusCode: 401,
-      message: 'Invalid token',
+      message: 'Invalid token. Please login again.',
       error: 'InvalidToken'
     });
   }
@@ -51,18 +66,40 @@ const errorHandler = (err, req, res, next) => {
     return res.status(401).json({
       success: false,
       statusCode: 401,
-      message: 'Token expired',
+      message: 'Your session has expired. Please login again.',
       error: 'TokenExpired'
     });
   }
 
-  // Send error response
-  res.status(err.statusCode).json({
+  // ==================== VALIDATION ERRORS ====================
+  if (err.name === 'ValidationError' || err.statusCode === 400) {
+    return res.status(400).json({
+      success: false,
+      statusCode: 400,
+      message: err.message || 'Validation failed',
+      error: 'ValidationError'
+    });
+  }
+
+  // ==================== DEFAULT ERROR ====================
+  res.status(error.statusCode).json({
     success: false,
-    statusCode: err.statusCode,
-    message: err.message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    statusCode: error.statusCode,
+    message: error.message,
+    ...(process.env.NODE_ENV === 'development' && { 
+      stack: error.stack,
+      errorType: err.name 
+    })
   });
 };
 
-module.exports = { errorHandler, AppError };
+// Utility to create operational errors easily
+const createError = (message, statusCode = 500, errorCode = null) => {
+  return new AppError(message, statusCode, errorCode);
+};
+
+module.exports = {
+  errorHandler,
+  AppError,
+  createError
+};

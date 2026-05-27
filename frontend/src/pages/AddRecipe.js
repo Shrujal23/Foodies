@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import AuthWarningModal from '../components/common/AuthWarningModal';
+import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import AuthWarningModal from '../components/common/AuthWarningModal';
 
 const AddRecipe = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+
   const [showAuthWarning, setShowAuthWarning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const [recipe, setRecipe] = useState({
     title: '',
     description: '',
@@ -23,9 +26,9 @@ const AddRecipe = () => {
     imagePreview: null
   });
 
+  // Check authentication
   useEffect(() => {
     if (authLoading) return;
-    
     if (!user) {
       setShowAuthWarning(true);
     }
@@ -47,6 +50,7 @@ const AddRecipe = () => {
   };
 
   const removeField = (index, field) => {
+    if (recipe[field].length === 1) return;
     setRecipe(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -56,6 +60,10 @@ const AddRecipe = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Image must be smaller than 10MB");
+        return;
+      }
       const preview = URL.createObjectURL(file);
       setRecipe(prev => ({ ...prev, image: file, imagePreview: preview }));
     }
@@ -63,37 +71,61 @@ const AddRecipe = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
-    const fd = new FormData();
-    fd.append('title', recipe.title);
-    fd.append('description', recipe.description);
-    fd.append('prepTime', recipe.prepTime || '0');
-    fd.append('cookTime', recipe.cookTime || '0');
-    fd.append('servings', recipe.servings || '1');
-    fd.append('difficulty', recipe.difficulty);
-    fd.append('cuisine', recipe.cuisine || 'international');
-    fd.append('ingredients', JSON.stringify(recipe.ingredients.filter(i => i.trim())));
-    fd.append('instructions', JSON.stringify(recipe.instructions.filter(i => i.trim())));
-    if (recipe.image) fd.append('image', recipe.image);
+    // Validation
+    if (!recipe.title.trim() || !recipe.description.trim()) {
+      toast.error("Title and description are required");
+      return;
+    }
+    if (!recipe.ingredients[0]?.trim()) {
+      toast.error("At least one ingredient is required");
+      return;
+    }
+    if (!recipe.instructions[0]?.trim()) {
+      toast.error("At least one instruction step is required");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('title', recipe.title.trim());
+    formData.append('description', recipe.description.trim());
+    formData.append('prepTime', recipe.prepTime || 0);
+    formData.append('cookTime', recipe.cookTime || 0);
+    formData.append('servings', recipe.servings || 1);
+    formData.append('difficulty', recipe.difficulty);
+    formData.append('cuisine', recipe.cuisine);
+    formData.append('ingredients', JSON.stringify(recipe.ingredients.filter(i => i.trim())));
+    formData.append('instructions', JSON.stringify(recipe.instructions.filter(i => i.trim())));
+
+    if (recipe.image) {
+      formData.append('image', recipe.image);
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/recipes`, {
         method: 'POST',
-        body: fd,
+        body: formData,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        toast.success('Recipe created successfully!');
+        toast.success('Your recipe has been published successfully!!!');
         navigate('/my-recipes');
       } else {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to create recipe');
+        toast.error(data.message || 'Failed to publish recipe');
       }
-    } catch (err) {
-      toast.error(err.message || 'Something went wrong');
+    } catch (error) {
+      console.error(error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -107,265 +139,194 @@ const AddRecipe = () => {
 
       {authLoading ? (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : !user ? (
         <div className="min-h-screen" />
       ) : (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
-          <div className="max-w-5xl mx-auto px-6">
-
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
-            Create New Recipe
-          </h1>
-          <p className="mt-4 text-xl text-gray-600 dark:text-gray-400">
-            Share your culinary masterpiece with the world
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-10">
-
-          {/* Image Upload Card */}
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Recipe Photo</h2>
-            <div className="flex flex-col items-center">
-              {recipe.imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={recipe.imagePreview}
-                    alt="Preview"
-                    className="w-full max-w-2xl h-96 object-cover rounded-2xl shadow-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setRecipe(prev => ({ ...prev, image: null, imagePreview: null }))}
-                    className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="cursor-pointer">
-                  <div className="border-4 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl w-full h-96 flex flex-col items-center justify-center hover:border-orange-500 transition">
-                    <svg className="w-20 h-20 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">
-                      Click to upload a beautiful photo
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 10MB</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
+          <div className="max-w-4xl mx-auto px-6">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent mb-4">
+                Share Your Recipe
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-400">
+                Let the community enjoy your creation
+              </p>
             </div>
-          </div>
 
-          {/* Basic Info */}
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Basic Information</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recipe Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  value={recipe.title}
-                  onChange={handleChange}
-                  placeholder="e.g., Classic Chocolate Chip Cookies"
-                  className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-10">
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                <textarea
-                  name="description"
-                  rows="4"
-                  required
-                  value={recipe.description}
-                  onChange={handleChange}
-                  placeholder="Tell us what makes this recipe special..."
-                  className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prep Time (min)</label>
-                  <input
-                    type="number"
-                    name="prepTime"
-                    required
-                    value={recipe.prepTime}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cook Time (min)</label>
-                  <input
-                    type="number"
-                    name="cookTime"
-                    required
-                    value={recipe.cookTime}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Servings</label>
-                  <input
-                    type="number"
-                    name="servings"
-                    required
-                    value={recipe.servings}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty</label>
-                  <select
-                    name="difficulty"
-                    value={recipe.difficulty}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  >
-                    <option>Easy</option>
-                    <option>Medium</option>
-                    <option>Hard</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cuisine</label>
-                  <select
-                    name="cuisine"
-                    value={recipe.cuisine}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  >
-                    <option value="international">International</option>
-                    <option value="italian">Italian</option>
-                    <option value="mexican">Mexican</option>
-                    <option value="indian">Indian</option>
-                    <option value="chinese">Chinese</option>
-                    <option value="american">American</option>
-                    <option value="japanese">Japanese</option>
-                    <option value="french">French</option>
-                    <option value="mediterranean">Mediterranean</option>
-                    <option value="thai">Thai</option>
-                    <option value="korean">Korean</option>
-                    <option value="spanish">Spanish</option>
-                    <option value="greek">Greek</option>
-                    <option value="middle_eastern">Middle Eastern</option>
-                    <option value="vietnamese">Vietnamese</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Ingredients */}
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ingredients</h2>
-              <button
-                type="button"
-                onClick={() => addField('ingredients')}
-                className="px-5 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-medium rounded-xl hover:from-orange-600 hover:to-pink-700 transition shadow-lg"
-              >
-                + Add Ingredient
-              </button>
-            </div>
-            <div className="space-y-4">
-              {recipe.ingredients.map((ing, i) => (
-                <div key={i} className="flex gap-3 items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                    {i + 1}
-                  </div>
-                  <input
-                    type="text"
-                    value={ing}
-                    onChange={(e) => handleArrayChange(i, e.target.value, 'ingredients')}
-                    placeholder="e.g., 2 cups all-purpose flour"
-                    className="flex-1 px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg"
-                  />
-                  {recipe.ingredients.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeField(i, 'ingredients')}
-                      className="text-red-600 hover:text-red-700 p-3"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
-              <button
-                type="button"
-                onClick={() => addField('instructions')}
-                className="px-5 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-medium rounded-xl hover:from-orange-600 hover:to-pink-700 transition shadow-lg"
-              >
-                + Add Step
-              </button>
-            </div>
-            <div className="space-y-6">
-              {recipe.instructions.map((step, i) => (
-                <div key={i} className="flex gap-4 items-start">
-                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-600 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-lg">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1">
-                    <textarea
-                      value={step}
-                      onChange={(e) => handleArrayChange(i, e.target.value, 'instructions')}
-                      placeholder="Describe this step clearly..."
-                      rows="3"
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition text-lg resize-none"
-                    />
-                    {recipe.instructions.length > 1 && (
+              {/* Image Upload */}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
+                <h2 className="text-2xl font-bold mb-6">Recipe Photo</h2>
+                <div className="flex flex-col items-center">
+                  {recipe.imagePreview ? (
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                      <img
+                        src={recipe.imagePreview}
+                        alt="Preview"
+                        className="max-h-96 w-full object-cover"
+                      />
                       <button
                         type="button"
-                        onClick={() => removeField(i, 'instructions')}
-                        className="text-red-600 hover:text-red-700 text-sm font-medium mt-2"
+                        onClick={() => setRecipe(prev => ({ ...prev, image: null, imagePreview: null }))}
+                        className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl text-sm font-medium transition"
                       >
-                        Remove step
+                        Remove Photo
                       </button>
-                    )}
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer w-full">
+                      <div className="border-4 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl h-80 flex flex-col items-center justify-center hover:border-orange-500 transition-colors">
+                        <p className="text-lg font-medium text-gray-600 dark:text-gray-400">Click to select a photo</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG • Max 10MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Basic Information */}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
+                <h2 className="text-2xl font-bold mb-8">Basic Information</h2>
+                <div className="space-y-6">
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    value={recipe.title}
+                    onChange={handleChange}
+                    placeholder="Recipe Title *"
+                    className="w-full px-6 py-4 text-lg rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500"
+                  />
+
+                  <textarea
+                    name="description"
+                    required
+                    rows={4}
+                    value={recipe.description}
+                    onChange={handleChange}
+                    placeholder="Brief description of your recipe... *"
+                    className="w-full px-6 py-4 text-lg rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 resize-none"
+                  />
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <input type="number" name="prepTime" placeholder="Prep Time (min)" value={recipe.prepTime} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
+                    <input type="number" name="cookTime" placeholder="Cook Time (min)" value={recipe.cookTime} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
+                    <input type="number" name="servings" placeholder="Servings" value={recipe.servings} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
+                    
+                    <select name="difficulty" value={recipe.difficulty} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500">
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Submit */}
-          <div className="flex justify-center pt-8">
-            <button
-              type="submit"
-              className="px-12 py-5 bg-gradient-to-r from-orange-500 to-pink-600 text-white text-xl font-bold rounded-2xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
-            >
-              Publish Recipe
-            </button>
+              {/* Ingredients */}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-bold">Ingredients</h2>
+                  <button
+                    type="button"
+                    onClick={() => addField('ingredients')}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-medium rounded-xl hover:from-orange-600 hover:to-pink-700 transition"
+                  >
+                    + Add Ingredient
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {recipe.ingredients.map((ing, i) => (
+                    <div key={i} className="flex gap-3 items-center">
+                      <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-xl flex items-center justify-center text-orange-600 font-bold flex-shrink-0">
+                        {i + 1}
+                      </div>
+                      <input
+                        type="text"
+                        value={ing}
+                        onChange={(e) => handleArrayChange(i, e.target.value, 'ingredients')}
+                        placeholder="e.g., 2 cups all-purpose flour"
+                        className="flex-1 px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500"
+                      />
+                      {recipe.ingredients.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeField(i, 'ingredients')}
+                          className="text-red-500 hover:text-red-600 px-4"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-bold">Instructions</h2>
+                  <button
+                    type="button"
+                    onClick={() => addField('instructions')}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-medium rounded-xl hover:from-orange-600 hover:to-pink-700 transition"
+                  >
+                    + Add Step
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {recipe.instructions.map((step, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0 shadow">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <textarea
+                          value={step}
+                          onChange={(e) => handleArrayChange(i, e.target.value, 'instructions')}
+                          placeholder="Describe this step in detail..."
+                          rows={3}
+                          className="w-full px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 resize-none"
+                        />
+                        {recipe.instructions.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeField(i, 'instructions')}
+                            className="text-red-500 hover:text-red-600 text-sm mt-2"
+                          >
+                            Remove step
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-center pt-8 pb-12">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-16 py-6 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white text-xl font-bold rounded-2xl transition-all duration-200 shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Publishing Your Recipe...' : 'Publish Recipe'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
       )}
     </>
   );

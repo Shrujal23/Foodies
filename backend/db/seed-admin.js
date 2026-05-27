@@ -1,6 +1,6 @@
 /**
  * Seed Admin Account
- * Run this once to create a mock admin account
+ * To create a mock admin account
  * Usage: node db/seed-admin.js (from backend directory)
  */
 
@@ -23,7 +23,7 @@ async function seedAdmin() {
       database: process.env.MYSQL_DATABASE || 'foodies'
     });
 
-    console.log('✅ Connected to database');
+    console.log('Connected to database');
 
     // Check if admin already exists
     const [existingAdmin] = await connection.execute(
@@ -32,7 +32,7 @@ async function seedAdmin() {
     );
 
     if (existingAdmin.length > 0) {
-      console.log('⚠️ Admin account already exists!');
+      console.log('Admin account already exists!');
       console.log('Email:', existingAdmin[0].email);
       console.log('Username:', existingAdmin[0].username);
       await connection.end();
@@ -51,9 +51,9 @@ async function seedAdmin() {
       [userId, adminUsername, 'Admin', adminEmail, hashedPassword, avatarUrl, 'admin']
     );
 
-    console.log('✅ Admin account created successfully!');
+    console.log('Admin account created successfully!');
     console.log('');
-    console.log('📝 Admin Credentials:');
+    console.log('Admin Credentials:');
     console.log('   Email: admin@gmail.com');
     console.log('   Password: admin');
     console.log('');
@@ -65,13 +65,13 @@ async function seedAdmin() {
     );
 
     if (newAdmin.length > 0) {
-      console.log('✅ Verification successful!');
+      console.log('Verification successful!');
       console.log('Admin user:', newAdmin[0]);
     }
 
     await connection.end();
   } catch (error) {
-    console.error('❌ Error seeding admin account:', error.message);
+    console.error('Error seeding admin account:', error.message);
     process.exit(1);
   }
 }
