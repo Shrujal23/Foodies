@@ -2,9 +2,35 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { validateRecipeSearch, validateUserRecipeCreation, validateRecipeId } = require('../middleware/validation');
 
-// Configure multer storage for recipe images
+// Middleware
+const { 
+  validateRecipeSearch, 
+  validateUserRecipeCreation, 
+  validateRecipeId 
+} = require('../middleware/validation');
+
+const isAuthenticated = require('../middleware/authJWT');
+
+// Controllers
+const {
+  searchRecipes,
+  getRecipeById,
+  getFeaturedRecipes,
+  getRatingBreakdown,
+  getFavoriteRecipes,
+  addToFavorites,
+  removeFromFavorites,
+  checkFavoriteStatus,
+  createUserRecipe,
+  getUserRecipes,
+  getAllPublicUserRecipes,
+  getPublicUserRecipeById,
+  updateUserRecipe,
+  deleteUserRecipe,
+} = require('../controllers/recipeController');
+
+// ====================== MULTER CONFIGURATION ======================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../uploads'));
@@ -16,7 +42,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter for multer - only allow images
 const fileFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
   if (allowedMimes.includes(file.mimetype)) {
@@ -32,47 +57,30 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-const {
-  searchRecipes,
-  getRecipeById,
-  getFavoriteRecipes,
-  addToFavorites,
-  removeFromFavorites,
-  checkFavoriteStatus,
-  createUserRecipe,
-  getUserRecipes,
-  getAllPublicUserRecipes,
-  getPublicUserRecipeById,
-  updateUserRecipe,
-  deleteUserRecipe,
-  getFeaturedRecipes
-} = require('../controllers/recipeController');
-const isAuthenticated = require('../middleware/authJWT');
+// ====================== ROUTES ======================
 
-// Search recipes
+// Public Routes
 router.get('/search', validateRecipeSearch, searchRecipes);
-
-// Public: list all user-created recipes
+router.get('/featured', getFeaturedRecipes);
 router.get('/user-recipes', getAllPublicUserRecipes);
 
-// Public: get featured recipes
-router.get('/featured', getFeaturedRecipes);
-
-// User recipes routes (must come before /:id to avoid conflicts)
-// Accept optional image upload under the field name 'image'
+// User Recipe CRUD Routes
 router.post('/', isAuthenticated, upload.single('image'), validateUserRecipeCreation, createUserRecipe);
 router.get('/my-recipes', isAuthenticated, getUserRecipes);
 router.get('/user/:id', getPublicUserRecipeById);
 router.put('/user/:id', isAuthenticated, upload.single('image'), validateUserRecipeCreation, updateUserRecipe);
 router.delete('/user/:id', isAuthenticated, deleteUserRecipe);
 
-// Favorite recipes routes
+// Favorites Routes
 router.get('/favorites', isAuthenticated, getFavoriteRecipes);
 router.post('/favorites', isAuthenticated, addToFavorites);
 router.delete('/favorites/:recipeId', isAuthenticated, removeFromFavorites);
 router.get('/favorites/:recipeId/status', isAuthenticated, checkFavoriteStatus);
 
-// Get recipe by ID (keep this last to avoid route conflicts)
+// Rating Routes
+router.get('/:id/rating-breakdown', getRatingBreakdown);
+
+// Single Recipe (Keep this LAST to avoid route conflicts)
 router.get('/:id', validateRecipeId, getRecipeById);
 
 module.exports = router;

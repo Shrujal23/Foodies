@@ -4,7 +4,6 @@ import {
   MagnifyingGlassIcon,
   StarIcon,
   FireIcon,
-  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { getFeaturedRecipes as getFeaturedRecipesService } from '../services/recipeService';
 import SaveButton from '../components/recipes/SaveButton';
@@ -98,7 +97,7 @@ export default function Home() {
   const loadRecipes = async () => {
     try {
       const recipes = await getFeaturedRecipesService();
-      setRecipes(recipes.length > 0 ? recipes : fallbackRecipes);
+      setRecipes(Array.isArray(recipes) && recipes.length > 0 ? recipes : fallbackRecipes);
     } catch (error) {
       setRecipes(fallbackRecipes);
     } finally {
@@ -109,9 +108,10 @@ export default function Home() {
   const loadCommunityRecipes = async () => {
     try {
       const data = await getFeaturedRecipesService(6);
-      setCommunityRecipes(Array.isArray(data) ? data.slice(0, 6) : []);
+      setCommunityRecipes(Array.isArray(data) && data.length > 0 ? data.slice(0, 6) : fallbackRecipes.slice(0, 6));
     } catch (error) {
       console.error('Error loading community recipes:', error);
+      setCommunityRecipes(fallbackRecipes.slice(0, 6));
     } finally {
       setCommunityLoading(false);
     }
@@ -211,27 +211,22 @@ export default function Home() {
               description: 'Organize and save your favorite recipes into personalized collections for easy access.'
             },
             {
-              
               title: 'Community Reviews',
               description: 'Read detailed reviews and ratings from home cooks who have tested the recipes.'
             },
             {
-              
               title: 'Adjustable Servings',
               description: 'Automatically scale ingredient quantities based on the number of servings you need.'
             },
             {
-              
               title: 'Mobile Friendly',
               description: 'Access your recipes anytime, anywhere with our fully responsive design.'
             },
             {
-              
               title: 'Global Cuisine',
               description: 'Explore recipes from cuisines around the world, from Italian to Asian fusion.'
             },
             {
-              
               title: 'Save & Share',
               description: 'Bookmark recipes and share them with friends and family instantly.'
             }
@@ -441,7 +436,6 @@ export default function Home() {
 
       {/* Newsletter CTA */}
       <section className="bg-gradient-to-r from-orange-600 to-pink-600 rounded-3xl p-16 text-center text-white shadow-3xl mb-24 max-w-7xl mx-auto">
-        <SparklesIcon className="w-20 h-20 mx-auto mb-8" />
         <h2 className="text-4xl lg:text-5xl font-extrabold mb-6">
           Get Weekly Recipe Inspiration
         </h2>
@@ -462,7 +456,6 @@ export default function Home() {
           </button>
         </form>
       </section>
-
     </div>
   );
 }

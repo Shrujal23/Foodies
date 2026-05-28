@@ -1,10 +1,8 @@
-// src/pages/ContactUs.js
 import React, { useState } from 'react';
 import { 
   EnvelopeIcon, 
   PhoneIcon, 
   MapPinIcon,
-  SparklesIcon,
   CheckCircleIcon,
   PaperAirplaneIcon,
    
@@ -38,7 +36,6 @@ export default function ContactUs() {
         {/* Hero */}
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold text-lg shadow-2xl shadow-pink-500/30 mb-8 animate-pulse-glow">
-            <SparklesIcon className="w-7 h-7" />
             We'd Love to Hear From You
           </div>
           <h1 className="text-6xl lg:text-8xl font-extrabold text-gradient mb-6">

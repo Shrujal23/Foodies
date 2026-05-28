@@ -1,91 +1,89 @@
 import { useState } from 'react';
-import SearchBar from '../components/recipes/SearchBar';
-import RecipeCard from '../components/recipes/RecipeCard';
+import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import FilterPills from '../components/common/FilterPills';
 import Breadcrumbs from '../components/common/Breadcrumbs';
+import SearchBar from '../components/recipes/SearchBar';
 import { searchRecipes } from '../services/recipeService';
-import toastConfig from '../utils/toastConfig';
+import toast from 'react-hot-toast';
 
 export default function Search() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchStats, setSearchStats] = useState({ userRecipes: 0, edamamRecipes: 0 });
-  const [filters, setFilters] = useState({});
+  const [activeFilters, setActiveFilters] = useState({});
 
-  const handleSearch = async ({ query, filters: searchFilters }) => {
-    if (!query.trim() && !Object.values(searchFilters).some(Boolean)) return;
+  const handleSearch = async ({ query, filters = {} }) => {
+    if (!query?.trim() && Object.keys(filters).length === 0) return;
 
-    setFilters(searchFilters);
+    setActiveFilters(filters);
     setLoading(true);
     setError(null);
     setRecipes([]);
-    setSearchStats({ userRecipes: 0, edamamRecipes: 0 });
 
     try {
-      // Pass all filters to the search function
-      const data = await searchRecipes(query.trim(), searchFilters);
+      const data = await searchRecipes(query.trim(), filters);
 
-      if (data?.hits?.length > 0) {
-        // Separate user recipes from edamam recipes for stats
-        const userRecipes = data.hits.filter(hit => hit.recipe.source === 'user');
-        const edamamRecipes = data.hits.filter(hit => hit.recipe.source !== 'user');
-        
-        setSearchStats({
-          userRecipes: userRecipes.length,
-          edamamRecipes: edamamRecipes.length
-        });
+      const userRecipes = data?.userRecipes || [];
+      const edamamRecipes = data?.edamamRecipes || [];
 
-        const foundRecipes = data.hits.map(hit => hit.recipe);
-        setRecipes(foundRecipes);
-        toastConfig.success(`Found ${foundRecipes.length} recipes!`);
+      const allRecipes = [...userRecipes, ...edamamRecipes];
+
+      setSearchStats({
+        userRecipes: userRecipes.length,
+        edamamRecipes: edamamRecipes.length
+      });
+
+      setRecipes(allRecipes);
+
+      if (allRecipes.length === 0) {
+        setError("No recipes found. Try different keywords or filters.");
       } else {
-        setRecipes([]);
-        setError('No recipes found — try adjusting your filters or search term');
+        toast.success(`Found ${allRecipes.length} recipes!`);
       }
     } catch (err) {
       console.error('Search failed:', err);
-      setError('Oops! Something went wrong. Please try again.');
-      toastConfig.error('Search failed. Please try again.');
+      setError('Something went wrong. Please try again.');
+      toast.error('Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRemoveFilter = (filterKey) => {
-    const newFilters = { ...filters, [filterKey]: '' };
-    setFilters(newFilters);
-    // Automatically search with updated filters if user already searched
-    if (recipes.length > 0) {
-      handleSearch({ query: '', filters: newFilters });
-    }
+  const handleRemoveFilter = (key) => {
+    const newFilters = { ...activeFilters };
+    delete newFilters[key];
+    setActiveFilters(newFilters);
+    
+    // Re-search with updated filters
+    handleSearch({ 
+      query: document.querySelector('input[placeholder*="Search"]')?.value || '', 
+      filters: newFilters 
+    });
   };
 
   const handleClearAllFilters = () => {
-    setFilters({});
+    setActiveFilters({});
     setRecipes([]);
-    setSearchStats({ userRecipes: 0, edamamRecipes: 0 });
     setError(null);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 pb-20">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Breadcrumbs */}
-        <div className="mb-8">
-          <Breadcrumbs />
-        </div>
+        <Breadcrumbs />
 
-        {/* Hero Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent mb-4">
-            Discover Delicious Recipes
+        {/* Header */}
+        <div className="text-center mt-12 mb-16">
+          <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
+            Discover <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Desi Flavors</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Search millions of recipes from around the world + community recipes — find your next favorite dish
+            Search authentic Indian recipes and global favorites from our community and beyond
           </p>
         </div>
 
@@ -94,11 +92,11 @@ export default function Search() {
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        {/* Active Filters Pills */}
-        {Object.values(filters).some(Boolean) && (
+        {/* Active Filters */}
+        {Object.keys(activeFilters).length > 0 && (
           <div className="mb-10">
             <FilterPills 
-              filters={filters}
+              filters={activeFilters}
               onRemoveFilter={handleRemoveFilter}
               onClearAll={handleClearAllFilters}
             />
@@ -107,86 +105,69 @@ export default function Search() {
 
         {/* Loading State */}
         {loading && (
-          <div className="py-24">
-            <p className="text-center text-lg text-gray-600 dark:text-gray-400 mb-8">
-              🔍 Finding delicious recipes...
-            </p>
-            <SkeletonLoader type="card" count={4} />
+          <div className="py-20">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 text-orange-600">
+                <div className="w-6 h-6 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-lg font-medium">Finding delicious recipes...</span>
+              </div>
+            </div>
+            <SkeletonLoader type="card" count={8} />
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
           <EmptyState
-            icon="⚠️"
+            icon="🔍"
             title="No Recipes Found"
             description={error}
             actions={[
               { label: 'Clear Filters', onClick: handleClearAllFilters, primary: true },
-              { label: 'Try New Search', onClick: handleClearAllFilters }
+              { label: 'Browse All Recipes', to: '/my-recipes' }
             ]}
           />
         )}
 
-        {/* Results Grid */}
+        {/* Results */}
         {!loading && !error && recipes.length > 0 && (
           <>
-            <div className="flex flex-col gap-6 mb-10">
+            <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {recipes.length} Delicious Recipe{recipes.length !== 1 ? 's' : ''} Found
+                  {recipes.length} Recipes Found
                 </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                  Click any card to view full details
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  {searchStats.userRecipes > 0 && `${searchStats.userRecipes} from Community • `}
+                  {searchStats.edamamRecipes > 0 && `${searchStats.edamamRecipes} from Global`}
                 </p>
-              </div>
-
-              {/* Search Stats */}
-              <div className="flex flex-wrap gap-4">
-                {searchStats.userRecipes > 0 && (
-                  <div className="px-4 py-2 bg-gradient-to-r from-orange-100 to-pink-100 dark:from-orange-900/30 dark:to-pink-900/30 rounded-full border border-orange-300 dark:border-orange-700/50">
-                    <span className="text-sm font-semibold text-orange-900 dark:text-orange-300">
-                      👥 {searchStats.userRecipes} Community Recipe{searchStats.userRecipes !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
-                {searchStats.edamamRecipes > 0 && (
-                  <div className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full border border-blue-300 dark:border-blue-700/50">
-                    <span className="text-sm font-semibold text-blue-900 dark:text-blue-300">
-                      🌍 {searchStats.edamamRecipes} Global Recipe{searchStats.edamamRecipes !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {recipes.map((recipe) => (
-                <div
-                  key={recipe.uri || recipe.id}
-                  className="transform transition-all duration-500 hover:scale-105"
-                >
-                  <RecipeCard
-                    recipe={recipe}
-                    onFavoriteToggle={(recipe, isFavorite) => {
-                      // Optional: trigger re-render or toast here if needed
-                    }}
-                  />
-                </div>
+                <RecipeCardEnhanced
+                  key={recipe._id || recipe.uri || recipe.id}
+                  recipe={recipe}
+                  onSave={(rec, saved) => {
+                    // You can add toast or state update here if needed
+                    console.log(saved ? 'Saved:' : 'Removed:', rec.title);
+                  }}
+                />
               ))}
             </div>
           </>
         )}
 
-        {/* Empty State - No Search Started */}
-        {!loading && !error && recipes.length === 0 && Object.values(filters).every(v => !v) && (
+        {/* Initial Empty State */}
+        {!loading && !error && recipes.length === 0 && Object.keys(activeFilters).length === 0 && (
           <EmptyState
-            icon="🔍"
-            title="Ready to cook something amazing?"
-            description="Search for ingredients, cuisines, diets, or just type what you're craving!"
+            icon="🍛"
+            title="What are you craving today?"
+            description="Search for Butter Chicken, Biryani, Paneer Tikka, or any dish you love"
             actions={[
-              { label: 'Browse Home', to: '/' },
-              { label: 'View Recipes', to: '/my-recipes', primary: true }
+              { label: 'Popular Recipes', to: '/' },
+              { label: 'Browse Community', to: '/my-recipes', primary: true }
             ]}
           />
         )}

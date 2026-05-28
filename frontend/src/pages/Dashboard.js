@@ -5,13 +5,14 @@ import {
   FolderIcon,
   PlusIcon,
   LockClosedIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
-import RecipeCard from '../components/recipes/RecipeCard';
+import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
 import AnimatedStatCard from '../components/common/AnimatedStatCard';
 import Breadcrumbs from '../components/common/Breadcrumbs';
-import toastConfig from '../utils/toastConfig';
+import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
 export default function Dashboard() {
@@ -41,8 +42,9 @@ export default function Dashboard() {
         const data = await res.json();
         setDashboardData(data);
       } catch (err) {
+        console.error(err);
         setError(err.message);
-        if (err.message.includes('token')) {
+        if (err.message.includes('token') || err.message.includes('401')) {
           localStorage.removeItem('token');
           navigate('/login');
         }
@@ -54,24 +56,12 @@ export default function Dashboard() {
     fetchDashboard();
   }, [user, authLoading, navigate]);
 
-  // Loading States
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-white dark:from-gray-950 dark:via-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-20 h-20 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6" />
-          <p className="text-xl font-medium text-gray-700 dark:text-gray-300">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-white dark:from-gray-950 dark:via-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6" />
-          <p className="text-xl font-medium text-gray-700 dark:text-gray-300">Loading your dashboard...</p>
+          <div className="w-20 h-20 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+          <p className="text-xl font-medium text-gray-700 dark:text-gray-300">Loading your kitchen dashboard...</p>
         </div>
       </div>
     );
@@ -79,9 +69,9 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-white dark:from-gray-950 flex items-center justify-center px-6">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 flex items-center justify-center px-6">
         <EmptyState
-          title="Oops! Something went wrong!!!"
+          title="Something went wrong"
           description={error}
           actions={[
             { label: 'Try Again', onClick: () => window.location.reload(), primary: true },
@@ -93,29 +83,29 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-white dark:from-gray-950 dark:via-gray-900 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 py-12">
       <div className="max-w-7xl mx-auto px-6">
 
         {!dashboardData?.isAuthenticated ? (
-          /* ==================== LOGIN PROMPT BOX ==================== */
+          /* ==================== LOGIN PROMPT ==================== */
           <div className="max-w-md mx-auto mt-20">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-10 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-orange-100 dark:bg-orange-900 rounded-2xl flex items-center justify-center">
-                <LockClosedIcon className="w-10 h-10 text-orange-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
+              <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-900 dark:to-pink-900 rounded-3xl flex items-center justify-center">
+                <LockClosedIcon className="w-12 h-12 text-orange-600" />
               </div>
 
-              <h2 className="text-3xl font-bold mb-3 text-gray-900 dark:text-white">
-                Welcome to Your Dashboard
+              <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+                Welcome to Your Kitchen
               </h2>
               
-              <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-                Sign in to view your saved recipes, collections, activity, and personalized recommendations.
+              <p className="text-gray-600 dark:text-gray-400 mb-10 text-lg leading-relaxed">
+                Sign in to access your saved recipes, collections, and personalized recommendations.
               </p>
 
               <div className="space-y-4">
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-2xl hover:from-orange-600 hover:to-pink-700 transition-all active:scale-95"
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-2xl hover:from-orange-600 hover:to-pink-700 transition-all active:scale-[0.97]"
                 >
                   Login to Continue
                 </button>
@@ -127,88 +117,84 @@ export default function Dashboard() {
                   Create New Account
                 </button>
               </div>
-
-              <p className="text-sm text-gray-500 mt-8">
-                Don't have an account? Join our community today!
-              </p>
             </div>
           </div>
         ) : (
-          /* ==================== NORMAL DASHBOARD ==================== */
+          /* ==================== AUTHENTICATED DASHBOARD ==================== */
           <div>
-            {/* Breadcrumbs */}
-            <div className="mb-8">
-              <Breadcrumbs />
-            </div>
+            <Breadcrumbs />
 
-            {/* Hero Welcome */}
+            {/* Welcome Header */}
             <div className="text-center mb-16">
-              <h1 className="text-6xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent mb-4">
-                Welcome back, {user?.display_name || user?.username}!
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl mb-6">
+                <span className="font-medium text-orange-600">Welcome back</span>
+              </div>
+              <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-4">
+                Namaste, {user?.display_name || user?.username}!
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-400">
-                Here's your cooking journey at a glance
+                Here's what's happening in your kitchen
               </p>
             </div>
 
-            {/* Stats Grid - Animated */}
-            <div className="grid grid-cols-5 sm:grid-cols-2 lg:grid-cols-1 gap-14 mb-20">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
               <AnimatedStatCard 
                 value={dashboardData?.totalFavorites || 0} 
                 label="Saved Recipes" 
                 color="pink"
-                duration={1800}
               />
               <AnimatedStatCard 
                 value={dashboardData?.collections?.length || 0} 
                 label="Collections"             
                 color="orange"
-                duration={1800}
               />
               <AnimatedStatCard 
-                value={dashboardData?.recentActivity?.filter(a => a.activity_type === 'search').length || 0} 
-                label="Searches"
+                value={dashboardData?.recentActivity?.length || 0} 
+                label="Recent Activity"
                 color="blue"
-                duration={1800}
               />
               <AnimatedStatCard 
                 value={dashboardData?.recentFavorites?.length || 0}
-                label="Recent Favorites" 
+                label="This Month" 
                 color="emerald"
-                duration={1800}
               />
             </div>
 
             {/* Recent Favorites */}
             {dashboardData?.recentFavorites?.length > 0 && (
-              <section className="mb-16">
+              <section className="mb-20">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">
-                    Your Recent Favorites</h2>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    Recently Saved
+                  </h2>
                   <button
                     onClick={() => navigate('/favorites')}
-                    className="text-orange-800 hover:text-orange-700 font-medium flex items-center gap-2 group"
+                    className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-2"
                   >
-                    View all <span aria-hidden="true">→</span>
+                    View All →
                   </button>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {dashboardData.recentFavorites.map((recipe) => (
-                    <div key={recipe.recipe_id} className="hover:scale-[1.03] transition-transform duration-300">
-                      <RecipeCard recipe={recipe} initialFavorite={true} />
-                    </div>
+                  {dashboardData.recentFavorites.slice(0, 8).map((recipe) => (
+                    <RecipeCardEnhanced 
+                      key={recipe.recipe_id || recipe.id} 
+                      recipe={recipe} 
+                      isSaved={true}
+                    />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Collections */}
-            <section className="mb-16">
+            {/* Collections Section */}
+            <section>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">Your Collections</h2>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Collections</h2>
                 <button 
-                  onClick={() => toastConfig.info('Create Collection feature coming soon!')}
-                  className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold rounded-2xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-105 transition-all active:scale-95 shadow-lg"
+                  onClick={() => toast.info('Collection creation coming soon!')}
+                  className="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-2xl hover:brightness-110 transition-all"
                 >
                   <PlusIcon className="w-5 h-5" />
                   New Collection
@@ -217,41 +203,40 @@ export default function Dashboard() {
 
               {dashboardData?.collections?.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {dashboardData.collections.map(collection => (
+                  {dashboardData.collections.map((collection) => (
                     <div
                       key={collection.id}
-                      className="group relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 cursor-pointer"
                       onClick={() => navigate(`/collections/${collection.id}`)}
+                      className="group bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="p-8 relative">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <FolderIcon className="w-8 h-8 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{collection.name}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{collection.recipe_count} recipes</p>
-                          </div>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center">
+                          <FolderIcon className="w-9 h-9 text-white" />
                         </div>
-                        <p className="text-gray-600 dark:text-gray-400 line-clamp-3 text-[15px]">
-                          {collection.description || 'No description provided'}
-                        </p>
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{collection.name}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {collection.recipe_count} recipes
+                          </p>
+                        </div>
                       </div>
+                      <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
+                        {collection.description || "A beautiful collection of homemade recipes."}
+                      </p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <EmptyState
-                  icon="📁"
                   title="No Collections Yet"
-                  description="Create collections to organize your favorite recipes"
+                  description="Organize your favorite recipes into collections"
                   actions={[
-                    { label: 'Create Your First Collection',
-                      onClick: () => toastConfig.info('This feature is coming soon!')
-                      ,primary: true }
+                    { 
+                      label: 'Create First Collection', 
+                      onClick: () => toast.info('This feature is coming soon!'), 
+                      primary: true 
+                    }
                   ]}
-                  className="py-16 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl"
                 />
               )}
             </section>

@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 
 const MyRecipes = () => {
   const [recipes, setRecipes] = useState([]);
-  const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCuisine, setFilterCuisine] = useState('all');
@@ -15,25 +14,99 @@ const MyRecipes = () => {
   const [cuisines, setCuisines] = useState([]);
   const [savedRecipes, setSavedRecipes] = useState([]);
 
-  // Fetch recipes on mount
-  useEffect(() => {
-    fetchRecipes();
-  }, []);
+  // Fetch recipes
+  const fetchRecipes = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchRecipes();
-    }, 600);
+      let url = `${API_BASE_URL}/recipes/user-recipes`;
 
-    return () => clearTimeout(timer);
+      if (searchQuery.trim()) {
+        const params = new URLSearchParams({
+          query: searchQuery.trim(),
+          limit: '50',
+          source: 'all'
+        });
+        url = `${API_BASE_URL}/recipes/search?${params}`;
+      }
+
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      
+      // ✅ FIXED: Safely extract recipe list
+      let recipeList = [];
+
+      if (data.success && data.data) {
+        recipeList = Array.isArray(data.data) ? data.data : 
+                    (Array.isArray(data.data.recipes) ? data.data.recipes : []);
+      } else if (Array.isArray(data)) {
+        recipeList = data;
+      } else if (data.recipes && Array.isArray(data.recipes)) {
+        recipeList = data.recipes;
+      }
+
+      processRecipes(recipeList);
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
+      toast.error('Failed to load recipes. Please try again.');
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
   }, [searchQuery]);
 
-  // Apply filters and sorting whenever data or filters change
+  // Process and normalize recipes
+  const processRecipes = (recipeList) => {
+    if (!Array.isArray(recipeList)) {
+      console.warn('recipeList is not an array:', recipeList);
+      setRecipes([]);
+      return;
+    }
+
+    const processed = recipeList
+      .filter(recipe => recipe && (recipe.title || recipe.label))
+      .map(recipe => ({
+        ...recipe,
+        id: recipe._id || recipe.id || recipe.uri || `recipe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        source: recipe._id || recipe.id ? 'user' : 'api',
+        image: recipe.image && !recipe.image.startsWith('http') 
+          ? `${ASSET_BASE_URL}${recipe.image}` 
+          : recipe.image || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80',
+        title: recipe.title || recipe.label || 'Untitled Recipe',
+        prepTime: recipe.prepTime || recipe.prep_time || recipe.totalTime,
+        cookTime: recipe.cookTime || recipe.cook_time,
+        cuisine: recipe.cuisine || (Array.isArray(recipe.cuisineType) ? recipe.cuisineType[0] : 'international'),
+        difficulty: recipe.difficulty || 'Medium',
+        rating: recipe.rating || 4.2,
+        created_at: recipe.created_at || recipe.createdAt,
+      }));
+
+    setRecipes(processed);
+
+    // Extract unique cuisines
+    const cuisineSet = new Set();
+    processed.forEach(r => {
+      if (r.cuisine) cuisineSet.add(r.cuisine.toLowerCase());
+    });
+
+    setCuisines(Array.from(cuisineSet).sort());
+  };
+
+  // Fetch on mount and when search changes
+  useEffect(() => {
+    fetchRecipes();
+  }, [fetchRecipes]);
+
+  // Processed recipes with filters & sorting
   const processedRecipes = useMemo(() => {
     let result = [...recipes];
 
-    // Search filter
+    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(recipe =>
@@ -68,66 +141,6 @@ const MyRecipes = () => {
     return result;
   }, [recipes, searchQuery, filterCuisine, filterDifficulty, sortBy]);
 
-  const fetchRecipes = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      let url = `${API_BASE_URL}/recipes/user-recipes`;
-
-      if (searchQuery.trim()) {
-        const params = new URLSearchParams({
-          query: searchQuery.trim(),
-          limit: '50',
-          source: 'all'
-        });
-        url = `${API_BASE_URL}/recipes/search?${params}`;
-      }
-
-      const res = await fetch(url);
-      
-      if (!res.ok) throw new Error('Failed to fetch recipes');
-
-      const data = await res.json();
-      const recipeList = data.data || data || [];
-
-      processRecipes(recipeList);
-    } catch (error) {
-      console.error('Error fetching recipes:', error);
-      toast.error('Failed to load recipes. Please try again.');
-      setRecipes([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery]);
-
-  const processRecipes = (recipeList) => {
-    const processed = recipeList
-      .filter(recipe => recipe && recipe.title)
-      .map(recipe => ({
-        ...recipe,
-        id: recipe._id || recipe.id || recipe.uri || `recipe-${Math.random().toString(36).substr(2, 9)}`,
-        source: recipe._id || recipe.id ? 'user' : 'api',
-        image: recipe.image && !recipe.image.startsWith('http') 
-          ? `${ASSET_BASE_URL}${recipe.image}` 
-          : recipe.image || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80',
-        title: recipe.title || recipe.label || 'Untitled Recipe',
-        prepTime: recipe.prepTime || recipe.totalTime,
-        cuisine: recipe.cuisine || recipe.cuisineType?.[0] || 'international',
-        difficulty: recipe.difficulty || 'Medium',
-        rating: recipe.rating || 4.2,
-      }));
-
-    setRecipes(processed);
-
-    // Extract unique cuisines
-    const cuisineSet = new Set();
-    processed.forEach(r => {
-      if (r.cuisine) cuisineSet.add(r.cuisine.toLowerCase());
-    });
-
-    setCuisines(Array.from(cuisineSet).sort());
-  };
-
   const handleSaveRecipe = (recipe) => {
     const recipeId = recipe.id;
     const isSaved = savedRecipes.includes(recipeId);
@@ -139,7 +152,7 @@ const MyRecipes = () => {
     setSavedRecipes(updated);
     localStorage.setItem('savedRecipes', JSON.stringify(updated));
     
-    toast.success(isSaved ? 'Removed from saved recipes' : 'Added to saved recipes');
+    toast.success(isSaved ? 'Removed from saved' : 'Saved successfully');
   };
 
   if (loading) {
@@ -147,7 +160,7 @@ const MyRecipes = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500">Loading delicious recipes...</p>
+          <p className="text-gray-500">Loading your recipes...</p>
         </div>
       </div>
     );
@@ -159,10 +172,10 @@ const MyRecipes = () => {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            Discover Recipes
+            My Recipes
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Explore {processedRecipes.length} recipes from our community and beyond
+            Discover and manage your collection
           </p>
         </div>
 
@@ -249,9 +262,9 @@ const MyRecipes = () => {
         {/* Recipes Grid */}
         {processedRecipes.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-2xl text-gray-400 mb-4">😕</p>
-            <p className="text-xl text-gray-600 dark:text-gray-400">No recipes found</p>
-            <p className="text-gray-500 mt-2">Try changing your search or filters</p>
+            <p className="text-6xl mb-6">😕</p>
+            <p className="text-2xl text-gray-600 dark:text-gray-400">No recipes found</p>
+            <p className="text-gray-500 mt-3">Try adjusting your search or filters</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
