@@ -58,25 +58,25 @@ const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
     : `/recipes/${recipe.uri ? recipe.uri.split('#')[1] : recipe.id}`;
 
   return (
-    <div className="group bg-white dark:bg-gray-800 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+    <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 overflow-hidden h-full flex flex-col">
       <div className="relative h-56 overflow-hidden">
         <Link to={recipeLink} className="block w-full h-full">
           <img
             src={imageUrl}
             alt={recipe.title || recipe.label}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
 
         {recipe.difficulty && (
-          <div className="absolute top-4 left-4 px-3 py-1 text-xs font-bold rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur">
+          <div className="absolute top-4 left-4 px-3 py-1 text-xs font-bold rounded-lg bg-white/90 dark:bg-gray-900/90 backdrop-blur">
             {recipe.difficulty}
           </div>
         )}
 
         <button
           onClick={handleBookmarkClick}
-          className="absolute top-4 right-4 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-2xl shadow-lg hover:scale-110 transition-all z-10"
+          className="absolute top-4 right-4 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-lg shadow-lg hover:scale-110 transition-all z-10"
         >
           {isBookmarked ? (
             <BookmarkSolid className="w-6 h-6 text-orange-500" />
@@ -99,14 +99,14 @@ const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
           </p>
         )}
 
-        <div className="flex flex-wrap gap-3 text-sm mb-6">
+        <div className="flex flex-wrap gap-2 text-sm mb-4">
           {(recipe.prepTime || recipe.prep_time) && (
-            <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-3 py-1 rounded-xl">
+            <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 px-3 py-1 rounded">
                {recipe.prepTime || recipe.prep_time} min
             </span>
           )}
           {recipe.cuisine && (
-            <span className="bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 px-3 py-1 rounded-xl">
+            <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-3 py-1 rounded">
                {recipe.cuisine}
             </span>
           )}

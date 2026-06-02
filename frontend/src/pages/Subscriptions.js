@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { CheckIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/solid';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function Subscriptions() {
@@ -117,82 +115,76 @@ export default function Subscriptions() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 pb-20">
+    <div className="min-h-screen bg-white dark:bg-gray-950 pb-20">
       
       {/* Hero Section */}
-      <div className="pt-24 pb-16 px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl mb-6 shadow">
-          <span className="font-semibold text-orange-600 dark:text-orange-400">Premium Experience</span>
-        </div>
-
-        <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
-          Elevate Your <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Desi Kitchen</span>
+      <div className="pt-20 pb-12 px-6 text-center">
+        <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          Simple, Transparent Pricing
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Unlock powerful tools to make your Indian cooking journey more enjoyable and efficient.
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          Choose the perfect plan for your cooking journey. Cancel anytime, no questions asked.
         </p>
       </div>
 
       {/* Billing Toggle */}
-      <div className="flex justify-center mb-16">
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-1.5 shadow-inner flex">
+      <div className="flex justify-center mb-12">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
           <button
             onClick={() => setBillingCycle('monthly')}
-            className={`px-8 py-3 rounded-2xl font-semibold transition-all ${
+            className={`px-6 py-2 rounded transition-colors font-medium ${
               billingCycle === 'monthly'
-                ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Monthly
           </button>
           <button
             onClick={() => setBillingCycle('yearly')}
-            className={`px-8 py-3 rounded-2xl font-semibold transition-all relative ${
+            className={`px-6 py-2 rounded transition-colors font-medium relative ${
               billingCycle === 'yearly'
-                ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Yearly
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-              SAVE 33%
-            </span>
+            {billingCycle === 'yearly' && (
+              <span className="ml-2 text-sm text-orange-600 font-semibold">Save 33%</span>
+            )}
           </button>
         </div>
       </div>
 
       {/* Pricing Cards */}
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 shadow-xl ${
+              className={`rounded-xl p-8 border transition-all duration-300 backdrop-blur-sm ${
                 plan.highlighted
-                  ? 'bg-gradient-to-br from-orange-500 to-pink-600 text-white ring-4 ring-orange-300 dark:ring-orange-700 scale-105'
-                  : 'bg-white dark:bg-gray-800'
+                  ? 'border-orange-600 bg-orange-50/50 dark:bg-orange-900/20 hover:shadow-lg hover:shadow-orange-200/50 dark:hover:shadow-orange-900/50 hover:-translate-y-1'
+                  : 'border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:-translate-y-1'
               }`}
             >
               {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 text-orange-600 dark:text-orange-400 text-xs font-bold px-5 py-1.5 rounded-2xl shadow">
+                <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-4">
                   {plan.badge}
                 </div>
               )}
 
-              <div className="text-center mb-8">
-                <h3 className="text-3xl font-bold mb-2">{plan.name}</h3>
-                <p className={`text-sm ${plan.highlighted ? 'text-orange-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {plan.description}
-                </p>
-              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                {plan.description}
+              </p>
 
-              <div className="text-center mb-10">
-                <span className="text-5xl font-extrabold">
+              <div className="mb-8">
+                <span className="text-4xl font-bold text-gray-900 dark:text-white">
                   {plan.price === 0 ? 'Free' : `₹${plan.price}`}
                 </span>
                 {plan.price > 0 && (
-                  <span className={`${plan.highlighted ? 'text-orange-100' : 'text-gray-500'} text-lg`}>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm ml-2">
                     /{billingCycle === 'monthly' ? 'month' : 'year'}
                   </span>
                 )}
@@ -200,31 +192,30 @@ export default function Subscriptions() {
 
               <button
                 onClick={() => handleSubscribe(plan.id)}
-                className={`w-full py-4 rounded-2xl font-semibold mb-10 transition-all ${
+                className={`w-full py-3 rounded font-medium mb-8 transition-all duration-300 ${
                   plan.highlighted
-                    ? 'bg-white text-orange-600 hover:bg-orange-50'
-                    : 'bg-gradient-to-r from-orange-500 to-pink-600 text-white hover:brightness-110'
+                    ? 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/30'
+                    : 'border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
                 }`}
               >
                 {plan.cta}
               </button>
 
               {/* Features */}
-              <div className="space-y-4">
+              <div className="space-y-3 mb-8">
                 {plan.features.map((feature, idx) => (
-                  <div key={idx} className="flex gap-3 items-start">
-                    <CheckIcon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${plan.highlighted ? 'text-orange-200' : 'text-green-500'}`} />
-                    <span className="text-[15px] leading-relaxed">{feature}</span>
+                  <div key={idx} className="flex gap-3 items-start text-sm">
+                    <span className="text-orange-600 font-bold mt-0.5">✓</span>
+                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                   </div>
                 ))}
               </div>
 
               {plan.notIncluded?.length > 0 && (
-                <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">Not Included</p>
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                   {plan.notIncluded.map((feature, idx) => (
-                    <div key={idx} className="flex gap-3 items-start opacity-60 text-sm">
-                      <span className="text-red-400 mt-1">✕</span>
+                    <div key={idx} className="flex gap-3 items-start text-sm opacity-50 text-gray-600 dark:text-gray-400 mb-2">
+                      <span className="mt-0.5">–</span>
                       <span>{feature}</span>
                     </div>
                   ))}
@@ -236,24 +227,24 @@ export default function Subscriptions() {
       </div>
 
       {/* FAQ Section */}
-      <div className="max-w-4xl mx-auto px-6 mt-28">
-        <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
-          Frequently Asked Questions
+      <div className="max-w-4xl mx-auto px-6 mt-24">
+        <h2 className="text-3xl font-bold text-center mb-3 text-gray-900 dark:text-white">
+          Questions?
         </h2>
         <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
-          Have questions? We've got answers.
+          We have answers.
         </p>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {faqs.map((faq, idx) => (
             <div 
               key={idx} 
-              className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-300"
             >
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 {faq.q}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {faq.a}
               </p>
             </div>
@@ -262,20 +253,19 @@ export default function Subscriptions() {
       </div>
 
       {/* Upcoming Features */}
-      <div className="max-w-7xl mx-auto px-6 mt-24">
-        <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
+      <div className="max-w-6xl mx-auto px-6 mt-24">
+        <h2 className="text-3xl font-bold text-center mb-3 text-gray-900 dark:text-white">
           Coming Soon
         </h2>
         <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
-          We're working hard to bring more exciting features to your kitchen.
+          We're building more ways to improve your cooking experience.
         </p>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {upcomingFeatures.map((feature, idx) => (
-            <div key={idx} className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg hover:shadow-xl transition">
-              <SparklesIcon className="w-8 h-8 text-orange-500 mb-4" />
-              <h4 className="font-semibold text-lg mb-2">{feature.title}</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{feature.availability}</p>
+            <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-500">{feature.availability}</p>
             </div>
           ))}
         </div>

@@ -270,6 +270,130 @@ async function createUserRecipe(req, res) {
 
 // Add your other functions (getUserRecipes, updateUserRecipe, etc.) here...
 
+/* ====================== USER RECIPES CRUD (implementations) ====================== */
+async function getUserRecipes(req, res, next) {
+  if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });
+  try {
+    const [rows] = await pool.execute(
+      `SELECT ur.*, u.username, u.display_name, u.avatar_url
+       FROM user_recipes ur
+       LEFT JOIN users u ON ur.user_id = u.id
+       WHERE ur.user_id = ?
+       ORDER BY ur.created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json(rows.map(r => ({ ...r, _id: r.id })));
+  } catch (err) {
+    console.error('getUserRecipes error:', err);
+    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch recipes' });
+  }
+}
+
+async function getAllPublicUserRecipes(req, res, next) {
+  try {
+    const { q = '', page = 1, limit = 12, sort = 'newest' } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const safeLimit = Math.min(parseInt(limit), 50);
+
+    const [rows] = await pool.execute(
+      `SELECT ur.*, u.username, u.display_name, u.avatar_url
+       FROM user_recipes ur
+       LEFT JOIN users u ON ur.user_id = u.id
+       WHERE ur.is_public = 1
+         AND ( ? = '' OR LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ?)
+       ORDER BY ${sort === 'top' ? 'ur.rating DESC' : 'ur.created_at DESC'}
+       LIMIT ? OFFSET ?`,
+      [q ? q.trim().toLowerCase() : '', `%${q.trim().toLowerCase()}%`, `%${q.trim().toLowerCase()}%`, safeLimit, offset]
+    );
+
+    res.json(rows.map(r => ({ ...r, _id: r.id })));
+  } catch (err) {
+    console.error('getAllPublicUserRecipes error:', err);
+    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch public recipes' });
+  }
+}
+
+async function getPublicUserRecipeById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute(
+      `SELECT ur.*, u.username, u.display_name, u.avatar_url
+       FROM user_recipes ur
+       LEFT JOIN users u ON ur.user_id = u.id
+       WHERE ur.id = ? AND ur.is_public = 1
+       LIMIT 1`,
+      [id]
+    );
+
+    const recipe = rows[0];
+    if (!recipe) return res.status(404).json({ success: false, message: 'Recipe not found' });
+    res.json({ ...recipe, _id: recipe.id });
+  } catch (err) {
+    console.error('getPublicUserRecipeById error:', err);
+    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch recipe' });
+  }
+}
+
+async function updateUserRecipe(req, res, next) {
+  if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      ingredients,
+      instructions,
+      prep_time,
+      cook_time,
+      servings,
+      cuisine,
+      is_public = 1
+    } = req.body;
+
+    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+    // Ensure ownership
+    const [ownerCheck] = await pool.execute('SELECT id FROM user_recipes WHERE id = ? AND user_id = ? LIMIT 1', [id, req.user.id]);
+    if (!ownerCheck[0]) return res.status(404).json({ success: false, message: 'Recipe not found' });
+
+    if (image) {
+      await pool.execute(
+        `UPDATE user_recipes
+         SET title = ?, description = ?, ingredients = ?, instructions = ?,
+             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, is_public = ?, image = ?
+         WHERE id = ? AND user_id = ?`,
+        [title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, is_public, image, id, req.user.id]
+      );
+    } else {
+      await pool.execute(
+        `UPDATE user_recipes
+         SET title = ?, description = ?, ingredients = ?, instructions = ?,
+             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, is_public = ?
+         WHERE id = ? AND user_id = ?`,
+        [title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, is_public, id, req.user.id]
+      );
+    }
+
+    res.json({ success: true, message: 'Recipe updated' });
+  } catch (err) {
+    console.error('updateUserRecipe error:', err);
+    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to update recipe' });
+  }
+}
+
+async function deleteUserRecipe(req, res, next) {
+  if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM user_recipes WHERE id = ? AND user_id = ?', [id, req.user.id]);
+    res.json({ success: true, message: 'Recipe deleted' });
+  } catch (err) {
+    console.error('deleteUserRecipe error:', err);
+    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to delete recipe' });
+  }
+}
+
 // ====================== FINAL EXPORT ======================
 module.exports = {
   searchRecipes,

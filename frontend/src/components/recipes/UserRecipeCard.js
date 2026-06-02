@@ -26,17 +26,19 @@ export default function UserRecipeCard({ recipe }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 overflow-hidden transition-all duration-300">
       <div className="relative">
-        <img
-          src={recipe.image || '/default-recipe.jpg'}
-          alt={recipe.title}
-          className="w-full h-48 object-cover"
-        />
+        <Link to={`/recipes/user/${recipe.id}`} className="block">
+          <img
+            src={recipe.image || '/default-recipe.jpg'}
+            alt={recipe.title}
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
         <button
           onClick={handleFavoriteClick}
           disabled={isLoading}
-          className={`absolute top-4 right-4 p-2 rounded-full transform transition-all duration-200 ease-in-out
+          className={`absolute top-4 right-4 p-2 rounded-lg transform transition-all duration-200 ease-in-out
             ${isFavorite 
               ? 'bg-red-500 text-white scale-110' 
               : 'bg-white/90 backdrop-blur-sm text-gray-600 hover:bg-white hover:scale-110'
@@ -56,8 +58,8 @@ export default function UserRecipeCard({ recipe }) {
         </button>
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold mb-2">{recipe.title}</h3>
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+        <h3 className="text-lg font-semibold mb-2 group-hover:text-orange-600 transition">{recipe.title}</h3>
+        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
           <div className="flex items-center">
             <ClockIcon className="h-4 w-4 mr-1" />
             {recipe.cook_time + recipe.prep_time} mins
@@ -71,12 +73,12 @@ export default function UserRecipeCard({ recipe }) {
             {recipe.difficulty}
           </div>
         </div>
-        <div className="text-sm text-gray-500 mb-4">
+        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Created: {new Date(recipe.created_at).toLocaleDateString()}
         </div>
         <Link
           to={`/recipes/user/${recipe.id}`}
-          className="inline-block bg-accent-600 text-white px-4 py-2 rounded-lg hover:bg-accent-700 transition-colors duration-200"
+          className="inline-block bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
         >
           View Recipe
         </Link>

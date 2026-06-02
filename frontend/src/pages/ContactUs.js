@@ -32,9 +32,8 @@ export default function ContactUs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 dark:to-black py-24 px-6">
       <div className="max-w-7xl mx-auto">
-
         {/* Hero */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-20 py-12 px-8 rounded-3xl bg-gradient-to-r from-orange-500/10 via-pink-500/5 to-rose-500/10 dark:from-orange-900/20 dark:via-pink-900/10 dark:to-rose-900/20 backdrop-blur-sm border border-white/20 dark:border-gray-800/30">
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold text-lg shadow-2xl shadow-pink-500/30 mb-8 animate-pulse-glow">
             We'd Love to Hear From You
           </div>
@@ -50,7 +49,8 @@ export default function ContactUs() {
 
           {/* Form */}
           <div className="glass-card-hover p-10 lg:p-12 rounded-3xl">
-            <h2 className="text-4xl font-bold text-gradient mb-10">Send us a Message</h2>
+            <h2 className="text-4xl font-bold text-gradient mb-2">Send us a Message</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">We'll get back to you as soon as possible!</p>
 
             {status === 'success' && (
               <div className="mb-8 p-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl text-white text-center animate-float">
@@ -60,8 +60,8 @@ export default function ContactUs() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid md:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">Your Name</label>
                   <input type="text" name="name" value={formData.name} onChange={handleChange} required className="form-input" placeholder="Priya Singh" />
@@ -85,12 +85,12 @@ export default function ContactUs() {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="btn-primary w-full text-xl py-6 flex items-center justify-center gap-4 group"
+                className="w-full text-lg font-bold py-4 px-6 bg-gradient-to-r from-orange-600 to-pink-600 text-white rounded-lg hover:from-orange-700 hover:to-pink-700 active:scale-95 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {status === 'sending' ? 'Sending...' : (
                   <>
                     Send Message
-                    <PaperAirplaneIcon className="w-7 h-7 group-hover:translate-x-2 transition-transform" />
+                    <PaperAirplaneIcon className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </button>
