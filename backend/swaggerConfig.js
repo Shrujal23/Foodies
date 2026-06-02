@@ -72,17 +72,21 @@ module.exports = {
             created_at: { type: 'string', format: 'date-time' }
           }
         },
-        Comment: {
+        Review: {
           type: 'object',
           properties: {
             id: { type: 'integer' },
             recipe_id: { type: 'string' },
             user_id: { type: 'integer', nullable: true },
-            content: { type: 'string', minLength: 1, maxLength: 1000 },
+            rating: { type: 'integer', minimum: 1, maximum: 5 },
+            title: { type: 'string' },
+            comment: { type: 'string' },
+            helpful_count: { type: 'integer' },
             username: { type: 'string' },
             display_name: { type: 'string' },
             avatar_url: { type: 'string', format: 'uri' },
-            created_at: { type: 'string', format: 'date-time' }
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' }
           }
         },
         Error: {
@@ -102,6 +106,8 @@ module.exports = {
     './routes/auth.js',
     './routes/recipes.js',
     './routes/users.js',
-    './routes/comments.js'
+    './routes/reviews.js',
+    './routes/bookmarks.js',
+    './routes/admin.js'
   ]
 };

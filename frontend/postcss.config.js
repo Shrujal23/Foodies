@@ -7,7 +7,7 @@ module.exports = {
       },
       stage: 3
     },
-    '@tailwindcss/postcss7-compat': {},
+    'tailwindcss': {},
     'autoprefixer': {}
   }
 }

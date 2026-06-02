@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 
@@ -10,8 +11,7 @@ import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 export default function Breadcrumbs({ customBreadcrumbs = null, className = '' }) {
   const location = useLocation();
 
-  // Generate breadcrumbs from path
-  const generateBreadcrumbs = () => {
+  const breadcrumbs = useMemo(() => {
     if (customBreadcrumbs) {
       return customBreadcrumbs;
     }
@@ -22,7 +22,7 @@ export default function Breadcrumbs({ customBreadcrumbs = null, className = '' }
     let currentPath = '';
     pathSegments.forEach((segment) => {
       currentPath += `/${segment}`;
-      const label = segment
+      const label = decodeURIComponent(segment)
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
@@ -30,9 +30,7 @@ export default function Breadcrumbs({ customBreadcrumbs = null, className = '' }
     });
 
     return breadcrumbs;
-  };
-
-  const breadcrumbs = generateBreadcrumbs();
+  }, [location.pathname, customBreadcrumbs]);
 
   if (breadcrumbs.length <= 1) {
     return null; // Don't show breadcrumbs on home page

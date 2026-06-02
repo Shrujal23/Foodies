@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { Fragment } from 'react';
+import { useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   ArrowRightIcon,
   LockClosedIcon
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 /**
  * AuthWarningModal - Beautiful warning modal for unauthenticated users
@@ -20,7 +20,8 @@ export default function AuthWarningModal({ isOpen, onClose, onSignIn }) {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [isOpen, onSignIn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -104,12 +105,12 @@ export default function AuthWarningModal({ isOpen, onClose, onSignIn }) {
                 {/* Help Text */}
                 <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">
                   Don't have an account?{' '}
-                  <a
-                    href="/register"
+                  <Link
+                    to="/register"
                     className="text-orange-600 dark:text-orange-400 font-semibold hover:underline"
                   >
                     Create one now
-                  </a>
+                  </Link>
                 </p>
               </Dialog.Panel>
             </Transition.Child>

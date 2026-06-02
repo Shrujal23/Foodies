@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bookmarkController = require('../controllers/bookmarkController');
-const isAuthenticated = require('../middleware/authJWT');
+const isAuthenticated = require('../middleware/auth');
 
 // Get user's collections
 router.get('/collections', isAuthenticated, (req, res, next) => 

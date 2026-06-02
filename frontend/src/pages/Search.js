@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
-import SkeletonLoader from '../components/common/SkeletonLoader';
+import LoadingPlaceholder from '../components/common/LoadingPlaceholder';
 import FilterPills from '../components/common/FilterPills';
 import Breadcrumbs from '../components/common/Breadcrumbs';
 import SearchBar from '../components/recipes/SearchBar';
@@ -112,7 +112,7 @@ export default function Search() {
                 <span className="text-lg font-medium">Finding delicious recipes...</span>
               </div>
             </div>
-            <SkeletonLoader type="card" count={8} />
+          <LoadingPlaceholder variant="recipe" count={8} />
           </div>
         )}
 

@@ -18,7 +18,7 @@ export default function EmptyState({
   return (
     <div className={`flex flex-col items-center justify-center py-16 px-6 ${className}`}>
       {/* Icon */}
-      <div className="text-7xl mb-6 opacity-80 animate-bounce">
+      <div className="text-7xl mb-6 opacity-80 animate-bounce" aria-hidden="true">
         {icon}
       </div>
 
@@ -44,7 +44,7 @@ export default function EmptyState({
 
             if (action.to) {
               return (
-                <Link key={idx} to={action.to} className={btnClass}>
+            <Link key={action.label || idx} to={action.to} className={btnClass}>
                   {action.label}
                 </Link>
               );
@@ -52,7 +52,7 @@ export default function EmptyState({
 
             return (
               <button 
-                key={idx} 
+            key={action.label || idx} 
                 onClick={action.onClick} 
                 className={btnClass}
               >

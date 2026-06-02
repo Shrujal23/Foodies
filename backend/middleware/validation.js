@@ -46,10 +46,13 @@ const validateUserRecipeCreation = [
     .notEmpty().withMessage('Description is required')
     .isLength({ min: 10, max: 2000 }).withMessage('Description must be 10-2000 characters'),
   body('prepTime')
+    .optional({ checkFalsy: true })
     .isInt({ min: 0, max: 1440 }).withMessage('Prep time must be between 0-1440 minutes'),
   body('cookTime')
+    .optional({ checkFalsy: true })
     .isInt({ min: 0, max: 1440 }).withMessage('Cook time must be between 0-1440 minutes'),
   body('servings')
+    .optional({ checkFalsy: true })
     .isInt({ min: 1, max: 100 }).withMessage('Servings must be between 1-100'),
   body('difficulty')
     .optional()

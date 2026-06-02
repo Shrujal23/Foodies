@@ -5,7 +5,7 @@
 
 const express = require('express');
 const { isAdmin } = require('../middleware/adminAuth');
-const isAuthenticated = require('../middleware/authJWT');
+const isAuthenticated = require('../middleware/auth');
 const { pool } = require('../db/database');
 const router = express.Router();
 

@@ -7,7 +7,7 @@ const {
   deleteReview,
   markReviewHelpful
 } = require('../controllers/reviewController');
-const isAuthenticated = require('../middleware/authJWT');
+const isAuthenticated = require('../middleware/auth');
 
 // Public routes
 router.get('/:recipeId/reviews', getRecipeReviews);

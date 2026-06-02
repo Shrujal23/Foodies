@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthWarningModal from './AuthWarningModal';
 
@@ -10,6 +10,7 @@ import AuthWarningModal from './AuthWarningModal';
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
@@ -20,9 +21,9 @@ export default function ProtectedRoute({ children }) {
     }
   }, [user, loading]);
 
-  const handleRedirect = () => {
-    navigate('/login', { state: { from: window.location.pathname } });
-  };
+  const handleRedirect = useCallback(() => {
+    navigate('/login', { state: { from: location.pathname } });
+  }, [navigate, location.pathname]);
 
   if (loading) {
     return (

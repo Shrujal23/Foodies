@@ -62,8 +62,8 @@ router.get('/status', async (req, res) => {
     success: true,
     isAuthenticated: false,
     user: null
-  }
-,);})
+  });
+});
 
 /**
  * @swagger
@@ -156,14 +156,6 @@ router.post('/register', validateRegister, async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Password strength validation (already done in middleware, but double-check here)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({ success: false,
-        message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
-      });
-    }
-
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({
@@ -201,7 +193,8 @@ router.get('/github',
 router.get('/github/callback',
   passport.authenticate('github', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/dashboard');
+    const frontendUrl = 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/dashboard`);
   }
 );
 
@@ -214,7 +207,8 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/dashboard');
+    const frontendUrl = 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/dashboard`);
   }
 );
 

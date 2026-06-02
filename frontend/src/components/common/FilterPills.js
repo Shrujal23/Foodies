@@ -13,6 +13,18 @@ export default function FilterPills({
   onClearAll, 
   className = '' 
 }) {
+  const formatFilterLabel = (key, value) => {
+    const labels = {
+      diet: `Diet: ${value}`,
+      health: `Health: ${value}`,
+      cuisineType: `Cuisine: ${value}`,
+      mealType: `Meal: ${value}`,
+      cookingTime: `Time: ${value} min`,
+      sortBy: `Sort: ${value}`
+    };
+    return labels[key] || value;
+  };
+
   // Get all active filters (non-empty, non-'all' values)
   const activeFilters = Object.entries(filters)
     .filter(([_, value]) => value && value !== 'all')
@@ -25,18 +37,6 @@ export default function FilterPills({
   if (activeFilters.length === 0) {
     return null;
   }
-
-  const formatFilterLabel = (key, value) => {
-    const labels = {
-      diet: `Diet: ${value}`,
-      health: `Health: ${value}`,
-      cuisineType: `Cuisine: ${value}`,
-      mealType: `Meal: ${value}`,
-      cookingTime: `Time: ${value} min`,
-      sortBy: `Sort: ${value}`
-    };
-    return labels[key] || value;
-  };
 
   return (
     <div className={`flex flex-wrap gap-3 items-center ${className}`}>

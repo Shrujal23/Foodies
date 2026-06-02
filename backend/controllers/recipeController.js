@@ -32,6 +32,7 @@ async function searchRecipes(req, res, next) {
     // User Recipes
     if (source === 'all' || source === 'user') {
       try {
+        const safeLimit = Math.min(parseInt(limit, 10) || 20, 50);
         const [userRecipes] = await pool.execute(`
           SELECT ur.*, u.username, u.display_name, u.avatar_url,
                  (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count
@@ -41,8 +42,8 @@ async function searchRecipes(req, res, next) {
              OR LOWER(ur.description) LIKE ? 
              OR LOWER(ur.ingredients) LIKE ?
           ORDER BY ur.created_at DESC
-          LIMIT ?
-        `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`, parseInt(limit)]);
+          LIMIT ${safeLimit}
+        `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`]);
 
         results.userRecipes = userRecipes.map(recipe => ({
           ...recipe,
@@ -101,15 +102,15 @@ async function searchRecipes(req, res, next) {
 /* ====================== FEATURED RECIPES ====================== */
 async function getFeaturedRecipes(req, res) {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 8, 20);
+    const safeLimit = Math.min(parseInt(req.query.limit, 10) || 8, 20);
 
     const [rows] = await pool.execute(`
       SELECT ur.*, u.username, u.display_name, u.avatar_url
       FROM user_recipes ur
       LEFT JOIN users u ON ur.user_id = u.id
       ORDER BY ur.created_at DESC
-      LIMIT ?
-    `, [limit]);
+      LIMIT ${safeLimit}
+    `);
 
     res.json(rows.map(recipe => ({
       ...recipe,
@@ -122,37 +123,6 @@ async function getFeaturedRecipes(req, res) {
   } catch (error) {
     console.error('Get Featured Recipes Error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch featured recipes' });
-  }
-}
-
-/* ====================== RATING BREAKDOWN ====================== */
-async function getRatingBreakdown(req, res) {
-  try {
-    const { id } = req.params;
-
-    const [result] = await pool.execute(`
-      SELECT 
-        COUNT(CASE WHEN rating = 1 THEN 1 END) as '1',
-        COUNT(CASE WHEN rating = 2 THEN 1 END) as '2',
-        COUNT(CASE WHEN rating = 3 THEN 1 END) as '3',
-        COUNT(CASE WHEN rating = 4 THEN 1 END) as '4',
-        COUNT(CASE WHEN rating = 5 THEN 1 END) as '5',
-        COUNT(*) as totalRatings,
-        ROUND(AVG(rating), 1) as averageRating
-      FROM recipe_ratings 
-      WHERE recipe_id = ?
-    `, [id]);
-
-    const stats = result[0] || {
-      '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
-      totalRatings: 0,
-      averageRating: 0
-    };
-
-    res.json(stats);
-  } catch (error) {
-    console.error('Rating breakdown error:', error);
-    res.status(500).json({ error: 'Failed to fetch rating breakdown' });
   }
 }
 
@@ -260,17 +230,55 @@ async function checkFavoriteStatus(req, res) {
 }
 
 /* ====================== USER RECIPES CRUD ====================== */
-// (Keep your existing createUserRecipe, getUserRecipes, etc. functions here)
-// For brevity, I'm including only the structure. Add your full versions if needed.
 
-async function createUserRecipe(req, res) {
-  // ... your existing createUserRecipe logic
-  res.status(501).json({ message: "Create user recipe - implement as needed" });
+async function createUserRecipe(req, res, next) {
+  if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });
+  
+  try {
+    const {
+      title,
+      description,
+      ingredients,
+      instructions,
+      servings,
+      cuisine
+    } = req.body;
+
+    const prep_time = parseInt(req.body.prepTime || req.body.prep_time || 0, 10);
+    const cook_time = parseInt(req.body.cookTime || req.body.cook_time || 0, 10);
+    const final_servings = parseInt(servings || 1, 10);
+
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const [result] = await pool.execute(
+      `INSERT INTO user_recipes 
+       (user_id, title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, image)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.user.id,
+        title,
+        description,
+        ingredients,
+        instructions,
+        prep_time,
+        cook_time,
+        final_servings,
+        cuisine || 'international',
+        image
+      ]
+    );
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Recipe created successfully',
+      recipeId: result.insertId 
+    });
+  } catch (err) {
+    console.error('createUserRecipe error:', err);
+    res.status(500).json({ success: false, message: 'Failed to create recipe' });
+  }
 }
 
-// Add your other functions (getUserRecipes, updateUserRecipe, etc.) here...
-
-/* ====================== USER RECIPES CRUD (implementations) ====================== */
 async function getUserRecipes(req, res, next) {
   if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });
   try {
@@ -286,31 +294,43 @@ async function getUserRecipes(req, res, next) {
     res.json(rows.map(r => ({ ...r, _id: r.id })));
   } catch (err) {
     console.error('getUserRecipes error:', err);
-    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch recipes' });
+    res.status(500).json({ success: false, message: 'Failed to fetch recipes' });
   }
 }
 
 async function getAllPublicUserRecipes(req, res, next) {
   try {
     const { q = '', page = 1, limit = 12, sort = 'newest' } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const safeLimit = Math.min(parseInt(limit), 50);
+    
+    const parsedPage = parseInt(page, 10) || 1;
+    const parsedLimit = parseInt(limit, 10) || 12;
+    const offset = (parsedPage - 1) * parsedLimit;
+    const safeLimit = Math.min(parsedLimit, 50);
 
-    const [rows] = await pool.execute(
-      `SELECT ur.*, u.username, u.display_name, u.avatar_url
-       FROM user_recipes ur
-       LEFT JOIN users u ON ur.user_id = u.id
-       WHERE ur.is_public = 1
-         AND ( ? = '' OR LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ?)
-       ORDER BY ${sort === 'top' ? 'ur.rating DESC' : 'ur.created_at DESC'}
-       LIMIT ? OFFSET ?`,
-      [q ? q.trim().toLowerCase() : '', `%${q.trim().toLowerCase()}%`, `%${q.trim().toLowerCase()}%`, safeLimit, offset]
-    );
+    const searchQuery = q ? q.toString().trim().toLowerCase() : '';
+
+    let sqlQuery = `
+      SELECT ur.*, u.username, u.display_name, u.avatar_url
+      FROM user_recipes ur
+      LEFT JOIN users u ON ur.user_id = u.id
+    `;
+    
+    const queryParams = [];
+
+    if (searchQuery) {
+      sqlQuery += ` WHERE LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ?`;
+      queryParams.push(`%${searchQuery}%`, `%${searchQuery}%`);
+    }
+
+    sqlQuery += ` ORDER BY ${sort === 'top' ? '(SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) DESC' : 'ur.created_at DESC'}`;
+    sqlQuery += ` LIMIT ${safeLimit} OFFSET ${offset}`;
+
+    const [rows] = await pool.execute(sqlQuery, queryParams);
 
     res.json(rows.map(r => ({ ...r, _id: r.id })));
   } catch (err) {
     console.error('getAllPublicUserRecipes error:', err);
-    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch public recipes' });
+    res.status(500).json({ success: false, message: 'Failed to fetch public recipes' });
   }
 }
 
@@ -321,7 +341,7 @@ async function getPublicUserRecipeById(req, res, next) {
       `SELECT ur.*, u.username, u.display_name, u.avatar_url
        FROM user_recipes ur
        LEFT JOIN users u ON ur.user_id = u.id
-       WHERE ur.id = ? AND ur.is_public = 1
+       WHERE ur.id = ?
        LIMIT 1`,
       [id]
     );
@@ -331,7 +351,7 @@ async function getPublicUserRecipeById(req, res, next) {
     res.json({ ...recipe, _id: recipe.id });
   } catch (err) {
     console.error('getPublicUserRecipeById error:', err);
-    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to fetch recipe' });
+    res.status(500).json({ success: false, message: 'Failed to fetch recipe' });
   }
 }
 
@@ -344,41 +364,55 @@ async function updateUserRecipe(req, res, next) {
       description,
       ingredients,
       instructions,
-      prep_time,
-      cook_time,
       servings,
-      cuisine,
-      is_public = 1
+      cuisine
     } = req.body;
+
+    // Check if the user already has a recipe with this exact title
+    const [existingRecipe] = await pool.execute(
+      'SELECT id FROM user_recipes WHERE user_id = ? AND LOWER(title) = LOWER(?) AND id != ? LIMIT 1',
+      [req.user.id, title.trim(), id]
+    );
+    
+    if (existingRecipe.length > 0) {
+      return res.status(400).json({ success: false, message: 'You already have a recipe with this title!' });
+    }
+
+    const prep_time = parseInt(req.body.prepTime || req.body.prep_time || 0, 10);
+    const cook_time = parseInt(req.body.cookTime || req.body.cook_time || 0, 10);
+    const final_servings = parseInt(servings || 1, 10);
 
     const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-    // Ensure ownership
-    const [ownerCheck] = await pool.execute('SELECT id FROM user_recipes WHERE id = ? AND user_id = ? LIMIT 1', [id, req.user.id]);
+    // Check ownership
+    const [ownerCheck] = await pool.execute(
+      'SELECT id FROM user_recipes WHERE id = ? AND user_id = ? LIMIT 1', 
+      [id, req.user.id]
+    );
     if (!ownerCheck[0]) return res.status(404).json({ success: false, message: 'Recipe not found' });
 
     if (image) {
       await pool.execute(
         `UPDATE user_recipes
          SET title = ?, description = ?, ingredients = ?, instructions = ?,
-             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, is_public = ?, image = ?
+             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, image = ?
          WHERE id = ? AND user_id = ?`,
-        [title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, is_public, image, id, req.user.id]
+        [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', image, id, req.user.id]
       );
     } else {
       await pool.execute(
         `UPDATE user_recipes
          SET title = ?, description = ?, ingredients = ?, instructions = ?,
-             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, is_public = ?
+             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?
          WHERE id = ? AND user_id = ?`,
-        [title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, is_public, id, req.user.id]
+        [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', id, req.user.id]
       );
     }
 
     res.json({ success: true, message: 'Recipe updated' });
   } catch (err) {
     console.error('updateUserRecipe error:', err);
-    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to update recipe' });
+    res.status(500).json({ success: false, message: 'Failed to update recipe' });
   }
 }
 
@@ -390,7 +424,7 @@ async function deleteUserRecipe(req, res, next) {
     res.json({ success: true, message: 'Recipe deleted' });
   } catch (err) {
     console.error('deleteUserRecipe error:', err);
-    next ? next(err) : res.status(500).json({ success: false, message: 'Failed to delete recipe' });
+    res.status(500).json({ success: false, message: 'Failed to delete recipe' });
   }
 }
 
@@ -399,7 +433,6 @@ module.exports = {
   searchRecipes,
   getRecipeById,
   getFeaturedRecipes,
-  getRatingBreakdown,
   getFavoriteRecipes,
   addToFavorites,
   removeFromFavorites,

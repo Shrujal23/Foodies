@@ -6,7 +6,9 @@ async function getRecipeReviews(req, res) {
     const { recipeId } = req.params;
     const { page = 1, limit = 10, sort = 'recent' } = req.query;
     
-    const offset = (page - 1) * limit;
+    const parsedPage = parseInt(page, 10) || 1;
+    const parsedLimit = parseInt(limit, 10) || 10;
+    const offset = (parsedPage - 1) * parsedLimit;
     
     let orderBy = 'r.created_at DESC';
     if (sort === 'rating-high') orderBy = 'r.rating DESC, r.created_at DESC';
@@ -19,8 +21,8 @@ async function getRecipeReviews(req, res) {
        JOIN users u ON r.user_id = u.id
        WHERE r.recipe_id = ?
        ORDER BY ${orderBy}
-       LIMIT ? OFFSET ?`,
-      [recipeId, parseInt(limit), offset]
+       LIMIT ${parsedLimit} OFFSET ${offset}`,
+      [recipeId]
     );
 
     // Get total count

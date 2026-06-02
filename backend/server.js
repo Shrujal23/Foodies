@@ -7,6 +7,9 @@ const passport = require('./config/passport');
 const swaggerUi = require('swagger-ui-express');
 const swaggerConfig = require('./swaggerConfig');
 
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerSpec = swaggerJsdoc(swaggerConfig);
+
 // Import middleware
 const requestLogger = require('./middleware/logger');
 const { apiLimiter, strictLimiter, searchLimiter } = require('./middleware/rateLimiter');
@@ -51,7 +54,6 @@ app.use(passport.session());
 const authRoutes = require('./routes/auth');
 const recipesRoutes = require('./routes/recipes');
 const userRoutes = require('./routes/users');
-const commentRoutes = require('./routes/comments');
 const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
 const bookmarkRoutes = require('./routes/bookmarks');
@@ -63,15 +65,14 @@ app.use('/api/recipes/search', searchLimiter);
 
 // Mount routes properly
 app.use('/api/auth', authRoutes);
+app.use('/api/recipes', reviewRoutes);
 app.use('/api/recipes', recipesRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 
 // Swagger Docs
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerConfig));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

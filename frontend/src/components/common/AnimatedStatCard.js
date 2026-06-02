@@ -25,6 +25,47 @@ import { useEffect, useRef, useState } from 'react';
  * @param {string} trendValue - Trend percentage or amount
  * @param {string} className - Additional CSS classes
  */
+
+// Color configurations moved outside component to prevent recreation on every render
+const COLOR_STYLES = {
+  orange: {
+    bg: 'from-orange-500 to-orange-600',
+    light: 'from-orange-100 to-orange-50',
+    darkLight: 'dark:from-orange-900/40 dark:to-orange-900/20',
+    text: 'text-orange-600 dark:text-orange-400',
+    badge: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    accent: 'rgb(249, 115, 22)', // orange-500
+    glow: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+  },
+  pink: {
+    bg: 'from-pink-500 to-pink-600',
+    light: 'from-pink-100 to-pink-50',
+    darkLight: 'dark:from-pink-900/40 dark:to-pink-900/20',
+    text: 'text-pink-600 dark:text-pink-400',
+    badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
+    accent: 'rgb(236, 72, 153)', // pink-500
+    glow: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
+  },
+  emerald: {
+    bg: 'from-emerald-500 to-emerald-600',
+    light: 'from-emerald-100 to-emerald-50',
+    darkLight: 'dark:from-emerald-900/40 dark:to-emerald-900/20',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+    accent: 'rgb(16, 185, 129)', // emerald-500
+    glow: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+  },
+  blue: {
+    bg: 'from-blue-500 to-blue-600',
+    light: 'from-blue-100 to-blue-50',
+    darkLight: 'dark:from-blue-900/40 dark:to-blue-900/20',
+    text: 'text-blue-600 dark:text-blue-400',
+    badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    accent: 'rgb(59, 130, 246)', // blue-500
+    glow: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+  }
+};
+
 export default function AnimatedStatCard({
   value = 0,
   label = 'Stat',
@@ -42,39 +83,11 @@ export default function AnimatedStatCard({
   const cardRef = useRef(null);
   const hasAnimatedRef = useRef(false);
 
-  // Color configurations
-  const colorStyles = {
-    orange: {
-      bg: 'from-orange-500 to-orange-600',
-      light: 'from-orange-100 to-orange-50',
-      darkLight: 'dark:from-orange-900/40 dark:to-orange-900/20',
-      text: 'text-orange-600 dark:text-orange-400',
-      badge: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-    },
-    pink: {
-      bg: 'from-pink-500 to-pink-600',
-      light: 'from-pink-100 to-pink-50',
-      darkLight: 'dark:from-pink-900/40 dark:to-pink-900/20',
-      text: 'text-pink-600 dark:text-pink-400',
-      badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300'
-    },
-    emerald: {
-      bg: 'from-emerald-500 to-emerald-600',
-      light: 'from-emerald-100 to-emerald-50',
-      darkLight: 'dark:from-emerald-900/40 dark:to-emerald-900/20',
-      text: 'text-emerald-600 dark:text-emerald-400',
-      badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-    },
-    blue: {
-      bg: 'from-blue-500 to-blue-600',
-      light: 'from-blue-100 to-blue-50',
-      darkLight: 'dark:from-blue-900/40 dark:to-blue-900/20',
-      text: 'text-blue-600 dark:text-blue-400',
-      badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-    }
-  };
+  const styles = COLOR_STYLES[color] || COLOR_STYLES.orange;
 
-  const styles = colorStyles[color] || colorStyles.orange;
+  // Safely parse the target value in case a string (like "2,500") is passed
+  const parsedValue = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+  const targetValue = isNaN(parsedValue) ? 0 : parsedValue;
 
   // Intersection Observer for triggering animation
   useEffect(() => {
@@ -113,7 +126,7 @@ export default function AnimatedStatCard({
 
       // Easing function (ease-out cubic)
       const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-      const currentValue = Math.floor(easeOutCubic * value);
+      const currentValue = Math.floor(easeOutCubic * targetValue);
 
       setDisplayValue(currentValue);
 
@@ -125,7 +138,7 @@ export default function AnimatedStatCard({
     animationId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationId);
-  }, [isVisible, value, duration]);
+  }, [isVisible, targetValue, duration]);
 
   const trendColor = trend === 'up' 
     ? 'text-emerald-600 dark:text-emerald-400' 
@@ -198,15 +211,15 @@ export default function AnimatedStatCard({
         {/* Bottom accent line */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gradient-to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
           style={{
-            backgroundImage: `linear-gradient(to right, transparent, rgb(249, 115, 22), transparent)`
+        backgroundImage: `linear-gradient(to right, transparent, ${styles.accent}, transparent)`
           }}
         />
       </div>
 
       {/* Hover glow effect */}
       <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-5 blur-xl transition-opacity duration-300"
-        style={{
-          background: `linear-gradient(135deg, #ff6b40 0%, #ec4899 100%)`
+      style={{
+        background: styles.glow
         }}
       />
     </div>

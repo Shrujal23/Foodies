@@ -10,14 +10,13 @@ const {
   validateRecipeId 
 } = require('../middleware/validation');
 
-const isAuthenticated = require('../middleware/authJWT');
+const isAuthenticated = require('../middleware/auth');
 
 // Controllers
 const {
   searchRecipes,
   getRecipeById,
   getFeaturedRecipes,
-  getRatingBreakdown,
   getFavoriteRecipes,
   addToFavorites,
   removeFromFavorites,
@@ -76,9 +75,6 @@ router.get('/favorites', isAuthenticated, getFavoriteRecipes);
 router.post('/favorites', isAuthenticated, addToFavorites);
 router.delete('/favorites/:recipeId', isAuthenticated, removeFromFavorites);
 router.get('/favorites/:recipeId/status', isAuthenticated, checkFavoriteStatus);
-
-// Rating Routes
-router.get('/:id/rating-breakdown', getRatingBreakdown);
 
 // Single Recipe (Keep this LAST to avoid route conflicts)
 router.get('/:id', validateRecipeId, getRecipeById);

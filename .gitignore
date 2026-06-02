@@ -26,6 +26,9 @@ bower_components/
 # Optional npm cache directory
 .npm
 
-# AI Chatbot (in progress - do not commit)
+# AI Chatbot (in progress -not committing now, will do it in future)
 frontend/src/services/FloatingAIChatbot.js
 frontend/src/components/FloatingAIChatbot.js
+
+# User uploaded files
+backend/uploads/

@@ -22,6 +22,8 @@ export default function LoadingPlaceholder({
 }) {
   const [isVisible, setIsVisible] = useState(false);
 
+  const safeCount = Math.max(1, parseInt(count, 10) || 1);
+
   // Stagger animation for entrance
   useEffect(() => {
     setIsVisible(true);
@@ -36,8 +38,8 @@ export default function LoadingPlaceholder({
       style={{ transitionDelay: `${index * 50}ms` }}
     >
       {/* Image Skeleton */}
-      <div className="relative h-64 bg-gradient-to-r from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent dark:via-white/5 animate-shimmer" />
+      <div className="relative h-64 bg-gradient-to-r from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent dark:via-white/5" />
       </div>
 
       {/* Content Skeleton */}
@@ -125,21 +127,7 @@ export default function LoadingPlaceholder({
         ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' 
         : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
     } ${className}`}>
-      {Array.from({ length: count }).map((_, i) => renderCard(i))}
+      {Array.from({ length: safeCount }).map((_, i) => renderCard(i))}
     </div>
   );
 }
-
-/**
- * Custom CSS required (add to your Tailwind config):
- * 
- * @keyframes shimmer {
- *   0% { transform: translateX(-100%); }
- *   100% { transform: translateX(100%); }
- * }
- * 
- * In tailwind.config.js:
- * animation: {
- *   shimmer: 'shimmer 2s infinite',
- * }
- */
