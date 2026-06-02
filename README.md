@@ -7,28 +7,25 @@
 [![JWT](https://img.shields.io/badge/JWT-Auth-red?logo=json-web-tokens)](https://jwt.io)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-A full-stack web application for food enthusiasts to discover, share, and manage recipes. Users can create accounts, upload their own recipes, explore community recipes, save favorites, and engage with the community through comments.
+A full-stack web application built for food enthusiasts to discover, share, and manage recipes. Developed with a modern React frontend and a robust Node.js/Express backend, Foodies allows users to securely create accounts, upload personal recipes, explore community creations, save favorites, and engage through a unified reviews and ratings system.
 
-## 🚀 Features
+## Key Features
 
-### User Authentication
-- JWT-based authentication
-- OAuth integration with Google and GitHub
-- Secure user registration and login
-- Session management
+### Security & Authentication
+- **Robust Auth:** JWT-based authentication for secure, stateless sessions.
+- **OAuth Integration:** Seamless sign-in with Google and GitHub using Passport.js.
+- **Data Protection:** Password hashing with Bcrypt and strict API endpoint protection.
 
 ### Recipe Management
-- Create, read, update, and delete user recipes
-- Rich recipe details including ingredients, instructions, prep/cook time, servings
-- Recipe difficulty levels (Easy, Medium, Hard)
-- Image upload support
-- Public recipe browsing
+- **Full CRUD Capabilities:** Create, read, update, and delete user recipes.
+- **Rich Recipe Details:** Support for dynamic ingredients, step-by-step instructions, prep/cook times, and servings.
+- **Media Uploads:** Secure recipe image uploads managed via Multer.
+- **Smart Search:** Filtering and search functionality to easily find recipes.
 
-### Social Features
-- Save favorite recipes
-- Comment on recipes
-- User profiles and recipe collections
-- Community-driven content
+### Social & Community
+- **Unified Reviews System:** Rate recipes out of 5 stars and leave detailed text reviews.
+- **Collections & Favorites:** Bookmark favorite recipes and organize them into personal collections.
+- **Responsive UI:** A beautiful, mobile-first design built with Tailwind CSS and Headless UI.
 
 ### User Experience
 - Responsive design with Tailwind CSS
@@ -59,15 +56,14 @@ A full-stack web application for food enthusiasts to discover, share, and manage
 ### Development Tools
 - **Nodemon** - Development server auto-restart
 - **Create React App** - Frontend build tool
-- **CRACO** - Create React App Configuration Override
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js (v14 or higher)
 - MySQL database
 - npm or yarn package manager
 
-## 🔧 Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -100,11 +96,10 @@ SESSION_SECRET=your_session_secret
 Create a MySQL database named `foodies_db` and run the following schema files in order:
 ```sql
 -- Run the SQL commands from the following files in backend/db/:
--- 1. schema.sql (users table)
--- 2. recipes_schema.sql (recipes, user_recipes, user_favorites tables)
--- 3. comments_schema.sql (recipe_comments table)
--- 4. activity_schema.sql (activities table)
--- 5. collections_schema.sql (collections, collection_recipes, collection_user_recipes tables)
+-- 1. schema.sql (core users table)
+-- 2. collections_schema.sql (recipes, user_recipes, user_favorites, and collections tables)
+-- 3. reviews_schema.sql (unified reviews and ratings table)
+-- 4. Run `node db/seed-admin.js` to create the default admin account
 ```
 
 ### 4. Frontend Setup
@@ -136,7 +131,7 @@ The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
 
-## 📖 Usage
+## Usage
 
 ### User Registration & Login
 1. Visit the application homepage
@@ -161,7 +156,7 @@ The application will be available at:
 - Save recipes to your favorites
 - Share recipes with others
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -181,13 +176,13 @@ The application will be available at:
 - `POST /api/recipes/:id/favorite` - Add to favorites
 - `DELETE /api/recipes/:id/favorite` - Remove from favorites
 
-### Comments
-- `GET /api/comments/:recipeId` - Get recipe comments
-- `POST /api/comments/:recipeId` - Add comment
-- `PUT /api/comments/:id` - Update comment
-- `DELETE /api/comments/:id` - Delete comment
+### Reviews & Ratings
+- `GET /api/recipes/:recipeId/reviews` - Get recipe reviews
+- `GET /api/recipes/:recipeId/rating-breakdown` - Get rating breakdown
+- `POST /api/recipes/:recipeId/reviews` - Add or update a review
+- `DELETE /api/recipes/:recipeId/reviews/:reviewId` - Delete a review
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 foodies/
@@ -218,7 +213,7 @@ foodies/
 └── README.md
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -233,7 +228,7 @@ foodies/
 - Update documentation as needed
 - Ensure responsive design works on all devices
 
-## 📄 License
+## License
 
 MIT License
 
@@ -257,14 +252,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with Create React App
 - Icons provided by Heroicons
-- **Transparency**: This project was developed with the assistance of AI tools to accelerate development and implementation of features.
 - UI components from Headless UI
 - Styling with Tailwind CSS
-
----
 
 **Happy Cooking! 🍳**
