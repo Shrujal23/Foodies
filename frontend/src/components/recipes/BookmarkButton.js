@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
   const [showCollections, setShowCollections] = useState(false);
   const [loading, setLoading] = useState(false);
   const [defaultCollection, setDefaultCollection] = useState(null);
+  const dropdownRef = useRef(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -18,6 +19,22 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
       fetchCollections();
     }
   }, [recipeId, externalRecipeId, user]);
+
+  // Handle clicking outside to close the dropdown smoothly
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCollections(false);
+      }
+    };
+    
+    if (showCollections) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCollections]);
 
   const checkBookmarkStatus = async () => {
     try {
@@ -139,6 +156,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
 
   return (
     <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       {/* Bookmark Button - Twitter Style */}
       <button
         onClick={() => setShowCollections(!showCollections)}
@@ -148,7 +166,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500'
             : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'
         }`}
-        title={isBookmarked ? 'Remove from collection' : 'Add to collection'}
+        title={isBookmarked ? 'Saved to a collection' : 'Add to collection'}
       >
         <svg
           className="w-5 h-5"
@@ -208,6 +226,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
         </div>
       )}
     </div>
+  </div>
   );
 };
 

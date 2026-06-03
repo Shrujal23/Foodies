@@ -12,9 +12,7 @@ const MyRecipes = () => {
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [cuisines, setCuisines] = useState([]);
-  const [savedRecipes, setSavedRecipes] = useState([]);
 
-  // Fetch recipes
   const fetchRecipes = useCallback(async () => {
     try {
       setLoading(true);
@@ -38,7 +36,6 @@ const MyRecipes = () => {
 
       const data = await res.json();
       
-      // ✅ FIXED: Safely extract recipe list
       let recipeList = [];
 
       if (data.success && data.data) {
@@ -60,7 +57,6 @@ const MyRecipes = () => {
     }
   }, [searchQuery]);
 
-  // Process and normalize recipes
   const processRecipes = (recipeList) => {
     if (!Array.isArray(recipeList)) {
       console.warn('recipeList is not an array:', recipeList);
@@ -88,7 +84,6 @@ const MyRecipes = () => {
 
     setRecipes(processed);
 
-    // Extract unique cuisines
     const cuisineSet = new Set();
     processed.forEach(r => {
       if (r.cuisine) cuisineSet.add(r.cuisine.toLowerCase());
@@ -97,16 +92,13 @@ const MyRecipes = () => {
     setCuisines(Array.from(cuisineSet).sort());
   };
 
-  // Fetch on mount and when search changes
   useEffect(() => {
     fetchRecipes();
   }, [fetchRecipes]);
 
-  // Processed recipes with filters & sorting
   const processedRecipes = useMemo(() => {
     let result = [...recipes];
 
-    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(recipe =>
@@ -115,21 +107,18 @@ const MyRecipes = () => {
       );
     }
 
-    // Cuisine filter
     if (filterCuisine !== 'all') {
       result = result.filter(recipe => 
         recipe.cuisine?.toLowerCase() === filterCuisine.toLowerCase()
       );
     }
 
-    // Difficulty filter
     if (filterDifficulty !== 'all') {
       result = result.filter(recipe => 
         recipe.difficulty?.toLowerCase() === filterDifficulty.toLowerCase()
       );
     }
 
-    // Sorting
     if (sortBy === 'newest') {
       result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     } else if (sortBy === 'rating') {
@@ -140,20 +129,6 @@ const MyRecipes = () => {
 
     return result;
   }, [recipes, searchQuery, filterCuisine, filterDifficulty, sortBy]);
-
-  const handleSaveRecipe = (recipe) => {
-    const recipeId = recipe.id;
-    const isSaved = savedRecipes.includes(recipeId);
-    
-    const updated = isSaved
-      ? savedRecipes.filter(id => id !== recipeId)
-      : [...savedRecipes, recipeId];
-    
-    setSavedRecipes(updated);
-    localStorage.setItem('savedRecipes', JSON.stringify(updated));
-    
-    toast.success(isSaved ? 'Removed from saved' : 'Saved successfully');
-  };
 
   if (loading) {
     return (
@@ -169,7 +144,6 @@ const MyRecipes = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
             My Recipes
@@ -179,7 +153,6 @@ const MyRecipes = () => {
           </p>
         </div>
 
-        {/* Search */}
         <div className="mb-8">
           <div className="relative max-w-xl">
             <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -193,7 +166,6 @@ const MyRecipes = () => {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Cuisine</label>
@@ -239,7 +211,6 @@ const MyRecipes = () => {
           </div>
         </div>
 
-        {/* Results Info */}
         <div className="mb-8 flex justify-between items-center">
           <p className="text-gray-600 dark:text-gray-400">
             Showing <span className="font-semibold text-gray-900 dark:text-white">{processedRecipes.length}</span> recipes
@@ -259,7 +230,6 @@ const MyRecipes = () => {
           )}
         </div>
 
-        {/* Recipes Grid */}
         {processedRecipes.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-6xl mb-6">😕</p>
@@ -272,8 +242,6 @@ const MyRecipes = () => {
               <RecipeCardEnhanced
                 key={recipe.id}
                 recipe={recipe}
-                onSave={() => handleSaveRecipe(recipe)}
-                isSaved={savedRecipes.includes(recipe.id)}
               />
             ))}
           </div>

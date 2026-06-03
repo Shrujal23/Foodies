@@ -218,7 +218,7 @@ const AddRecipe = () => {
                     className="w-full px-6 py-4 text-lg rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 resize-none"
                   />
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <input type="number" name="prepTime" placeholder="Prep Time (min)" value={recipe.prepTime} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
                     <input type="number" name="cookTime" placeholder="Cook Time (min)" value={recipe.cookTime} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
                     <input type="number" name="servings" placeholder="Servings" value={recipe.servings} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500" required />
@@ -227,6 +227,18 @@ const AddRecipe = () => {
                       <option value="Easy">Easy</option>
                       <option value="Medium">Medium</option>
                       <option value="Hard">Hard</option>
+                    </select>
+
+                    <select name="cuisine" value={recipe.cuisine} onChange={handleChange} className="px-6 py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500">
+                      <option value="international">International</option>
+                      <option value="american">American</option>
+                      <option value="asian">Asian</option>
+                      <option value="chinese">Chinese</option>
+                      <option value="french">French</option>
+                      <option value="indian">Indian</option>
+                      <option value="italian">Italian</option>
+                      <option value="japanese">Japanese</option>
+                      <option value="mexican">Mexican</option>
                     </select>
                   </div>
                 </div>

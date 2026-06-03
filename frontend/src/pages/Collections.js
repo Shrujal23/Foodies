@@ -252,7 +252,7 @@ const Collections = () => {
                         <RecipeCardEnhanced recipe={recipe} />
                         <button
                           onClick={() => handleRemoveRecipe(selectedCollection, recipe.id)}
-                          className="absolute top-4 right-4 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-lg z-10"
+                          className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-xl z-20 font-bold text-lg"
                           title="Remove from collection"
                         >
                           ×

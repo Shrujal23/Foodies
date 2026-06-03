@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
-import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL, ASSET_BASE_URL } from '../../config';
+import SaveButton from './SaveButton';
 
-const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
-  const [rating, setRating] = useState(4.2);
-  const [reviewCount, setReviewCount] = useState(0);
-  const [isBookmarked, setIsBookmarked] = useState(isSaved);
+const RecipeCardEnhanced = ({ recipe }) => {
+  const [rating, setRating] = useState(recipe.rating || 4.2);
+  const [reviewCount, setReviewCount] = useState(recipe.reviewCount || 0);
 
   const fetchRating = useCallback(async () => {
+    // Skip fetching if the backend already provided the review count
+    if (recipe.reviewCount !== undefined) return;
+
     try {
       const recipeId = recipe._id || recipe.id;
-      if (!recipeId) return;
+      
+      // Skip fetching for external Edamam recipes to prevent the N+1 query problem 
+      // (Edamam recipes don't have local DB reviews anyway)
+      if (!recipeId || recipe.uri || String(recipeId).includes('http') || String(recipeId).includes('#')) {
+        return;
+      }
 
       const res = await fetch(`${API_BASE_URL}/recipes/${recipeId}/rating-breakdown`);
       
@@ -41,14 +47,6 @@ const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
     fetchRating();
   }, [fetchRating]);
 
-  const handleBookmarkClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const newState = !isBookmarked;
-    setIsBookmarked(newState);
-    onSave?.(recipe, newState);
-  };
-
   const imageUrl = recipe.image 
     ? (recipe.image.startsWith('http') ? recipe.image : `${ASSET_BASE_URL}${recipe.image}`)
     : 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80';
@@ -64,6 +62,7 @@ const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
           <img
             src={imageUrl}
             alt={recipe.title || recipe.label}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
@@ -74,16 +73,9 @@ const RecipeCardEnhanced = ({ recipe, onSave, isSaved = false }) => {
           </div>
         )}
 
-        <button
-          onClick={handleBookmarkClick}
-          className="absolute top-4 right-4 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-lg shadow-lg hover:scale-110 transition-all z-10"
-        >
-          {isBookmarked ? (
-            <BookmarkSolid className="w-6 h-6 text-orange-500" />
-          ) : (
-            <BookmarkOutline className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-          )}
-        </button>
+        <div className="absolute top-3 right-3 z-10">
+          <SaveButton recipe={recipe} />
+        </div>
       </div>
 
       <div className="p-6 flex-1 flex flex-col">

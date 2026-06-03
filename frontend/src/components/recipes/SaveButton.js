@@ -12,10 +12,12 @@ export default function SaveButton({ recipe }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const recipeId = recipe.uri || recipe._id || recipe.id;
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkSaveStatus();
-  }, [recipe.uri, user]);
+  }, [recipeId, user]);
 
   const checkSaveStatus = async () => {
     if (!user) {
@@ -25,7 +27,7 @@ export default function SaveButton({ recipe }) {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipe.uri)}/status`, {
+      const res = await fetch(`${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipeId)}/status`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -42,7 +44,10 @@ export default function SaveButton({ recipe }) {
     }
   };
 
-  const handleSaveClick = async () => {
+  const handleSaveClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!user) {
       toast.error('Please log in to save recipes');
       navigate('/login');
@@ -55,8 +60,16 @@ export default function SaveButton({ recipe }) {
     try {
       const method = isSaved ? 'DELETE' : 'POST';
       const url = isSaved
-        ? `${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipe.uri)}`
+        ? `${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipeId)}`
         : `${API_BASE_URL}/recipes/favorites`;
+
+      // Normalize payload to prevent backend crashes on user-created recipes
+      const payload = {
+        ...recipe,
+        uri: recipeId,
+        label: recipe.label || recipe.title,
+        source: recipe.source || 'user'
+      };
 
       const res = await fetch(url, {
         method,
@@ -64,7 +77,7 @@ export default function SaveButton({ recipe }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: !isSaved ? JSON.stringify({ recipe }) : undefined
+        body: !isSaved ? JSON.stringify({ recipe: payload }) : undefined
       });
 
       if (!res.ok) throw new Error('Failed');
@@ -104,11 +117,6 @@ export default function SaveButton({ recipe }) {
           <BookmarkIcon className="w-7 h-7" />
         )}
       </div>
-
-      {/* Subtle pulse when saved */}
-      {isSaved && (
-        <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping" />
-      )}
 
       {/* Glow on hover (only when not saved) */}
       {!isSaved && (

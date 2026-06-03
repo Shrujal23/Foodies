@@ -1,4 +1,3 @@
-// src/pages/Login.js
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -29,20 +28,17 @@ export default function Login() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
         <div className="max-w-md w-full">
 
-          {/* Logo + Title */}
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
               Foodies
             </h1>
             <p className="mt-3 text-gray-600 dark:text-gray-400 text-lg">
-              Welcome back! Sign in to continue cooking
+              Good to see you again.
             </p>
           </div>
 
-          {/* Form Card */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email address
@@ -57,13 +53,11 @@ export default function Login() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
-                  {/* This now correctly links to your ForgotPassword page */}
                   <Link
                     to="/forgot-password"
                     className="text-sm text-orange-600 hover:text-orange-500 font-medium transition"
@@ -81,7 +75,17 @@ export default function Login() {
                 />
               </div>
 
-              {/* Submit Button */}
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Remember me
+            </label>
+          </div>
+
               <button
                 type="submit"
                 className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg"
@@ -90,14 +94,12 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Divider */}
             <div className="my-8 flex items-center">
               <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
-              <span className="px-4 text-sm text-gray-500">or continue with</span>
+              <span className="px-4 text-sm text-gray-500">or</span>
               <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
             </div>
 
-            {/* Social Logins */}
             <div className="grid grid-cols-2 gap-3">
               <a
                 href="/auth/google"
@@ -123,7 +125,6 @@ export default function Login() {
               </a>
             </div>
 
-            {/* Register Link */}
             <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <Link
@@ -134,19 +135,6 @@ export default function Login() {
               </Link>
             </p>
           </div>
-
-          {/* Footer note */}
-          <p className="mt-8 text-center text-xs text-gray-500 dark:text-gray-600">
-            By signing in, you agree to our{' '}
-            <a href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-400">
-              Terms
-            </a>{' '}
-            and{' '}
-            <a href="/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-400">
-              Privacy Policy
-            </a>
-            .
-          </p>
         </div>
       </div>
     </>

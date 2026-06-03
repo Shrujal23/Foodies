@@ -11,6 +11,7 @@ export default function Register() {
     password: '',
     confirmPassword: '',
   });
+  const [agreed, setAgreed] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,6 +28,11 @@ export default function Register() {
 
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!agreed) {
+      toast.error('Please agree to the Terms and Privacy Policy');
       return;
     }
 
@@ -53,24 +59,21 @@ export default function Register() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-12">
         <div className="max-w-md w-full">
 
-          {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
               Foodies
             </h1>
             <p className="mt-3 text-xl text-gray-700 dark:text-gray-300 font-medium">
-              Join the community
+              Create an account
             </p>
             <p className="mt-1 text-gray-500 dark:text-gray-400">
-              Start sharing and discovering amazing recipes
+              Save, share, and review your favorite dishes.
             </p>
           </div>
 
-          {/* Form Card */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
 
-              {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Full name
@@ -86,7 +89,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email address
@@ -102,7 +104,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Password
@@ -118,7 +119,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Confirm password
@@ -134,7 +134,27 @@ export default function Register() {
                 />
               </div>
 
-              {/* Submit */}
+          <div className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                id="terms"
+                type="checkbox"
+                required
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor="terms" className="font-medium text-gray-700 dark:text-gray-300">
+                I agree to the{' '}
+                <Link to="/terms" className="text-orange-600 hover:text-orange-500 hover:underline">Terms</Link>
+                {' '}and{' '}
+                <Link to="/privacy" className="text-orange-600 hover:text-orange-500 hover:underline">Privacy Policy</Link>
+              </label>
+            </div>
+          </div>
+
               <button
                 type="submit"
                 className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg"
@@ -143,14 +163,12 @@ export default function Register() {
               </button>
             </form>
 
-            {/* Divider */}
             <div className="my-8 flex items-center">
               <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
-              <span className="px-4 text-sm text-gray-500">or sign up with</span>
+              <span className="px-4 text-sm text-gray-500">or</span>
               <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
             </div>
 
-            {/* Social Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <a
                 href="/auth/google"
@@ -176,7 +194,6 @@ export default function Register() {
               </a>
             </div>
 
-            {/* Login Link */}
             <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <Link
@@ -187,14 +204,6 @@ export default function Register() {
               </Link>
             </p>
           </div>
-
-          {/* Legal note */}
-          <p className="mt-8 text-center text-xs text-gray-500 dark:text-gray-600">
-            By creating an account, you agree to our{' '}
-            <a href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-400">Terms</a>{' '}
-            and{' '}
-            <a href="/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-400">Privacy Policy</a>.
-          </p>
         </div>
       </div>
     </>

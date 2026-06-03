@@ -54,7 +54,9 @@ const UserRecipeDetail = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/recipes/user/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       if (res.ok) {
         toast.success('Recipe deleted');
@@ -76,18 +78,17 @@ const UserRecipeDetail = () => {
   if (!recipe) return null;
 
   const ingredients = typeof recipe.ingredients === 'string'
-    ? JSON.parse(recipe.ingredients)
-    : recipe.ingredients;
+    ? JSON.parse(recipe.ingredients || '[]')
+    : (recipe.ingredients || []);
 
   const instructions = typeof recipe.instructions === 'string'
-    ? JSON.parse(recipe.instructions)
-    : recipe.instructions;
+    ? JSON.parse(recipe.instructions || '[]')
+    : (recipe.instructions || []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-6 py-12">
 
-        {/* Hero Image */}
         <div className="relative rounded-3xl overflow-hidden mb-12 shadow-2xl">
           <img
             src={recipe.image || 'https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'}
@@ -117,7 +118,6 @@ const UserRecipeDetail = () => {
           </div>
         </div>
 
-        {/* Top Actions */}
         <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex flex-wrap items-center gap-4">
@@ -141,7 +141,6 @@ const UserRecipeDetail = () => {
               </div>
             </div>
 
-            {/* Bookmark Button */}
             <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-700 pl-6">
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Save to collection:</span>
               <BookmarkButton recipeId={recipe.id} />
@@ -198,7 +197,6 @@ const UserRecipeDetail = () => {
               </div>
             </div>
 
-            {/* Adjustable Servings */}
             <ServingsMultiplier 
               originalServings={recipe.servings || 1}
               ingredients={ingredients}
@@ -248,7 +246,7 @@ const UserRecipeDetail = () => {
                 <div>
                   <span className="text-gray-500">Last updated</span>
                   <p className="font-medium text-gray-900 dark:text-gray-200">
-                    {new Date(recipe.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {new Date(recipe.updated_at || recipe.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
               </div>
@@ -256,7 +254,6 @@ const UserRecipeDetail = () => {
           </div>
         </div>
 
-        {/* Reviews and Ratings Section */}
         <div className="mt-20">
           <ReviewsSection recipeId={id} />
         </div>

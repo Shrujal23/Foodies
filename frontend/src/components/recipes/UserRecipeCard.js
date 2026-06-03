@@ -32,6 +32,7 @@ export default function UserRecipeCard({ recipe }) {
           <img
             src={recipe.image || '/default-recipe.jpg'}
             alt={recipe.title}
+            loading="lazy"
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>

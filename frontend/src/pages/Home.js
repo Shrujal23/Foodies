@@ -137,8 +137,6 @@ export default function Home() {
       <section className="relative overflow-hidden pt-20 pb-32 bg-gradient-to-br from-orange-700 via-orange-600 to-orange-500">
         {/* Subtle overlay for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-orange-900/20 via-transparent to-transparent" />
-        {/* Subtle overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-orange-900/20 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-6 py-24 lg:py-32 relative z-10">
           <div className="text-center text-white max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-lg bg-white/20 font-bold mb-8">
@@ -194,7 +192,12 @@ export default function Home() {
                   className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-2 transition-all duration-300 block w-full h-full"
                 >
                   {recipe.image && (
-                    <img src={recipe.image} alt={recipe.title} className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img 
+                      src={recipe.image} 
+                      alt={recipe.title} 
+                      loading="lazy"
+                      className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-300" 
+                    />
                   )}
                   <div className="p-8">
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition line-clamp-2">
@@ -394,6 +397,7 @@ export default function Home() {
                     <img
                       src={recipe.image}
                       alt={recipe.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 px-3 py-1 rounded text-xs font-semibold">

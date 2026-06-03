@@ -24,6 +24,8 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import ForgotPassword from './pages/ForgotPassword';
 import Subscriptions from './pages/Subscriptions';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
 
@@ -51,6 +53,8 @@ function App() {
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
 
             </Routes>
           </main>

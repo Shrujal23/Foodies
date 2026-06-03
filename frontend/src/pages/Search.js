@@ -14,11 +14,13 @@ export default function Search() {
   const [error, setError] = useState(null);
   const [searchStats, setSearchStats] = useState({ userRecipes: 0, edamamRecipes: 0 });
   const [activeFilters, setActiveFilters] = useState({});
+  const [lastQuery, setLastQuery] = useState('');
 
   const handleSearch = async ({ query, filters = {} }) => {
     if (!query?.trim() && Object.keys(filters).length === 0) return;
 
     setActiveFilters(filters);
+    setLastQuery(query);
     setLoading(true);
     setError(null);
     setRecipes([]);
@@ -57,9 +59,8 @@ export default function Search() {
     delete newFilters[key];
     setActiveFilters(newFilters);
     
-    // Re-search with updated filters
     handleSearch({ 
-      query: document.querySelector('input[placeholder*="Search"]')?.value || '', 
+      query: lastQuery, 
       filters: newFilters 
     });
   };
@@ -74,10 +75,8 @@ export default function Search() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 pb-20">
       <div className="max-w-7xl mx-auto px-6">
 
-        {/* Breadcrumbs */}
         <Breadcrumbs />
 
-        {/* Header */}
         <div className="text-center mt-12 mb-16">
           <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
             Discover <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Desi Flavors</span>
@@ -87,12 +86,10 @@ export default function Search() {
           </p>
         </div>
 
-        {/* Search Bar */}
         <div className="mb-12">
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        {/* Active Filters */}
         {Object.keys(activeFilters).length > 0 && (
           <div className="mb-10">
             <FilterPills 
@@ -103,7 +100,6 @@ export default function Search() {
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="py-20">
             <div className="text-center mb-8">
@@ -116,7 +112,6 @@ export default function Search() {
           </div>
         )}
 
-        {/* Error State */}
         {error && !loading && (
           <EmptyState
             icon="🔍"
@@ -129,7 +124,6 @@ export default function Search() {
           />
         )}
 
-        {/* Results */}
         {!loading && !error && recipes.length > 0 && (
           <>
             <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -149,17 +143,12 @@ export default function Search() {
                 <RecipeCardEnhanced
                   key={recipe._id || recipe.uri || recipe.id}
                   recipe={recipe}
-                  onSave={(rec, saved) => {
-                    // You can add toast or state update here if needed
-                    console.log(saved ? 'Saved:' : 'Removed:', rec.title);
-                  }}
                 />
               ))}
             </div>
           </>
         )}
 
-        {/* Initial Empty State */}
         {!loading && !error && recipes.length === 0 && Object.keys(activeFilters).length === 0 && (
           <EmptyState
             icon="🍛"

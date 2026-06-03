@@ -51,7 +51,6 @@ export const getToken = () => {
 export const checkAuthStatus = async () => {
   const token = getToken();
   if (!token) {
-    console.log('No token found');
     setCurrentUser(null);
     return null;
   }
@@ -97,7 +96,6 @@ export const login = async (email, password) => {
     if (response.ok) {
       const data = await response.json();
       setCurrentUser(data.user, data.token);
-      toast.success('Successfully logged in!');
       return data.user;
     } else {
       const errorText = await response.text();
@@ -112,8 +110,6 @@ export const login = async (email, password) => {
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error('Login error:', error);
-    toast.error(error.message || 'Login failed. Please try again.');
     throw error;
   }
 };
@@ -131,8 +127,6 @@ export const register = async (userData) => {
 
     if (response.ok) {
       const data = await response.json();
-      // Don't set current user after registration
-      toast.success('Successfully registered!');
       return data;
     } else {
       const errorText = await response.text();
@@ -147,8 +141,6 @@ export const register = async (userData) => {
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error('Register error:', error);
-    toast.error(error.message || 'Registration failed. Please try again.');
     throw error;
   }
 };

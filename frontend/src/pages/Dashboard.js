@@ -1,11 +1,9 @@
-// src/pages/Dashboard.js
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FolderIcon,
   PlusIcon,
   LockClosedIcon,
-  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
@@ -87,7 +85,6 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-6">
 
         {!dashboardData?.isAuthenticated ? (
-          /* ==================== LOGIN PROMPT ==================== */
           <div className="max-w-md mx-auto mt-20">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
               <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-900 dark:to-pink-900 rounded-3xl flex items-center justify-center">
@@ -120,11 +117,9 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          /* ==================== AUTHENTICATED DASHBOARD ==================== */
           <div>
             <Breadcrumbs />
 
-            {/* Welcome Header */}
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl mb-6">
                 <span className="font-medium text-orange-600">Welcome back</span>
@@ -133,11 +128,10 @@ export default function Dashboard() {
                 Namaste, {user?.display_name || user?.username}!
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-400">
-                Here's what's happening in your kitchen
+                Ready to cook something amazing today?
               </p>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
               <AnimatedStatCard 
                 value={dashboardData?.totalFavorites || 0} 
@@ -161,7 +155,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Recent Favorites */}
             {dashboardData?.recentFavorites?.length > 0 && (
               <section className="mb-20">
                 <div className="flex items-center justify-between mb-8">
@@ -169,7 +162,7 @@ export default function Dashboard() {
                     Recently Saved
                   </h2>
                   <button
-                    onClick={() => navigate('/favorites')}
+                onClick={() => navigate('/collections')}
                     className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-2"
                   >
                     View All →
@@ -188,7 +181,6 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* Collections Section */}
             <section>
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Collections</h2>
@@ -206,7 +198,7 @@ export default function Dashboard() {
                   {dashboardData.collections.map((collection) => (
                     <div
                       key={collection.id}
-                      onClick={() => navigate(`/collections/${collection.id}`)}
+                  onClick={() => navigate('/collections')}
                       className="group bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-4 mb-6">

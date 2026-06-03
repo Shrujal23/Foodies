@@ -14,7 +14,10 @@ export default function SearchBar({ onSearch }) {
     sortBy: 'relevance',
   });
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'sortBy' && value === 'relevance') return false;
+    return Boolean(value);
+  }).length;
 
   const handleSubmit = (e) => {
     e.preventDefault();

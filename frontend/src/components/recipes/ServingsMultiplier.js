@@ -93,7 +93,7 @@ const AdjustableServings = ({ originalServings = 1, ingredients = [], onMultipli
           <div className="space-y-2 text-sm">
             {ingredients.slice(0, 5).map((ingredient, idx) => (
               <div key={idx} className="text-gray-700 dark:text-gray-300">
-                {adjustQuantity(ingredient, multiplier)} {ingredient.split(' ').slice(1).join(' ')}
+                {adjustQuantity(ingredient, multiplier)}
               </div>
             ))}
             {ingredients.length > 5 && (

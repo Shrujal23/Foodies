@@ -26,32 +26,25 @@ const ReviewsSection = ({ recipeId }) => {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API_BASE_URL}/recipes/${recipeId}/reviews?page=${page}&limit=10&sort=${sortBy}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data.reviews);
-        setStats(data.stats);
-        setTotalPages(data.pagination.pages);
-      }
+      const [reviewsRes, breakdownRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews?page=${page}&limit=10&sort=${sortBy}`),
+        fetch(`${API_BASE_URL}/recipes/${recipeId}/rating-breakdown`)
+      ]);
 
-      // Also fetch rating breakdown
-      try {
-        const breakdownRes = await fetch(`${API_BASE_URL}/recipes/${recipeId}/rating-breakdown`);
-        if (breakdownRes.ok) {
-          const breakdown = await breakdownRes.json();
-          setStats(prev => ({
-            ...prev,
-            1: breakdown[1] || 0,
-            2: breakdown[2] || 0,
-            3: breakdown[3] || 0,
-            4: breakdown[4] || 0,
-            5: breakdown[5] || 0
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to fetch rating breakdown:', error);
+      if (reviewsRes.ok) {
+        const data = await reviewsRes.json();
+        const breakdown = breakdownRes.ok ? await breakdownRes.json() : {};
+        
+        setReviews(data.reviews);
+        setTotalPages(data.pagination.pages);
+        setStats({
+          ...data.stats,
+          1: breakdown[1] || 0,
+          2: breakdown[2] || 0,
+          3: breakdown[3] || 0,
+          4: breakdown[4] || 0,
+          5: breakdown[5] || 0
+        });
       }
     } catch (error) {
       console.error('Failed to fetch reviews:', error);
@@ -77,8 +70,6 @@ const ReviewsSection = ({ recipeId }) => {
         return;
       }
 
-      console.log('Submitting review:', { recipeId, formData });
-
       const res = await fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews`, {
         method: 'POST',
         headers: {
@@ -88,23 +79,22 @@ const ReviewsSection = ({ recipeId }) => {
         body: JSON.stringify(formData)
       });
 
-      console.log('Review submission response status:', res.status);
-
       if (res.ok) {
-        const data = await res.json();
-        console.log('Review submission success:', data);
         toast.success('Review submitted successfully!');
         setFormData({ rating: 5, title: '', comment: '' });
         setShowForm(false);
-        setPage(1);
-        fetchReviews();
+        
+        // If already on page 1, manually fetch to refresh. Otherwise, changing the page automatically triggers the fetch.
+        if (page === 1) {
+          fetchReviews();
+        } else {
+          setPage(1);
+        }
       } else {
         const error = await res.json();
-        console.error('Review submission error:', error);
         toast.error(error.error || 'Failed to submit review');
       }
     } catch (error) {
-      console.error('Error submitting review:', error);
       toast.error('Failed to submit review: ' + error.message);
     } finally {
       setSubmitLoading(false);

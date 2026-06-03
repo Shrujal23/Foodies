@@ -190,13 +190,13 @@ const AdminCollections = () => {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="text-3xl font-bold text-blue-600">
-              {collections.reduce((sum, c) => sum + (c.item_count || 0), 0)}
+              {collections.reduce((sum, c) => sum + (Number(c.item_count) || 0), 0)}
             </div>
             <div className="text-gray-600 dark:text-gray-400 text-sm mt-1">Total Items</div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="text-3xl font-bold text-green-600">
-              {collections.length > 0 ? Math.round(collections.reduce((sum, c) => sum + (c.item_count || 0), 0) / collections.length) : 0}
+              {collections.length > 0 ? Math.round(collections.reduce((sum, c) => sum + (Number(c.item_count) || 0), 0) / collections.length) : 0}
             </div>
             <div className="text-gray-600 dark:text-gray-400 text-sm mt-1">Avg Items per Collection</div>
           </div>
