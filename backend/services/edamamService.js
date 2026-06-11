@@ -3,22 +3,24 @@ const axios = require('axios');
 class EdamamService {
   constructor() {
     this.baseURL = 'https://api.edamam.com/api/recipes/v2';
-    this.appId = process.env.EDAMAM_APP_ID;
-    this.appKey = process.env.EDAMAM_APP_KEY;
   }
 
   async searchRecipes(query, options = {}) {
     try {
-      if (!this.appId || !this.appKey) {
-        throw new Error('Edamam API credentials are missing');
+      // Pulling it dynamically to ensure dotenv has loaded them by the time a user clicks search
+      const appId = process.env.EDAMAM_APP_ID;
+      const appKey = process.env.EDAMAM_APP_KEY;
+
+      if (!appId || !appKey) {
+        throw new Error('Edamam API credentials are missing. Check your .env configuration.');
       }
 
       const params = {
         type: 'public',
         q: query,
-        app_id: this.appId,
-        app_key: this.appKey,
-        random: true,                   
+        app_id: appId,
+        app_key: appKey,
+        random: true,                  
         field: [
           'uri', 'label', 'image', 'source', 'url', 'ingredientLines',
           'ingredients', 'calories', 'totalTime', 'cuisineType',
@@ -27,16 +29,18 @@ class EdamamService {
         ...options
       };
 
-      // Strong Indian cuisine bias (since app is Indian-focused)
       if (!options.cuisineType) {
         params.cuisineType = 'indian';
       }
 
-      console.log(`🔍 Searching Edamam for: "${query}" with cuisine=indian`);
+      console.log(`Searching Edamam for: "${query}" with cuisine=indian`);
 
       const response = await axios.get(this.baseURL, {
         params,
         timeout: 12000,
+        paramsSerializer: {
+          indexes: null 
+        },
         headers: {
           'User-Agent': 'Foodies-App/1.0',
           'Accept': 'application/json',
@@ -44,9 +48,7 @@ class EdamamService {
       });
 
       const result = this.formatRecipes(response.data);
-
       console.log(`Edamam returned ${result.recipes.length} recipes for "${query}"`);
-
       return result;
 
     } catch (error) {
@@ -66,11 +68,14 @@ class EdamamService {
 
   async getRecipeById(id) {
     try {
+      const appId = process.env.EDAMAM_APP_ID;
+      const appKey = process.env.EDAMAM_APP_KEY;
+
       const response = await axios.get(`${this.baseURL}/${id}`, {
         params: {
           type: 'public',
-          app_id: this.appId,
-          app_key: this.appKey
+          app_id: appId,
+          app_key: appKey
         },
         headers: {
           'User-Agent': 'Foodies-App/1.0',
@@ -100,7 +105,7 @@ class EdamamService {
   formatRecipe(recipe) {
     return {
       uri: recipe.uri,
-      _id: recipe.uri.split('#')[1] || recipe.uri, // Extract ID
+      _id: recipe.uri.split('#')[1] || recipe.uri, 
       label: recipe.label,
       image: recipe.image,
       source: recipe.source,

@@ -23,3 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .env
+
+# AI Chatbot (not committing yet)
+src/services/FloatingAIChatbot.js
+src/components/FloatingAIChatbot.js
