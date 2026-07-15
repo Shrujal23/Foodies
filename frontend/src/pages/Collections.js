@@ -17,11 +17,19 @@ const Collections = () => {
     if (user) {
       fetchCollections();
     }
+
+    // When another component updates favorites, refresh collections
+    const handler = () => {
+      if (user) fetchCollections();
+    };
+
+    window.addEventListener('favorites:updated', handler);
+    return () => window.removeEventListener('favorites:updated', handler);
   }, [user]);
 
   const fetchCollections = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/collections`, {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/collections`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -43,7 +51,15 @@ const Collections = () => {
 
   const loadCollectionRecipes = async (collectionId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/collections/${collectionId}`, {
+      const token = localStorage.getItem('token');
+      const collectionMeta = collections.find(c => c.id === collectionId);
+      // If the collection is private and we don't have a token, avoid calling protected endpoint
+      if (collectionMeta && !collectionMeta.isPublic && !token) {
+        toast('Sign in to view private collections');
+        setRecipes([]);
+        return;
+      }
+      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -67,7 +83,7 @@ const Collections = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/collections`, {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/collections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +111,7 @@ const Collections = () => {
     if (!window.confirm('Delete this collection?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/collections/${collectionId}`, {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -122,7 +138,7 @@ const Collections = () => {
 
   const handleRemoveRecipe = async (collectionId, itemId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/collections/${collectionId}/items/${itemId}`, {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}/items/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

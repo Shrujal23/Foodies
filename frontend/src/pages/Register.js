@@ -48,7 +48,7 @@ export default function Register() {
       toast.success('Account created successfully!', { id: 'register' });
       setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
-      toast.error('Something went wrong. Try again.', { id: 'register' });
+      toast.error(error.message || 'Something went wrong. Try again.', { id: 'register' });
     }
   };
 

@@ -63,7 +63,7 @@ export default function SaveButton({ recipe }) {
         ? `${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipeId)}`
         : `${API_BASE_URL}/recipes/favorites`;
 
-      // Normalize payload to prevent backend crashes on user-created recipes
+      // Normalizes the payload to prevent backend crashes on user-created recipes
       const payload = {
         ...recipe,
         uri: recipeId,
@@ -84,6 +84,13 @@ export default function SaveButton({ recipe }) {
 
       setIsSaved(!isSaved);
       toast.success(isSaved ? 'Removed from favorites' : 'Saved to favorites');
+
+      // Notifies the other parts of the app that favorites/collections changed
+      try {
+        window.dispatchEvent(new Event('favorites:updated'));
+      } catch (evErr) {
+        // ignore
+      }
     } catch (err) {
       toast.error('Something went wrong');
     } finally {

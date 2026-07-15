@@ -17,7 +17,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-// ====================== MIDDLEWARE ======================
+// Middleware stack is:  logging, CORS, parsing, and rate limits
 app.use(requestLogger);
 
 app.use(cors({
@@ -50,7 +50,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ====================== ROUTES ======================
+// Routes — mount feature modules here
 const authRoutes = require('./routes/auth');
 const recipesRoutes = require('./routes/recipes');
 const userRoutes = require('./routes/users');
@@ -58,7 +58,7 @@ const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
 const bookmarkRoutes = require('./routes/bookmarks');
 
-// Apply stricter rate limiting
+// Apply stricter rate limits to sensitive endpoints
 app.use('/api/auth/login', strictLimiter);
 app.use('/api/auth/register', strictLimiter);
 app.use('/api/recipes/search', searchLimiter);
@@ -77,8 +77,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ====================== ERROR HANDLING ======================
-// 404 Handler
+// Error handling — 404s and the global error handler (registered last)
 app.use((req, res) => {
   res.status(404).json({
     success: false,

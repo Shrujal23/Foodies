@@ -8,14 +8,22 @@ const { body, param, query, validationResult } = require('express-validator');
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const formattedErrors = errors.array().map(err => ({
+      field: err.param,
+      message: err.msg
+    }));
+
+    console.warn('Validation failed:', {
+      path: req.path,
+      method: req.method,
+      errors: formattedErrors
+    });
+
     return res.status(400).json({
       success: false,
       statusCode: 400,
       message: 'Validation failed',
-      errors: errors.array().map(err => ({
-        field: err.param,
-        message: err.msg
-      }))
+      errors: formattedErrors
     });
   }
   next();
@@ -93,23 +101,29 @@ const validateComment = [
 const validateLogin = [
   body('email')
     .trim()
-    .isEmail().withMessage('Invalid email format'),
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Invalid email format')
+    .normalizeEmail(),
   body('password')
-    .isLength({ min: 1 }).withMessage('Password is required'),
+    .notEmpty().withMessage('Password is required'),
   handleValidationErrors
 ];
 
 const validateRegister = [
-  body('email')
-    .trim()
-    .isEmail().withMessage('Invalid email format'),
-  body('password')
-    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase, and numbers'),
   body('username')
     .trim()
+    .notEmpty().withMessage('Username is required')
     .isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 characters')
-    .matches(/^[a-zA-Z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores and hyphens'),
+    .matches(/^[a-zA-Z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores, and hyphens'),
+  body('email')
+    .trim()
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Invalid email format')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty().withMessage('Password is required')
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase, and a number'),
   handleValidationErrors
 ];
 

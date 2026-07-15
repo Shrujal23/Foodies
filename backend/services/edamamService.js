@@ -7,7 +7,7 @@ class EdamamService {
 
   async searchRecipes(query, options = {}) {
     try {
-      // Pulling it dynamically to ensure dotenv has loaded them by the time a user clicks search
+      // Read credentials at request time so dotenv has a chance to initialize
       const appId = process.env.EDAMAM_APP_ID;
       const appKey = process.env.EDAMAM_APP_KEY;
 

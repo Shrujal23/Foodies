@@ -1,12 +1,13 @@
 /**
- * Request logging middleware
- * Logs all incoming requests with timing and response status
+ * Simple request logger
+ * Records each request with timing, status and (optionally) response data.
+ * Useful for debugging locally and shipping logs in production.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Ensure logs directory exists
+// make sure the logs folder exists so we can append daily logs
 const logsDir = path.join(__dirname, '../logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });

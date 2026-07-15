@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FolderIcon,
-  PlusIcon,
-  LockClosedIcon,
-} from '@heroicons/react/24/outline';
+import { LockClosedIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
@@ -162,7 +158,7 @@ export default function Dashboard() {
                     Recently Saved
                   </h2>
                   <button
-                onClick={() => navigate('/collections')}
+                    onClick={() => navigate('/collections')}
                     className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-2"
                   >
                     View All →
@@ -180,58 +176,6 @@ export default function Dashboard() {
                 </div>
               </section>
             )}
-
-            <section>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Collections</h2>
-                <button 
-                  onClick={() => toast.info('Collection creation coming soon!')}
-                  className="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-2xl hover:brightness-110 transition-all"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  New Collection
-                </button>
-              </div>
-
-              {dashboardData?.collections?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {dashboardData.collections.map((collection) => (
-                    <div
-                      key={collection.id}
-                  onClick={() => navigate('/collections')}
-                      className="group bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                          <FolderIcon className="w-9 h-9 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{collection.name}</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {collection.recipe_count} recipes
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
-                        {collection.description || "A beautiful collection of homemade recipes."}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No Collections Yet"
-                  description="Organize your favorite recipes into collections"
-                  actions={[
-                    { 
-                      label: 'Create First Collection', 
-                      onClick: () => toast.info('This feature is coming soon!'), 
-                      primary: true 
-                    }
-                  ]}
-                />
-              )}
-            </section>
           </div>
         )}
       </div>

@@ -100,10 +100,13 @@ export const login = async (email, password) => {
     } else {
       const errorText = await response.text();
       console.error('Login response:', errorText);
-      let errorMessage = 'Login failed';
+      let errorMessage = 'Login failed. Please check your email and password.';
       try {
         const error = JSON.parse(errorText);
-        errorMessage = error.message || errorMessage;
+        if (error.message) errorMessage = error.message;
+        if (Array.isArray(error.errors) && error.errors.length > 0) {
+          errorMessage = error.errors.map(err => err.message).join(' ');
+        }
       } catch (e) {
         errorMessage = errorText || errorMessage;
       }
@@ -131,10 +134,13 @@ export const register = async (userData) => {
     } else {
       const errorText = await response.text();
       console.error('Register response:', errorText);
-      let errorMessage = 'Registration failed';
+      let errorMessage = 'Registration failed. Please check your information.';
       try {
         const error = JSON.parse(errorText);
-        errorMessage = error.message || errorMessage;
+        if (error.message) errorMessage = error.message;
+        if (Array.isArray(error.errors) && error.errors.length > 0) {
+          errorMessage = error.errors.map(err => err.message).join(' ');
+        }
       } catch (e) {
         errorMessage = errorText || errorMessage;
       }

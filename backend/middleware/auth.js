@@ -26,7 +26,7 @@ async function isAuthenticated(req, res, next) {
       });
     }
 
-    // Remove sensitive data
+    // strip password and other sensitive fields before attaching user to request
     const { password_hash, ...userWithoutPassword } = user;
     req.user = userWithoutPassword;
     next();
@@ -41,7 +41,7 @@ async function isAuthenticated(req, res, next) {
       });
     }
 
-    // Fallback for generic token errors (prevents hanging requests)
+    // If token is invalid, respond 401 so the client can re-authenticate
     return res.status(401).json({
       success: false,
       statusCode: 401,

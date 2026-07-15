@@ -1,7 +1,10 @@
 const edamamService = require('../services/edamamService');
 const { pool } = require('../db/database');
 
-/* ====================== SEARCH RECIPES ====================== */
+/*
+  Search recipes — handles both user-created recipes and Edamam results.
+  Keeps the interface simple so the frontend can aggregate both sources.
+*/
 async function searchRecipes(req, res, next) {
   try {
     const { 
@@ -99,7 +102,9 @@ async function searchRecipes(req, res, next) {
   }
 }
 
-/* ====================== FEATURED RECIPES ====================== */
+/*
+  Featured recipes — return a short list of recent user recipes for the UI.
+*/
 async function getFeaturedRecipes(req, res) {
   try {
     const safeLimit = Math.min(parseInt(req.query.limit, 10) || 8, 20);
@@ -126,7 +131,9 @@ async function getFeaturedRecipes(req, res) {
   }
 }
 
-/* ====================== GET SINGLE RECIPE ====================== */
+/*
+  Get a single recipe by ID — currently proxies to Edamam for external recipes.
+*/
 async function getRecipeById(req, res, next) {
   try {
     const { id } = req.params;
@@ -138,7 +145,9 @@ async function getRecipeById(req, res, next) {
   }
 }
 
-/* ====================== FAVORITES ====================== */
+/*
+  Favorites endpoints — list, add, remove, and check favorite status for a user.
+*/
 async function getFavoriteRecipes(req, res) {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
 
@@ -161,6 +170,21 @@ async function addToFavorites(req, res) {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
 
   const { recipe } = req.body;
+  if (!recipe || typeof recipe !== 'object') {
+    return res.status(400).json({ error: 'Recipe payload is required' });
+  }
+
+  // Normalize incoming recipe fields to avoid DB constraint failures
+  const recipeId = recipe.uri || recipe.recipeId || recipe._id || recipe.id;
+  const label = recipe.label || recipe.title || 'Untitled Recipe';
+  const image = recipe.image || null;
+  const source = recipe.source || 'user';
+  const url = recipe.url || null;
+
+  if (!recipeId) {
+    return res.status(400).json({ error: 'Recipe identifier is required' });
+  }
+
   const connection = await pool.getConnection();
 
   try {
@@ -168,14 +192,14 @@ async function addToFavorites(req, res) {
 
     const [existing] = await connection.execute(
       'SELECT recipe_id FROM recipes WHERE recipe_id = ?',
-      [recipe.uri]
+      [recipeId]
     );
 
     if (existing.length === 0) {
       await connection.execute(
         `INSERT INTO recipes (recipe_id, label, image, source, url)
          VALUES (?, ?, ?, ?, ?)`,
-        [recipe.uri, recipe.label, recipe.image, recipe.source, recipe.url]
+        [recipeId, label, image, source, url]
       );
     }
 
@@ -183,8 +207,49 @@ async function addToFavorites(req, res) {
       `INSERT INTO user_favorites (user_id, recipe_id)
        VALUES (?, ?)
        ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP`,
-      [req.user.id, recipe.uri]
+      [req.user.id, recipeId]
     );
+
+    // Also add to a per-user "Favorites" collection so saved recipes appear in Collections view.
+    try {
+      // Find or create a Favorites collection for this user
+      const [favRows] = await connection.execute(
+        'SELECT id FROM collections WHERE user_id = ? AND name = ? LIMIT 1',
+        [req.user.id, 'Favorites']
+      );
+
+      let favoritesCollectionId;
+      if (favRows.length > 0) {
+        favoritesCollectionId = favRows[0].id;
+      } else {
+        const [insertCol] = await connection.execute(
+          'INSERT INTO collections (user_id, name, description) VALUES (?, ?, ?)',
+          [req.user.id, 'Favorites', 'Automatically created favorites collection']
+        );
+        favoritesCollectionId = insertCol.insertId;
+      }
+
+      // Insert into the mapping table used by the app: collection_items
+      if (source === 'user') {
+        const userRecipeId = parseInt(recipeId, 10);
+        if (!Number.isNaN(userRecipeId)) {
+          await connection.execute(
+            `INSERT IGNORE INTO collection_items (collection_id, recipe_id, recipe_type, external_recipe_id)
+             VALUES (?, ?, ?, NULL)`,
+            [favoritesCollectionId, userRecipeId, 'user']
+          );
+        }
+      } else {
+        await connection.execute(
+          `INSERT IGNORE INTO collection_items (collection_id, recipe_id, recipe_type, external_recipe_id)
+           VALUES (?, NULL, ?, ?)`,
+          [favoritesCollectionId, 'external', recipeId]
+        );
+      }
+    } catch (err) {
+      // non-fatal: log and continue — favorites should still succeed
+      console.error('Warning: failed to add favorite into Favorites collection', err.message || err);
+    }
 
     await connection.commit();
     res.json({ message: 'Recipe added to favorites' });
@@ -229,7 +294,9 @@ async function checkFavoriteStatus(req, res) {
   }
 }
 
-/* ====================== USER RECIPES CRUD ====================== */
+/*
+  User recipe CRUD — create, read, update, delete user-submitted recipes.
+*/
 
 async function createUserRecipe(req, res, next) {
   if (!req.user) return res.status(401).json({ success: false, message: 'Authentication required' });

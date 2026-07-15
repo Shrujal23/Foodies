@@ -8,16 +8,29 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper to safely sync state and update local browser storage cache
+  const updateUserState = (userData) => {
+    setUser(userData);
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+  };
+
   useEffect(() => {
+    // 1. Grab initial snapshot cache to render UI immediately
     const existing = getStoredUser();
     if (existing) {
       setUser(existing);
     }
     
+    // 2. Instantly verify live database permissions/roles over the network
     checkAuthStatus();
     
+    // 3. Listen to auth state shifts (Login/Logout triggers)
     const unsubscribe = onAuthStateChanged((nextUser) => {
-      setUser(nextUser);
+      updateUserState(nextUser);
     });
     
     return () => {
@@ -29,7 +42,7 @@ export function AuthProvider({ children }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setUser(null);
+        updateUserState(null);
         setLoading(false);
         return;
       }
@@ -43,15 +56,16 @@ export function AuthProvider({ children }) {
       const data = await response.json();
       
       if (data && data.user) {
-        setUser(data.user);
+        // 🌟 SUCCESS: Overwrite state with fresh backend model data containing your database 'role'
+        updateUserState(data.user);
       } else {
         const existingUser = getStoredUser();
-        setUser(existingUser || null);
+        updateUserState(existingUser || null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       const existingUser = getStoredUser();
-      setUser(existingUser || null);
+      updateUserState(existingUser || null);
     } finally {
       setLoading(false);
     }

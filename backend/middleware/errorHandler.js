@@ -1,6 +1,6 @@
 /**
- * Centralized Error Handling Middleware
- * Should be registered as the LAST middleware in server.js
+ * Central error handler — converts thrown errors into friendly JSON responses.
+ * Register this last in server.js so it sees all errors from previous middleware/routes.
  */
 
 class AppError extends Error {
@@ -8,7 +8,7 @@ class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.errorCode = errorCode;
-    this.isOperational = true; // Errors we can predict and handle
+    this.isOperational = true; // mark predictable/operational errors so we can handle them cleanly
     Error.captureStackTrace(this, this.constructor);
   }
 }

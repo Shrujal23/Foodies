@@ -1,26 +1,37 @@
 const { pool } = require('../db/database');
 
-// Get all collections for a user
 async function getUserCollections(req, res) {
   try {
-    const userId = req.user.id;
-    const [collections] = await pool.execute(
-      'SELECT * FROM collections WHERE user_id = ? ORDER BY created_at DESC',
-      [userId]
-    );
-    
-    // Get item counts for each collection
-    for (let collection of collections) {
-      const [[{ count }]] = await pool.execute(
-        'SELECT COUNT(*) as count FROM collection_items WHERE collection_id = ?',
-        [collection.id]
-      );
-      collection.itemCount = count;
-    }
+    const uid = req.user?.id;
+    if (!uid) return res.status(401).json({ error: 'Authentication required' });
 
-    res.json(collections);
-  } catch (error) {
-    console.error('Get Collections Error:', error);
+    console.debug(`getUserCollections called by userId=${uid}`);
+
+    const [rows] = await pool.execute(
+      `SELECT c.id, c.user_id, c.name, c.description, c.is_public, c.created_at, c.updated_at,
+       COALESCE(COUNT(ci.id), 0) AS item_count
+       FROM collections c
+       LEFT JOIN collection_items ci ON ci.collection_id = c.id
+       WHERE c.user_id = ?
+       GROUP BY c.id
+       ORDER BY c.created_at DESC`,
+      [uid]
+    );
+
+    const result = rows.map(r => ({
+      id: r.id,
+      userId: r.user_id,
+      name: r.name,
+      description: r.description,
+      isPublic: Boolean(r.is_public),
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      itemCount: Number(r.item_count || 0)
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error('Get Collections Error:', err);
     res.status(500).json({ error: 'Failed to fetch collections' });
   }
 }
@@ -145,7 +156,7 @@ async function removeFromCollection(req, res) {
   }
 }
 
-// Get collection details with recipes
+// Gets the collection details with recipes
 async function getCollectionDetails(req, res) {
   try {
     const { collectionId } = req.params;
@@ -160,13 +171,17 @@ async function getCollectionDetails(req, res) {
       return res.status(404).json({ error: 'Collection not found' });
     }
 
+    // Debug: log owner vs requester
+    console.debug(`getCollectionDetails: collectionId=${collectionId} owner=${collection.user_id} requester=${userId} is_public=${collection.is_public}`);
+
     // Check if user has access
     if (collection.user_id !== userId && !collection.is_public) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
     const [items] = await pool.execute(
-      `SELECT ci.*, ur.title, ur.image, ur.difficulty, ur.prep_time, ur.cook_time, ur.servings
+      `SELECT ci.id, ci.collection_id, ci.recipe_id, ci.recipe_type, ci.external_recipe_id, ci.added_at,
+       ur.title, ur.image, ur.difficulty, ur.prep_time, ur.cook_time, ur.servings
        FROM collection_items ci
        LEFT JOIN user_recipes ur ON ci.recipe_id = ur.id
        WHERE ci.collection_id = ?
@@ -174,7 +189,18 @@ async function getCollectionDetails(req, res) {
       [collectionId]
     );
 
-    res.json({ collection, items });
+    const collectionOut = {
+      id: collection.id,
+      userId: collection.user_id,
+      name: collection.name,
+      description: collection.description,
+      isPublic: Boolean(collection.is_public),
+      createdAt: collection.created_at,
+      updatedAt: collection.updated_at,
+      itemCount: items.length
+    };
+
+    res.json({ collection: collectionOut, items });
   } catch (error) {
     console.error('Get Collection Details Error:', error);
     res.status(500).json({ error: 'Failed to fetch collection' });

@@ -9,11 +9,11 @@ const {
 } = require('../controllers/reviewController');
 const isAuthenticated = require('../middleware/auth');
 
-// Public routes
+// Public endpoints (no auth required)
 router.get('/:recipeId/reviews', getRecipeReviews);
 router.get('/:recipeId/rating-breakdown', getRatingBreakdown);
 
-// Protected routes
+// Authenticated endpoints (user must be signed in)
 router.post('/:recipeId/reviews', isAuthenticated, createOrUpdateReview);
 router.delete('/:recipeId/reviews/:reviewId', isAuthenticated, deleteReview);
 router.post('/:recipeId/reviews/:reviewId/helpful', markReviewHelpful);

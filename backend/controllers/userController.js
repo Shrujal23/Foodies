@@ -7,26 +7,28 @@ async function getUserDashboard(req, res) {
       return res.json({
         success: true,
         isAuthenticated: false,
+        role: 'user', // Default fallback role
         message: "Please log in to view your dashboard"
       });
     }
-    
 
     const stats = await userService.getUserStats(req.user.id);
 
     return res.json({
       success: true,
       isAuthenticated: true,
+      role: req.user.role || 'user', // Explicitly expose user role (e.g., 'admin' or 'user')
       ...stats
     });
   } catch (error) {
     console.error('Dashboard Error:', error);
-    // Always return safe defaults on error
+    // Always return safe defaults on error to prevent frontend UI crashes
     return res.json({
       success: true,
       isAuthenticated: false,
+      role: 'user',
       message: "Failed to load dashboard",
-      totalFavorites:0,
+      totalFavorites: 0,
       recentFavorites: [],
       recentActivity: [],
       collections: [],

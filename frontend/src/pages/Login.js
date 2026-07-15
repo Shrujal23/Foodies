@@ -17,7 +17,7 @@ export default function Login() {
       toast.success('Welcome back!', { id: 'login' });
       setTimeout(() => navigate('/'), 800);
     } catch (error) {
-      toast.error('Invalid email or password', { id: 'login' });
+      toast.error(error.message || 'Invalid email or password', { id: 'login' });
     }
   };
 
