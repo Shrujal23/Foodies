@@ -33,7 +33,8 @@ app.use(requestLogger);
 
 const allowedOrigins = [
     "http://localhost:5173",
-    "https://foodies-dusky-sigma.vercel.app"
+    "https://foodies-dusky-sigma.vercel.app",
+    "https://foodies-o39vn46h3-shrujal23s-projects.vercel.app"
 ];
 
 
