@@ -8,8 +8,14 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 A full-stack web application built for food enthusiasts to discover, share, and manage recipes. Developed with a modern React frontend and a robust Node.js/Express backend, Foodies allows users to securely create accounts, upload personal recipes, explore community creations, save favorites, and engage through a unified reviews and ratings system.
+Foodies also includes **Foody**, an AI-powered cooking assistant built with the Groq API. Users can ask for recipes, ingredient substitutions, cooking techniques, meal planning suggestions, and nutrition-focused recommendations through a conversational chat interface.
 
 ## Key Features
+
+### AI-Powered Cooking Assistant
+- **Conversational AI:** Get instant recipe recommendations, cooking tips, and ingredient substitutions from "Foody," an integrated AI chatbot.
+- **Powered by Groq:** Utilizes the high-performance Groq API and an open-source model for fast, relevant responses.
+- **Secure Backend Integration:** All AI communication is proxied through the Express backend, ensuring API keys are never exposed on the client-side.
 
 ### Security & Authentication
 - **Robust Auth:** JWT-based authentication for secure, stateless sessions.
@@ -43,6 +49,13 @@ A full-stack web application built for food enthusiasts to discover, share, and 
 - **React Hot Toast** - Notification system
 - **Heroicons** - Icon library
 - **Headless UI** - Accessible UI components
+
+### AI Integration
+
+- **Groq API** – AI inference provider
+- **GPT-OSS-20B** – Open-weight language model for conversational recipe assistance
+- **groq-sdk** – Official JavaScript SDK
+
 
 ### Backend
 - **Node.js** with **Express.js** - Server framework
@@ -90,6 +103,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 SESSION_SECRET=your_session_secret
+GROQ_API_KEY=your_groq_api_key
 ```
 
 ### 3. Database Setup
@@ -162,9 +176,11 @@ The application will be available at:
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `GET /api/auth/logout` - User logout
-- `GET /api/auth/google` - Google OAuth
-- `GET /api/auth/github` - GitHub OAuth
 - `GET /api/auth/me` - Get current user info
+
+### AI Assistant
+
+- `POST /api/chat` - Generate AI-powered cooking responses using Groq
 
 ### Recipes
 - `GET /api/recipes` - Get all public recipes
