@@ -28,7 +28,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import Subscriptions from './pages/Subscriptions';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import AdminDashboard from './pages/AdminDashboard'; // Imported perfectly!
+import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminRoute from './components/common/AdminRoute';
 
 function App() {
   return (
@@ -50,10 +52,11 @@ function App() {
                 <Route path="/my-recipes" element={<MyRecipes />} />
                 <Route path="/recipes/user/:id" element={<UserRecipeDetail />} />
                 <Route path="/collections" element={<Collections />} />
+                <Route path="/profile" element={<Profile />} />
                 
                 {/*Unified Admin Section */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/collections" element={<AdminCollections />} />
+                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                <Route path="/admin/collections" element={<AdminRoute><AdminCollections /></AdminRoute>} />
                 
                 {/* Standard Public Pages */}
                 <Route path="/about" element={<AboutUs />} />

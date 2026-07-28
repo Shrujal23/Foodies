@@ -6,6 +6,7 @@ const session = require('express-session');
 const passport = require('./config/passport');
 const swaggerUi = require('swagger-ui-express');
 const swaggerConfig = require('./swaggerConfig');
+const chatRoutes = require('./routes/ai_routes');
 
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerSpec = swaggerJsdoc(swaggerConfig);
@@ -54,6 +55,7 @@ app.use(passport.session());
 const authRoutes = require('./routes/auth');
 const recipesRoutes = require('./routes/recipes');
 const userRoutes = require('./routes/users');
+const userProfileRoutes = require('./routes/userProfile');
 const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
 const bookmarkRoutes = require('./routes/bookmarks');
@@ -68,8 +70,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/recipes', reviewRoutes);
 app.use('/api/recipes', recipesRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/users', userProfileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Swagger Docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

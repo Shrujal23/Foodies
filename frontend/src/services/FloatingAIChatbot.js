@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { 
+import {
   XMarkIcon,
   ChatBubbleLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
@@ -8,7 +8,7 @@ const INITIAL_MESSAGES = [
   {
     id: 1,
     type: 'bot',
-    content: "Hey, I'm Foody. Need a recipe idea or a quick cooking tip?",
+    content: "Hey, I'm Foody. Ask me anything about recipes, cooking, or food!",
     timestamp: 'Just now'
   }
 ];
@@ -19,187 +19,90 @@ export default function FloatingAIChatbot() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
 
+  // Auto-scroll to the latest message
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
 
+  const closeChat = useCallback(() => {
+    setIsOpen(false);
+    // Reset state on close
+    setMessages(INITIAL_MESSAGES);
+    setInput('');
+    setIsTyping(false);
+  }, []);
+
   // Close on Escape and focus the input when opening the chat
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-        setMessages(INITIAL_MESSAGES);
-        setInput('');
-        setIsTyping(false);
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        closeChat();
       }
     };
+
     if (isOpen) {
       document.addEventListener('keydown', onKey);
+      // Focus input on open
       const inputEl = document.querySelector('#foody-chat-input');
       if (inputEl) inputEl.focus();
     }
+
     return () => document.removeEventListener('keydown', onKey);
-  }, [isOpen]);
-
-  // Local canned responses (fallback when external API doesn't return a match)
-  const getLocalResponse = (query) => {
-    const q = query.toLowerCase();
-
-    if (q.includes('vegan') || q.includes('substitute')) {
-      return {
-        content: 'Here are some useful vegan substitutions:',
-        tips: [
-          'Egg → 1 tbsp flaxseed + 3 tbsp water',
-          'Milk → Almond or oat milk',
-          'Butter → Coconut oil',
-          'Cheese → Nutritional yeast'
-        ]
-      };
-    }
-
-    if (q.includes('quick') || q.includes('30') || q.includes('fast')) {
-      return {
-        content: 'Try this quick dinner idea:',
-        recipe: {
-          title: 'Garlic Butter Shrimp Pasta',
-          cuisine: 'Italian',
-          time: '25 min',
-          difficulty: 'Easy',
-          ingredients: 'Pasta, shrimp, garlic, butter',
-          instructions: 'Boil pasta → Sauté shrimp in garlic butter → Combine.'
-        }
-      };
-    }
-
-    return null;
-  };
-
-  // Query TheMealDB (free, no API key) for recipe matches. Falls back to random meal when no match.
-  const fetchMealDB = async (query) => {
-    try {
-      const base = 'https://www.themealdb.com/api/json/v1/1';
-      const searchUrl = `${base}/search.php?s=${encodeURIComponent(query)}`;
-      const res = await fetch(searchUrl);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data && data.meals) {
-        const meal = data.meals[0];
-        // build ingredients list
-        const ingredients = [];
-        for (let i = 1; i <= 20; i++) {
-          const ing = meal['strIngredient' + i];
-          const measure = meal['strMeasure' + i];
-          if (ing && ing.trim()) ingredients.push(`${measure ? measure.trim() + ' ' : ''}${ing.trim()}`);
-        }
-        return {
-          content: `Found a recipe: ${meal.strMeal}`,
-          recipe: {
-            title: meal.strMeal,
-            cuisine: meal.strArea || 'Various',
-            time: meal.strTime || 'Varies',
-            difficulty: 'Medium',
-            ingredients: ingredients.join(', '),
-            instructions: meal.strInstructions || ''
-          }
-        };
-      }
-
-      // no search result — try random suggestion
-      const rnd = await fetch(`${base}/random.php`);
-      if (!rnd.ok) return null;
-      const rndData = await rnd.json();
-      if (rndData && rndData.meals) {
-        const meal = rndData.meals[0];
-        const ingredients = [];
-        for (let i = 1; i <= 20; i++) {
-          const ing = meal['strIngredient' + i];
-          const measure = meal['strMeasure' + i];
-          if (ing && ing.trim()) ingredients.push(`${measure ? measure.trim() + ' ' : ''}${ing.trim()}`);
-        }
-        return {
-          content: `Couldn't find an exact match — here's a recommendation: ${meal.strMeal}`,
-          recipe: {
-            title: meal.strMeal,
-            cuisine: meal.strArea || 'Various',
-            time: meal.strTime || 'Varies',
-            difficulty: 'Medium',
-            ingredients: ingredients.join(', '),
-            instructions: meal.strInstructions || ''
-          }
-        };
-      }
-
-      return null;
-    } catch (err) {
-      return null;
-    }
-  };
+  }, [isOpen, closeChat]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, {
+    const userMessage = {
       id: Date.now(),
       type: 'user',
       content: input.trim(),
       timestamp: 'Just now'
-    }]);
+    };
 
-    const currentQuery = input.trim();
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
-    // Try external API first
-    const apiResp = await fetchMealDB(currentQuery);
-    if (apiResp) {
-      setMessages(prev => [...prev, {
+    try {
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage.content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const botMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        content: apiResp.content,
-        recipe: apiResp.recipe,
+        content: data.reply,
         timestamp: 'Just now'
-      }]);
+      };
+      setMessages(prev => [...prev, botMessage]);
+
+    } catch (error) {
+      console.error('Failed to fetch AI response:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        timestamp: 'Just now'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-      return;
     }
-
-    // Fallback to local canned responses
-    const local = getLocalResponse(currentQuery);
-    if (local) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'bot',
-        content: local.content,
-        recipe: local.recipe,
-        tips: local.tips,
-        timestamp: 'Just now'
-      }]);
-    } else {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'bot',
-        content: "That's a great question — try searching for 'chicken', 'pasta', or 'vegetarian' to get recipe matches.",
-        timestamp: 'Just now'
-      }]);
-    }
-
-    setIsTyping(false);
   };
-
-  const closeChat = useCallback(() => {
-    setIsOpen(false);
-    setMessages(INITIAL_MESSAGES);
-    setInput('');
-    setIsTyping(false);
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-  }, []);
 
   const toggleChat = () => {
     if (isOpen) {
@@ -223,7 +126,7 @@ export default function FloatingAIChatbot() {
       {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-full max-w-xs sm:max-w-sm h-auto max-h-[72vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col border border-gray-200 dark:border-gray-700">
-          
+
           {/* Header */}
           <div className="bg-orange-600 p-4 text-white flex items-center justify-between" role="banner">
             <div className="flex items-center gap-3">
@@ -233,7 +136,7 @@ export default function FloatingAIChatbot() {
                 <p className="text-xs opacity-90">How can I help you today?</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={closeChat}
               aria-label="Close chat"
               className="hover:bg-white/20 p-2 rounded-xl transition-colors"
@@ -254,30 +157,10 @@ export default function FloatingAIChatbot() {
                 <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm transform transition duration-200 ease-out ${
                   msg.type === 'user' 
                     ? 'bg-orange-600 text-white rounded-br-none' 
-                    : 'bg-gray-50 dark:bg-gray-800 rounded-bl-none'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none'
                 }`}>
+                  {/* The content is now just plain text from the AI */}
                   {msg.content}
-
-                  {/* Recipe Preview */}
-                  {msg.recipe && (
-                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-sm border border-gray-100 dark:border-gray-800">
-                      <p className="font-bold">{msg.recipe.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {msg.recipe.cuisine} • {msg.recipe.time} • {msg.recipe.difficulty}
-                      </p>
-                      <p className="mt-3 text-xs font-medium">Ingredients: {msg.recipe.ingredients}</p>
-                      <p className="mt-2 text-xs">{msg.recipe.instructions}</p>
-                    </div>
-                  )}
-
-                  {msg.tips && (
-                    <div className="mt-3 space-y-1">
-                      {msg.tips.map((tip, i) => (
-                        <div key={i} className="text-xs bg-orange-50 dark:bg-gray-800 p-2 rounded-xl">• {tip}</div>
-                      ))}
-                    </div>
-                  )}
-
                   <p className="text-[10px] opacity-60 text-right mt-3">{msg.timestamp}</p>
                 </div>
               </div>
@@ -285,7 +168,7 @@ export default function FloatingAIChatbot() {
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-gray-800 px-4 py-3 rounded-3xl rounded-bl-none flex items-center gap-3 shadow">
+                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-none flex items-center gap-3 shadow-sm">
                   <div className="w-8 flex items-center gap-1">
                     <span className="bg-gray-400 w-1.5 h-1.5 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="bg-gray-400 w-1.5 h-1.5 rounded-full animate-bounce" style={{ animationDelay: '120ms' }} />
@@ -312,9 +195,9 @@ export default function FloatingAIChatbot() {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim()}
+                disabled={!input.trim() || isTyping}
                 aria-label="Send message"
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-orange-600 text-white rounded-full text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-2 bg-orange-600 text-white rounded-full text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-700 transition-colors"
               >
                 Send
               </button>
