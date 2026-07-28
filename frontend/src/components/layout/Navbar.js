@@ -41,9 +41,9 @@ export default function Navbar() {
       e.preventDefault();
       toast.error('Please sign in to access this feature', {
         icon: <LockClosedIcon className="h-5 w-5" />,
-        duration: 2000,
+        duration: 1000,
       });
-      setTimeout(() => navigate('/login'), 1000);
+      setTimeout(() => navigate('/login'), 500);
     }
   };
 
@@ -157,19 +157,34 @@ export default function Navbar() {
                         </Menu.Item>
 
                         {user.role === 'admin' && (
-                          <Menu.Item>
-                            {({ active }) => (
-                              <Link
-                                to="/admin/collections"
-                                className={classNames(
-                                  active ? 'bg-gray-50 dark:bg-gray-700' : '',
-                                  'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
-                                )}
-                              >
-                                Manage Collections
-                              </Link>
-                            )}
-                          </Menu.Item>
+                          <>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  to="/admin"
+                                  className={classNames(
+                                    active ? 'bg-gray-50 dark:bg-gray-700' : '',
+                                    'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
+                                  )}
+                                >
+                                  Admin Dashboard
+                                </Link>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  to="/admin/collections"
+                                  className={classNames(
+                                    active ? 'bg-gray-50 dark:bg-gray-700' : '',
+                                    'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
+                                  )}
+                                >
+                                  Manage Collections
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          </>
                         )}
 
                         <div className="border-t border-gray-100 dark:border-gray-700 my-1" />

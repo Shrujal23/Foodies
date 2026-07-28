@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import {
+  ChartBarIcon,
+  UserGroupIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  BookmarkIcon,
+  FolderIcon,
+  ShieldCheckIcon,
+  Cog6ToothIcon
+} from '@heroicons/react/24/outline';
 
 import AdminCollections from './AdminCollections';
 
@@ -17,9 +26,7 @@ export default function AdminDashboard() {
   });
   const [listData, setListData] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
-
-  // 🛡️ BULLETPROOF FORCED ENTRY: If your username or email has 'admin' in it, you are let in instantly!
-  const hasAdminRights = true; 
+  const isAdmin = user?.role === 'admin';
 
   // 1. Fetch Global Numerical KPIs
   const fetchStatistics = async () => {
@@ -68,6 +75,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadTabList(activeTab);
   }, [activeTab]);
+
+  // Guard non-admin users early so the page never renders unprotected data
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-12">
+        <div className="max-w-xl w-full rounded-3xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-gray-900 shadow-lg p-8 text-center">
+          <h1 className="text-2xl font-semibold text-red-700 dark:text-red-300">Admin access required</h1>
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Only users with an admin role can access this dashboard.</p>
+        </div>
+      </div>
+    );
+  }
 
   // 3. Destructive Moderation Handlers
   const handleDeleteItem = async (itemId) => {
@@ -123,16 +142,22 @@ export default function AdminDashboard() {
       {/* Metrics Counters Dashboard Layout */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {[
-          { label: 'Total Accounts', count: stats.totalUsers, border: 'border-blue-500' },
-          { label: 'Community Recipes', count: stats.totalRecipes, border: 'border-orange-500' },
-          { label: 'Platform Reviews', count: stats.totalReviews, border: 'border-pink-500' },
-          { label: 'Total Saves/Saves', count: stats.totalFavorites, border: 'border-yellow-500' },
-        ].map((card, key) => (
-          <div key={key} className={`bg-white dark:bg-gray-900 p-6 rounded-2xl border border-l-4 ${card.border} dark:border-y-gray-800 dark:border-r-gray-800 shadow-sm`}>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{card.label}</span>
-            <p className="text-3xl font-black mt-1">{loading ? '...' : card.count}</p>
-          </div>
-        ))}
+          { label: 'Total Accounts', count: stats.totalUsers, border: 'border-blue-500', icon: UserGroupIcon },
+          { label: 'Community Recipes', count: stats.totalRecipes, border: 'border-orange-500', icon: BookmarkIcon },
+          { label: 'Platform Reviews', count: stats.totalReviews, border: 'border-pink-500', icon: ChatBubbleOvalLeftEllipsisIcon },
+          { label: 'Total Favorites', count: stats.totalFavorites, border: 'border-yellow-500', icon: ChartBarIcon },
+        ].map((card, key) => {
+          const Icon = card.icon;
+          return (
+            <div key={key} className={`bg-white dark:bg-gray-900 p-6 rounded-2xl border border-l-4 ${card.border} dark:border-y-gray-800 dark:border-r-gray-800 shadow-sm`}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{card.label}</span>
+                <Icon className="h-6 w-6 text-gray-400" />
+              </div>
+              <p className="text-3xl font-black mt-4">{loading ? '...' : card.count}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Control Split Panel Interface */}
@@ -141,24 +166,30 @@ export default function AdminDashboard() {
         {/* Simple Horizontal/Vertical Navigation Track */}
         <div className="w-full lg:w-60 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 shrink-0">
           {[
-            { id: 'statistics', name: '📊 Control Home' },
-            { id: 'users', name: '👤 Platform Users' },
-            { id: 'recipes', name: '🍛 Content: Recipes' },
-            { id: 'reviews', name: '💬 Content: Reviews' },
-            { id: 'collections', name: '📁 Asset Collections' },
-          ].map(btn => (
-            <button
-              key={btn.id}
-              onClick={() => setActiveTab(btn.id)}
-              className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition whitespace-nowrap ${
-                activeTab === btn.id
-                  ? 'bg-orange-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              {btn.name}
-            </button>
-          ))}
+            { id: 'statistics', name: 'Overview', icon: ChartBarIcon },
+            { id: 'users', name: 'Users', icon: UserGroupIcon },
+            { id: 'recipes', name: 'Recipes', icon: BookmarkIcon },
+            { id: 'reviews', name: 'Reviews', icon: ChatBubbleOvalLeftEllipsisIcon },
+            { id: 'collections', name: 'Collections', icon: FolderIcon },
+          ].map(btn => {
+            const TabIcon = btn.icon;
+            return (
+              <button
+                key={btn.id}
+                onClick={() => setActiveTab(btn.id)}
+                className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition whitespace-nowrap ${
+                  activeTab === btn.id
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <TabIcon className={`h-5 w-5 ${activeTab === btn.id ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
+                  {btn.name}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Dynamic Action Rendering Window */}
@@ -166,9 +197,9 @@ export default function AdminDashboard() {
           
           {activeTab === 'statistics' && (
             <div className="text-center py-16 text-gray-400">
-              <span className="text-4xl">⚙️</span>
-              <h3 className="font-bold text-gray-800 dark:text-white text-lg mt-3">Platform Integrity Optimal</h3>
-              <p className="text-sm max-w-xs mx-auto mt-1">Use the navigation bar map to load core data sets, perform data pruning, or escalate roles.</p>
+              <Cog6ToothIcon className="mx-auto h-12 w-12 text-orange-500" />
+              <h3 className="font-bold text-gray-800 dark:text-white text-lg mt-3">Platform integrity</h3>
+              <p className="text-sm max-w-xs mx-auto mt-1">Select a section to review users, recipes, reviews, or collections.</p>
             </div>
           )}
 

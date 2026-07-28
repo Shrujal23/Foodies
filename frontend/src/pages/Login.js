@@ -5,19 +5,20 @@ import { login } from '../services/authService';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     toast.loading('Signing you in...', { id: 'login' });
 
     try {
-      await login(email, password);
+      await login(identifier, password, rememberMe);
       toast.success('Welcome back!', { id: 'login' });
       setTimeout(() => navigate('/'), 800);
     } catch (error) {
-      toast.error(error.message || 'Invalid email or password', { id: 'login' });
+      toast.error(error.message || 'Invalid email or password', { id: 'login', duration: 1000 });
     }
   };
 
@@ -41,15 +42,15 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email address
+                  Email address or username
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-                  placeholder="you@example.com"
+                  placeholder="admin or you@example.com"
                 />
               </div>
 
@@ -79,6 +80,8 @@ export default function Login() {
             <input
               id="remember-me"
               type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
               className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800"
             />
             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">

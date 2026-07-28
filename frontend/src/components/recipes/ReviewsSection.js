@@ -57,7 +57,7 @@ const ReviewsSection = ({ recipeId }) => {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!user) {
-      toast.error('Please sign in to leave a review');
+      toast.error('Please sign in to leave a review', { duration: 1000 });
       return;
     }
 
@@ -66,7 +66,7 @@ const ReviewsSection = ({ recipeId }) => {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        toast.error('Authentication token not found. Please sign in again.');
+        toast.error('Authentication token not found. Please sign in again.', { duration: 1000 });
         return;
       }
 

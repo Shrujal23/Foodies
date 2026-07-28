@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import toast, { Toaster } from 'react-hot-toast';
 import { register } from '../services/authService';
 
@@ -13,6 +14,21 @@ export default function Register() {
   });
   const [agreed, setAgreed] = useState(false);
 
+  const passwordChecks = useMemo(() => {
+    const password = formData.password;
+    return {
+      length: password.length >= 8,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+      symbol: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
+    };
+  }, [formData.password]);
+
+  const passwordStrength = useMemo(() => {
+    return Object.values(passwordChecks).filter(Boolean).length;
+  }, [passwordChecks]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -22,17 +38,17 @@ export default function Register() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error('Passwords do not match', { duration: 1000 });
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (passwordStrength < 4) {
+      toast.error('Password does not meet the security requirements', { duration: 1000 });
       return;
     }
 
     if (!agreed) {
-      toast.error('Please agree to the Terms and Privacy Policy');
+      toast.error('Please agree to the Terms and Privacy Policy', { duration: 1000 });
       return;
     }
 
@@ -48,7 +64,7 @@ export default function Register() {
       toast.success('Account created successfully!', { id: 'register' });
       setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
-      toast.error(error.message || 'Something went wrong. Try again.', { id: 'register' });
+      toast.error(error.message || 'Something went wrong. Try again.', { id: 'register', duration: 1000 });
     }
   };
 
@@ -115,8 +131,61 @@ export default function Register() {
                   value={formData.password}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                 />
+                <div className="mt-4 space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.length ? (
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <XCircleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>Password is at least 8 characters</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.lowercase ? (
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <XCircleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>Contains lowercase letter</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.uppercase ? (
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <XCircleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>Contains uppercase letter</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.number ? (
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <XCircleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>Contains number</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.symbol ? (
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <XCircleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>Contains symbol</span>
+                  </div>
+                </div>
+                <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                  <div className={`h-full rounded-full transition-all ${
+                    passwordStrength >= 5 ? 'bg-emerald-500 w-full' :
+                    passwordStrength === 4 ? 'bg-lime-500 w-4/5' :
+                    passwordStrength === 3 ? 'bg-amber-500 w-3/5' :
+                    passwordStrength === 2 ? 'bg-orange-500 w-2/5' :
+                    passwordStrength === 1 ? 'bg-red-500 w-1/5' :
+                    'bg-red-500 w-0'
+                  }`} />
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Password strength: {['Very Weak','Weak','Fair','Good','Strong'][Math.max(0, passwordStrength - 1)]}</p>
               </div>
 
               <div>
@@ -138,8 +207,10 @@ export default function Register() {
             <div className="flex items-center h-5">
               <input
                 id="terms"
+                name="terms"
                 type="checkbox"
                 required
+                aria-required="true"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800"
@@ -152,12 +223,16 @@ export default function Register() {
                 {' '}and{' '}
                 <Link to="/privacy" className="text-orange-600 hover:text-orange-500 hover:underline">Privacy Policy</Link>
               </label>
+              {!agreed && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">You must agree before creating an account.</p>
+              )}
             </div>
           </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-pink-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg"
+                disabled={!agreed}
+                className={`w-full py-3.5 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg ${agreed ? 'bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 transform hover:scale-[1.02]' : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed opacity-70'}`}
               >
                 Create Account
               </button>

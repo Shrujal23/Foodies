@@ -80,7 +80,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
 
   const handleBookmarkClick = async (collectionId = null) => {
     if (!user) {
-      toast.error('Please sign in to bookmark recipes');
+      toast.error('Please sign in to bookmark recipes', { duration: 1000 });
       return;
     }
 

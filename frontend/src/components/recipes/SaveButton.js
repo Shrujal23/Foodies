@@ -49,7 +49,7 @@ export default function SaveButton({ recipe }) {
     e.stopPropagation();
 
     if (!user) {
-      toast.error('Please log in to save recipes');
+      toast.error('Please log in to save recipes', { duration: 1000 });
       navigate('/login');
       return;
     }

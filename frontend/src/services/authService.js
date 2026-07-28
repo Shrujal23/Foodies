@@ -17,23 +17,38 @@ export const onAuthStateChanged = (callback) => {
   return () => listeners.delete(callback);
 };
 
+const getStorageForRemember = (remember) => {
+  if (remember === true) return localStorage;
+  if (remember === false) return sessionStorage;
+  if (localStorage.getItem('token')) return localStorage;
+  return sessionStorage;
+};
+
 // Set the current user and token
-export const setCurrentUser = (user, token) => {
+export const setCurrentUser = (user, token, remember = null) => {
   currentUser = user;
+  const storage = getStorageForRemember(remember);
+
   if (user && token) {
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('token', token);
+    storage.setItem('user', JSON.stringify(user));
+    storage.setItem('token', token);
+    const otherStorage = storage === localStorage ? sessionStorage : localStorage;
+    otherStorage.removeItem('user');
+    otherStorage.removeItem('token');
   } else {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
   }
+
   notifyListeners();
 };
 
 // Get the current user
 export const getCurrentUser = () => {
   if (!currentUser) {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
     if (storedUser) {
       currentUser = JSON.parse(storedUser);
       notifyListeners();
@@ -44,7 +59,7 @@ export const getCurrentUser = () => {
 
 // Get the auth token
 export const getToken = () => {
-  return localStorage.getItem('token');
+  return sessionStorage.getItem('token') || localStorage.getItem('token');
 };
 
 // Check authentication status with backend
@@ -83,19 +98,19 @@ export const checkAuthStatus = async () => {
 };
 
 // Login function
-export const login = async (email, password) => {
+export const login = async (identifier, password, rememberMe = false) => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
 
     if (response.ok) {
       const data = await response.json();
-      setCurrentUser(data.user, data.token);
+      setCurrentUser(data.user, data.token, rememberMe);
       return data.user;
     } else {
       const errorText = await response.text();
@@ -151,6 +166,60 @@ export const register = async (userData) => {
   }
 };
 
+export const updateProfile = async (profileData) => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    if (profileData.username !== undefined) {
+      formData.append('username', profileData.username);
+    }
+    if (profileData.display_name !== undefined) {
+      formData.append('display_name', profileData.display_name);
+    }
+    if (profileData.email !== undefined) {
+      formData.append('email', profileData.email);
+    }
+    if (profileData.avatarFile) {
+      formData.append('avatar', profileData.avatarFile);
+    } else if (profileData.avatar_url !== undefined) {
+      formData.append('avatar_url', profileData.avatar_url);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.user) {
+        setCurrentUser(data.user, token);
+      }
+      return data.user;
+    }
+
+    const errorText = await response.text();
+    console.error('Update profile response:', errorText);
+    let errorMessage = 'Profile update failed. Please check your input.';
+    try {
+      const error = JSON.parse(errorText);
+      if (error.message) errorMessage = error.message;
+      if (Array.isArray(error.errors) && error.errors.length > 0) {
+        errorMessage = error.errors.map(err => err.message).join(' ');
+      }
+    } catch (e) {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Logout function
 export const logout = async () => {
   try {
@@ -172,7 +241,7 @@ export const logout = async () => {
     }
   } catch (error) {
     console.error('Logout error:', error);
-    toast.error('Failed to log out. Please try again.');
+    toast.error('Failed to log out. Please try again.', { duration: 1000 });
     throw error;
   }
 };

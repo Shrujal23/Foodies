@@ -6,6 +6,7 @@ import {
   FireIcon,
 } from '@heroicons/react/24/outline';
 import { getFeaturedRecipes as getFeaturedRecipesService } from '../services/recipeService';
+import { ASSET_BASE_URL } from '../config';
 import SaveButton from '../components/recipes/SaveButton';
 import EmptyState from '../components/common/EmptyState';
 import LoadingPlaceholder from '../components/common/LoadingPlaceholder';
@@ -88,10 +89,12 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [communityRecipes, setCommunityRecipes] = useState([]);
   const [communityLoading, setCommunityLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     loadRecipes();
     loadCommunityRecipes();
+    setTimeout(() => setIsMounted(true), 60);
   }, []);
 
   const loadRecipes = async () => {
@@ -134,7 +137,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 dark:to-black">
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden pt-20 pb-32 bg-gradient-to-br from-orange-700 via-orange-600 to-orange-500">
+      <section className={`relative overflow-hidden pt-20 pb-32 bg-gradient-to-br from-orange-700 via-orange-600 to-orange-500 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Subtle overlay for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-orange-900/20 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-6 py-24 lg:py-32 relative z-10">
@@ -155,13 +158,13 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               <Link 
                 to="/search" 
-                className="px-10 py-4 bg-white text-orange-600 font-bold rounded-lg hover:bg-gray-50 transition"
+                className="px-10 py-4 bg-white text-orange-600 font-bold rounded-lg hover:bg-gray-50 transform hover:-translate-y-1 transition duration-300"
               >
                 Explore Recipes
               </Link>
               <Link 
                 to="/recipes/add" 
-                className="px-10 py-4 bg-white/20 text-white font-bold rounded-lg border border-white/50 hover:bg-white/30 transition"
+                className="px-10 py-4 bg-white/20 text-white font-bold rounded-lg border border-white/50 hover:bg-white/30 transform hover:-translate-y-1 transition duration-300"
               >
                 Share Your Recipe
               </Link>
@@ -193,7 +196,7 @@ export default function Home() {
                 >
                   {recipe.image && (
                     <img 
-                      src={recipe.image} 
+                      src={recipe.image && !recipe.image.startsWith('http') ? `${ASSET_BASE_URL}${recipe.image}` : recipe.image} 
                       alt={recipe.title} 
                       loading="lazy"
                       className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -289,7 +292,7 @@ export default function Home() {
               description: 'Bookmark recipes and share them with friends and family instantly.'
             }
           ].map((feature, idx) => (
-            <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow">
+            <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow transform transition duration-500 ease-out hover:-translate-y-2 hover:shadow-xl">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
               <p className="text-gray-600 dark:text-gray-400">{feature.description}</p>
             </div>
@@ -309,11 +312,11 @@ export default function Home() {
             { num: '02', title: 'Save & Organize', desc: 'Create collections and bookmark your favorite recipes for quick access.' },
             { num: '03', title: 'Share & Enjoy', desc: 'Add your own recipes, share with the community, and get feedback.' }
           ].map((step, idx) => (
-            <div key={idx} className="relative text-center">
+            <div key={idx} className="relative text-center transform transition duration-500 ease-out hover:-translate-y-3 hover:shadow-xl p-6 rounded-3xl bg-white dark:bg-gray-900">
               {idx !== 2 && (
                 <div className="hidden md:block absolute top-1/2 -right-8 w-16 h-1 bg-gray-300" />
               )}
-              <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-6 mx-auto">
+              <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-6 mx-auto shadow-lg">
                 {step.num}
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{step.title}</h3>
@@ -325,7 +328,7 @@ export default function Home() {
 
       {/* Search & Filters Section */}
       <div className="max-w-7xl mx-auto px-6 mb-24">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12">
+        <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="mb-12">
             <div className="relative max-w-4xl mx-auto">
               <MagnifyingGlassIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-orange-600" />
@@ -390,12 +393,12 @@ export default function Home() {
             {filteredRecipes.map(recipe => (
               <div
                 key={recipe._id}
-                className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                className={`group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               >
                 <Link to={`/recipes/${recipe._id}`} className="block">
                   <div className="relative h-48 overflow-hidden bg-gray-100">
                     <img
-                      src={recipe.image}
+                      src={recipe.image && !recipe.image.startsWith('http') ? `${ASSET_BASE_URL}${recipe.image}` : recipe.image}
                       alt={recipe.title}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

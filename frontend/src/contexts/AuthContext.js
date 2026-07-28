@@ -1,22 +1,17 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { getCurrentUser as getStoredUser, onAuthStateChanged } from '../services/authService';
+import {
+  getCurrentUser as getStoredUser,
+  getToken,
+  onAuthStateChanged,
+  setCurrentUser,
+} from '../services/authService';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Helper to safely sync state and update local browser storage cache
-  const updateUserState = (userData) => {
-    setUser(userData);
-    if (userData) {
-      localStorage.setItem('user', JSON.stringify(userData));
-    } else {
-      localStorage.removeItem('user');
-    }
-  };
 
   useEffect(() => {
     // 1. Grab initial snapshot cache to render UI immediately
@@ -30,7 +25,7 @@ export function AuthProvider({ children }) {
     
     // 3. Listen to auth state shifts (Login/Logout triggers)
     const unsubscribe = onAuthStateChanged((nextUser) => {
-      updateUserState(nextUser);
+      setUser(nextUser);
     });
     
     return () => {
@@ -40,9 +35,9 @@ export function AuthProvider({ children }) {
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
-        updateUserState(null);
+        setCurrentUser(null);
         setLoading(false);
         return;
       }
@@ -53,19 +48,31 @@ export function AuthProvider({ children }) {
         }
       });
       
+      if (!response.ok) {
+        setCurrentUser(null);
+        return;
+      }
+
       const data = await response.json();
       
       if (data && data.user) {
-        // 🌟 SUCCESS: Overwrite state with fresh backend model data containing your database 'role'
-        updateUserState(data.user);
+        setCurrentUser(data.user, token);
       } else {
         const existingUser = getStoredUser();
-        updateUserState(existingUser || null);
+        if (existingUser) {
+          setCurrentUser(existingUser, token);
+        } else {
+          setCurrentUser(null);
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       const existingUser = getStoredUser();
-      updateUserState(existingUser || null);
+      if (existingUser) {
+        setCurrentUser(existingUser, getToken());
+      } else {
+        setCurrentUser(null);
+      }
     } finally {
       setLoading(false);
     }

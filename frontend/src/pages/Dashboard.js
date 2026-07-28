@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LockClosedIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
@@ -83,8 +83,8 @@ export default function Dashboard() {
         {!dashboardData?.isAuthenticated ? (
           <div className="max-w-md mx-auto mt-20">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
-              <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-900 dark:to-pink-900 rounded-3xl flex items-center justify-center">
-                <LockClosedIcon className="w-12 h-12 text-orange-600" />
+              <div className="w-24 h-24 mx-auto mb-8 bg-white/90 dark:bg-gray-800 rounded-3xl flex items-center justify-center shadow-lg">
+                <UserCircleIcon className="w-14 h-14 text-orange-500" />
               </div>
 
               <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
