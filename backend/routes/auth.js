@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const {
   createUserWithPassword,
   findUserByEmail,
+  findUserByEmailOrUsername,
   verifyPassword,
   findUserById
 } = require('../db/database');
@@ -88,12 +89,12 @@ router.get('/status', async (req, res) => {
  */
 router.post('/login', validateLogin, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    const user = await findUserByEmail(email);
+    const user = await findUserByEmailOrUsername(identifier);
     if (!user || !user.password_hash) {
       return res.status(401).json({ success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid username/email or password'
       });
     }
 

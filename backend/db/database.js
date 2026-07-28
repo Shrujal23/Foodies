@@ -107,12 +107,30 @@ async function findUserByEmail(email) {
   }
 }
 
+async function findUserByEmailOrUsername(identifier) {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.execute(
+        'SELECT * FROM users WHERE email = ? OR username = ?',
+        [identifier, identifier]
+      );
+      return rows[0] || null;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Database error finding user by identifier:', error);
+    return null;
+  }
+}
+
 async function findUserById(id) {
   try {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.execute(
-        'SELECT id, username, display_name, email, avatar_url FROM users WHERE id = ?',
+        'SELECT id, username, display_name, email, avatar_url, role FROM users WHERE id = ?',
         [id]
       );
       return rows[0] || null;
@@ -125,6 +143,48 @@ async function findUserById(id) {
   }
 }
 
+async function updateUserProfile(id, profile) {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const fields = [];
+      const values = [];
+
+      if (profile.username !== undefined) {
+        fields.push('username = ?');
+        values.push(profile.username);
+      }
+      if (profile.display_name !== undefined) {
+        fields.push('display_name = ?');
+        values.push(profile.display_name);
+      }
+      if (profile.email !== undefined) {
+        fields.push('email = ?');
+        values.push(profile.email);
+      }
+      if (profile.avatar_url !== undefined) {
+        fields.push('avatar_url = ?');
+        values.push(profile.avatar_url);
+      }
+      if (fields.length === 0) {
+        return false;
+      }
+
+      values.push(id);
+      await connection.execute(
+        `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+      return true;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Database error updating user profile:', error);
+    return false;
+  }
+}
+
 async function verifyPassword(user, password) {
   return await bcrypt.compare(password, user.password_hash);
 }
@@ -134,6 +194,8 @@ module.exports = {
   findOrCreateUser,
   createUserWithPassword,
   findUserByEmail,
+  findUserByEmailOrUsername,
   findUserById,
-  verifyPassword
+  verifyPassword,
+  updateUserProfile
 };

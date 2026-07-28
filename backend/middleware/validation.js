@@ -99,11 +99,15 @@ const validateComment = [
 ];
 
 const validateLogin = [
-  body('email')
+  body('identifier')
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Invalid email format')
-    .normalizeEmail(),
+    .notEmpty().withMessage('Username or email is required')
+    .custom(value => {
+      if (value.includes('@')) {
+        return /^[\w.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*$/.test(value);
+      }
+      return /^[a-zA-Z0-9_-]{3,30}$/.test(value);
+    }).withMessage('Enter a valid email address or username'),
   body('password')
     .notEmpty().withMessage('Password is required'),
   handleValidationErrors
