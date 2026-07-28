@@ -1,84 +1,82 @@
 # Foodies - Recipe Sharing Platform
 
-[![React](https://img.shields.io/badge/React-19.1.1-blue?logo=react)](https://reactjs.org)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)](https://nodejs.org)
-[![MySQL](https://img.shields.io/badge/MySQL-Database-orange?logo=mysql)](https://www.mysql.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?logo=tailwind-css)](https://tailwindcss.com)
-[![JWT](https://img.shields.io/badge/JWT-Auth-red?logo=json-web-tokens)](https://jwt.io)
+[![React](https://img.shields.io/badge/React-JS-blue?logo=react)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=nodedotjs)](https://nodejs.org/)
+[![MySQL](https.img.shields.io/badge/MySQL-Database-blue?logo=mysql)](https://www.mysql.com/)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://vercel.com/)
+[![AWS](https://img.shields.io/badge/Backend-AWS_EC2-orange?logo=amazonaws)](https://aws.amazon.com/ec2/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-A full-stack web application built for food enthusiasts to discover, share, and manage recipes. Developed with a modern React frontend and a robust Node.js/Express backend, Foodies allows users to securely create accounts, upload personal recipes, explore community creations, save favorites, and engage through a unified reviews and ratings system.
-Foodies also includes **Foody**, an AI-powered cooking assistant built with the Groq API. Users can ask for recipes, ingredient substitutions, cooking techniques, meal planning suggestions, and nutrition-focused recommendations through a conversational chat interface.
+## 1. Project Overview
 
-## Key Features
+Foodies is a full-stack web application designed for culinary enthusiasts to discover, create, and share recipes. It provides a centralized platform for users to manage their personal recipes, explore community-contributed dishes, and interact through reviews and ratings. The project solves the common problem of disorganized recipe collections by offering a structured and feature-rich digital cookbook. A key feature is "Foody," an AI-powered assistant that offers real-time cooking advice, making the culinary experience more interactive and accessible.
 
-### AI-Powered Cooking Assistant
-- **Conversational AI:** Get instant recipe recommendations, cooking tips, and ingredient substitutions from "Foody," an integrated AI chatbot.
-- **Powered by Groq:** Utilizes the high-performance Groq API and an open-source model for fast, relevant responses.
-- **Secure Backend Integration:** All AI communication is proxied through the Express backend, ensuring API keys are never exposed on the client-side.
+## 2. Live Demo & Deployments
 
-### Security & Authentication
-- **Robust Auth:** JWT-based authentication for secure, stateless sessions.
-- **OAuth Integration:** Seamless sign-in with Google and GitHub using Passport.js.
-- **Data Protection:** Password hashing with Bcrypt and strict API endpoint protection.
+### Frontend (Vercel)
+The React frontend is deployed on Vercel and is accessible here:
+**https://foodies-dusky-sigma.vercel.app**
 
-### Recipe Management
-- **Full CRUD Capabilities:** Create, read, update, and delete user recipes.
-- **Rich Recipe Details:** Support for dynamic ingredients, step-by-step instructions, prep/cook times, and servings.
-- **Media Uploads:** Secure recipe image uploads managed via Multer.
-- **Smart Search:** Filtering and search functionality to easily find recipes.
+### Backend (AWS EC2)
+The Node.js/Express REST API is hosted on an AWS EC2 instance.
 
-### Social & Community
-- **Unified Reviews System:** Rate recipes out of 5 stars and leave detailed text reviews.
-- **Collections & Favorites:** Bookmark favorite recipes and organize them into personal collections.
-- **Responsive UI:** A beautiful, mobile-first design built with Tailwind CSS and Headless UI.
+> **Note:** As this is a personal cloud deployment for portfolio purposes, the EC2 instance is not running 24/7 to manage costs.
 
-### User Experience
-- Responsive design with Tailwind CSS
-- Modern React-based frontend
-- Real-time notifications with toast messages
-- Intuitive navigation and user interface
+## 3. Features
 
-## 🛠 Tech Stack
+- **User Authentication:** Secure user registration and login system with JWT.
+- **User Profiles:** Personalized user profiles to manage recipes and activity.
+- **Recipe Management:** Full CRUD (Create, Read, Update, Delete) functionality for recipes.
+- **Recipe Browsing & Search:** Explore public recipes with advanced search and filtering by category.
+- **Reviews and Ratings:** Users can rate recipes and leave detailed comments.
+- **Bookmark/Save Recipes:** Save favorite recipes to a personal collection for easy access.
+- **AI Recipe Assistant:** An integrated chatbot ("Foody") powered by the Groq API for instant recipe ideas, cooking tips, and ingredient substitutions.
+- **Image Uploads:** Functionality to upload and associate images with recipes.
+- **Protected Routes:** Secure access to user-specific features and data.
+- **Admin Dashboard:** A dedicated interface for administrators to manage users and content.
 
-### Frontend
-- **React** 19.1.1 - UI framework
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Utility-first CSS framework
-- **Axios** - HTTP client
-- **React Hot Toast** - Notification system
-- **Heroicons** - Icon library
-- **Headless UI** - Accessible UI components
+## 4. Tech Stack
 
-### AI Integration
+| Category      | Technology                                       |
+|---------------|--------------------------------------------------|
+| **Frontend**  | React.js, React Router, Context API, Tailwind CSS|
+| **Backend**   | Node.js, Express.js                              |
+| **Database**  | MySQL                                            |
+| **Auth**      | JWT, Passport.js, Express Session                |
+| **AI**        | Groq API                                         |
+| **Deployment**| Vercel (Frontend), AWS EC2 (Backend)             |
+| **API Docs**  | Swagger                                          |
 
-- **Groq API** – AI inference provider
-- **GPT-OSS-20B** – Open-weight language model for conversational recipe assistance
-- **groq-sdk** – Official JavaScript SDK
+## 5. System Architecture
 
+The application follows a decoupled client-server architecture. The React frontend is served statically from Vercel, which communicates with a backend REST API deployed on an AWS EC2 instance. This API handles all business logic and interacts with a MySQL database.
 
-### Backend
-- **Node.js** with **Express.js** - Server framework
-- **MySQL2** - Database
-- **JWT** - Authentication tokens
-- **Passport.js** - OAuth authentication
-- **Bcrypt** - Password hashing
-- **Multer** - File uploads
-- **CORS** - Cross-origin resource sharing
+```
+User Browser
+      |
+      |
+React Frontend (Vercel)
+      |
+      | (REST API Calls)
+      |
+Express REST API (AWS EC2)
+      |
+      | (Database Queries)
+      |
+MySQL Database
+```
 
-### Development Tools
-- **Nodemon** - Development server auto-restart
-- **Create React App** - Frontend build tool
+## 6. API Documentation
 
-## Prerequisites
+The backend API is documented using Swagger. You can explore the available endpoints and test them live.
 
-- Node.js (v14 or higher)
-- MySQL database
-- npm or yarn package manager
+**Swagger UI:** http://ec2-65-2-57-140.ap-south-1.compute.amazonaws.com:5000/api-docs
 
-## Installation & Setup
+## 7. Environment Setup & Local Installation
 
-### 1. Clone the Repository
+To run this project locally, you will need Node.js and a MySQL instance.
+
+### 1. Clone Repository
 ```bash
 git clone <repository-url>
 cd foodies
@@ -89,8 +87,7 @@ cd foodies
 cd backend
 npm install
 ```
-
-Create a `.env` file in the backend directory with the following variables:
+Create a `.env` file in the `backend` directory and add the following variables:
 ```env
 PORT=5000
 DB_HOST=localhost
@@ -107,172 +104,63 @@ GROQ_API_KEY=your_groq_api_key
 ```
 
 ### 3. Database Setup
-Create a MySQL database named `foodies_db` and run the following schema files in order:
-```sql
--- Run the SQL commands from the following files in backend/db/:
--- 1. schema.sql (core users table)
--- 2. collections_schema.sql (recipes, user_recipes, user_favorites, and collections tables)
--- 3. reviews_schema.sql (unified reviews and ratings table)
--- 4. Run `node db/seed-admin.js` to create the default admin account
-```
+Ensure your MySQL server is running. Create a database named `foodies_db` and execute the schema files located in `backend/db/` to set up the required tables.
 
 ### 4. Frontend Setup
 ```bash
 cd ../frontend
 npm install
 ```
-
-Create a `.env` file in the frontend directory:
+Create a `.env` file in the `frontend` directory:
 ```env
 REACT_APP_API_URL=http://localhost:5000/api
 ```
 
-### 5. Start the Application
+### 5. Run the Application
 
-**Backend:**
+**Start Backend Server:**
 ```bash
 cd backend
 npm run dev
 ```
 
-**Frontend:**
+**Start Frontend Development Server:**
 ```bash
 cd frontend
 npm start
 ```
+The application will be available at `http://localhost:3000`.
 
-The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-
-## Usage
-
-### User Registration & Login
-1. Visit the application homepage
-2. Click "Register" to create a new account or "Login" to sign in
-3. Use email/password or OAuth providers (Google/GitHub)
-
-### Creating Recipes
-1. Navigate to "Add Recipe" from the dashboard
-2. Fill in recipe details: title, description, prep/cook time, servings
-3. Add ingredients and instructions dynamically
-4. Upload an optional recipe image
-5. Set difficulty level and submit
-
-### Managing Recipes
-1. View your recipes in "My Recipes"
-2. Edit or delete recipes from the detailed view
-3. Browse public recipes on the home page
-4. Save favorite recipes for later
-
-### Social Interaction
-- Comment on any public recipe
-- Save recipes to your favorites
-- Share recipes with others
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user info
-
-### AI Assistant
-
-- `POST /api/chat` - Generate AI-powered cooking responses using Groq
-
-### Recipes
-- `GET /api/recipes` - Get all public recipes
-- `GET /api/recipes/my-recipes` - Get user's recipes
-- `GET /api/recipes/user/:id` - Get specific user recipe
-- `POST /api/recipes` - Create new recipe
-- `PUT /api/recipes/user/:id` - Update user recipe
-- `DELETE /api/recipes/user/:id` - Delete user recipe
-- `POST /api/recipes/:id/favorite` - Add to favorites
-- `DELETE /api/recipes/:id/favorite` - Remove from favorites
-
-### Reviews & Ratings
-- `GET /api/recipes/:recipeId/reviews` - Get recipe reviews
-- `GET /api/recipes/:recipeId/rating-breakdown` - Get rating breakdown
-- `POST /api/recipes/:recipeId/reviews` - Add or update a review
-- `DELETE /api/recipes/:recipeId/reviews/:reviewId` - Delete a review
-
-## Project Structure
+## 8. Folder Structure
 
 ```
 foodies/
 ├── backend/
-│   ├── controllers/          # Route controllers
-│   ├── db/                   # Database schemas and connections
-│   ├── middleware/           # Authentication and validation middleware
-│   ├── routes/               # API route definitions
-│   ├── services/             # Business logic services
-│   ├── uploads/              # File upload directory
-│   ├── .env                  # Environment variables
-│   ├── package.json
-│   └── server.js             # Main server file
-├── frontend/
-│   ├── public/               # Static assets
-│   ├── src/
-│   │   ├── components/       # Reusable React components
-│   │   ├── contexts/         # React contexts (Auth, etc.)
-│   │   ├── pages/            # Page components
-│   │   ├── services/         # API service functions
-│   │   └── App.js            # Main app component
-│   ├── .env                  # Frontend environment variables
-│   ├── package.json
-│   └── tailwind.config.js    # Tailwind CSS configuration
-├── .gitignore
-├── LICENSE
-├── package.json              # Root package.json (if needed)
-└── README.md
+│   ├── controllers/      # Request/response handlers
+│   ├── db/               # Database connection & schemas
+│   ├── middleware/       # Auth and validation middleware
+│   ├── routes/           # API route definitions
+│   ├── services/         # Business logic
+│   ├── .env.example
+│   └── server.js         # Express server entry point
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── components/   # Reusable React components
+    │   ├── contexts/     # Global state management
+    │   ├── pages/        # Page-level components
+    │   ├── services/     # API call functions
+    │   └── App.js
+    ├── .env.example
+    └── package.json
 ```
 
-## Contributing
+## 9. Future Improvements
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow existing code style and conventions
-- Write clear, concise commit messages
-- Test your changes thoroughly
-- Update documentation as needed
-- Ensure responsive design works on all devices
+- **Recipe Collections:** Allow users to create and share public collections of recipes (e.g., "Weekly Dinners," "Holiday Baking").
+- **Real-time Notifications:** Implement WebSockets for real-time notifications on new comments or recipe updates.
+- **Advanced Search:** Integrate a more powerful search solution like Elasticsearch and using vector databases for faster and more relevant search results.
+- **Unit & Integration Testing:** Increase test coverage for both frontend and backend to improve code reliability.
 
 ## License
-
-MIT License
-
-Copyright (c) 2025 Shrujal23
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-## Acknowledgments
-
-- Built with Create React App
-- Icons provided by Heroicons
-- UI components from Headless UI
-- Styling with Tailwind CSS
-
-**Happy Cooking! 🍳**
+This project is licensed under the MIT License. See the LICENSE file for details.
