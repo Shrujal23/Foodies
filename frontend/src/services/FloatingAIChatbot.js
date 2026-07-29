@@ -3,13 +3,14 @@ import {
   XMarkIcon,
   ChatBubbleLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
+import { API_BASE_URL } from '../config';
 
 const INITIAL_MESSAGES = [
   {
     id: 1,
     type: 'bot',
     content: "Hey, I'm Foody. Ask me anything about recipes, cooking, or food!",
-    timestamp: 'Just now'
+    timestamp: new Date().toLocaleString()
   }
 ];
 
@@ -26,6 +27,45 @@ export default function FloatingAIChatbot() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Escape and lightly format AI output (preserve newlines and simple bullet lists)
+  const escapeHtml = (unsafe) => {
+    return String(unsafe)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const formatMessage = (text) => {
+    if (!text && text !== 0) return '';
+    // escape first to avoid raw HTML from user/model
+    let escaped = escapeHtml(text);
+
+    // Lightweight markdown-like formatting: bold, italic, inline code
+    // Replace bold (**text**)
+    escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Replace italic (*text*) but avoid replacing inside bold
+    escaped = escaped.replace(/\*(?!\*)([^*]+?)\*/g, '<em>$1</em>');
+    // Replace inline code `code`
+    escaped = escaped.replace(/`([^`]+?)`/g, '<code class="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 text-xs">$1</code>');
+
+    const lines = escaped.split(/\r?\n/);
+    let inList = false;
+    const out = [];
+    lines.forEach((line) => {
+      if (/^\s*[-*]\s+/.test(line)) {
+        if (!inList) { out.push('<ul class="pl-5 list-disc">'); inList = true; }
+        out.push('<li class="mb-1">' + line.replace(/^\s*[-*]\s+/, '') + '</li>');
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push('<p class="m-0 text-sm leading-relaxed">' + line + '</p>');
+      }
+    });
+    if (inList) out.push('</ul>');
+    return out.join('');
+  };
 
   const closeChat = useCallback(() => {
     setIsOpen(false);
@@ -60,7 +100,7 @@ export default function FloatingAIChatbot() {
       id: Date.now(),
       type: 'user',
       content: input.trim(),
-      timestamp: 'Just now'
+      timestamp: new Date().toLocaleString()
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -68,12 +108,15 @@ export default function FloatingAIChatbot() {
     setIsTyping(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(msg => ({ role: msg.type === 'user' ? 'user' : 'assistant', content: msg.content })),
+          message: userMessage.content,
+        }),
       });
 
       if (!response.ok) {
@@ -86,7 +129,7 @@ export default function FloatingAIChatbot() {
         id: Date.now() + 1,
         type: 'bot',
         content: data.reply,
-        timestamp: 'Just now'
+        timestamp: new Date().toLocaleString()
       };
       setMessages(prev => [...prev, botMessage]);
 
@@ -159,8 +202,12 @@ export default function FloatingAIChatbot() {
                     ? 'bg-orange-600 text-white rounded-br-none' 
                     : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none'
                 }`}>
-                  {/* The content is now just plain text from the AI */}
-                  {msg.content}
+                  {/* Render formatted content (escaped + simple markdown -> HTML) */}
+                  {msg.type === 'bot' ? (
+                    <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                  ) : (
+                    <div>{msg.content}</div>
+                  )}
                   <p className="text-[10px] opacity-60 text-right mt-3">{msg.timestamp}</p>
                 </div>
               </div>
@@ -168,13 +215,18 @@ export default function FloatingAIChatbot() {
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-none flex items-center gap-3 shadow-sm">
-                  <div className="w-8 flex items-center gap-1">
-                    <span className="bg-gray-400 w-1.5 h-1.5 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="bg-gray-400 w-1.5 h-1.5 rounded-full animate-bounce" style={{ animationDelay: '120ms' }} />
-                    <span className="bg-gray-400 w-1.5 h-1.5 rounded-full animate-bounce" style={{ animationDelay: '240ms' }} />
+                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-none flex items-center gap-3 shadow-sm" role="status" aria-live="polite">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-7 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center px-2">
+                      <span className="bg-gray-400 w-2.5 h-2.5 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="bg-gray-400 w-2.5 h-2.5 rounded-full animate-bounce" style={{ animationDelay: '140ms' }} />
+                      <span className="bg-gray-400 w-2.5 h-2.5 rounded-full animate-bounce" style={{ animationDelay: '280ms' }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Foody is thinking…</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Fetching a helpful reply</p>
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-200">Thinking…</span>
                 </div>
               </div>
             )}
@@ -197,9 +249,19 @@ export default function FloatingAIChatbot() {
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping}
                 aria-label="Send message"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-2 bg-orange-600 text-white rounded-full text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-700 transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-2 bg-orange-600 text-white rounded-full text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-700 transition-colors flex items-center gap-2"
               >
-                Send
+                {isTyping ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    Thinking…
+                  </>
+                ) : (
+                  'Send'
+                )}
               </button>
             </div>
           </div>

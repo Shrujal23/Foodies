@@ -72,10 +72,19 @@ const uploadLimiter = createLimiter({
   message: 'Too many upload attempts. Please try again later.'
 });
 
+// Chat limiter: limit chat requests to prevent token overuse.
+// Defaults: 30 requests per hour per user (or IP). Admins and development are skipped.
+const chatLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30,
+  message: 'Too many chat requests. Please wait and try again later.'
+});
+
 module.exports = {
   apiLimiter,
   strictLimiter,
   searchLimiter,
   uploadLimiter,
+  chatLimiter,
   createLimiter
 };
