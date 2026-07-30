@@ -1,166 +1,184 @@
-# Foodies - Recipe Sharing Platform
+# Foodies
 
-[![React](https://img.shields.io/badge/React-JS-blue?logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=nodedotjs)](https://nodejs.org/)
-[![MySQL](https.img.shields.io/badge/MySQL-Database-blue?logo=mysql)](https://www.mysql.com/)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://vercel.com/)
-[![AWS](https://img.shields.io/badge/Backend-AWS_EC2-orange?logo=amazonaws)](https://aws.amazon.com/ec2/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-## 1. Project Overview
+A full-stack recipe app built as a portfolio project. People can browse recipes, publish their own, leave reviews, save favorites into collections, and chat with a small AI cooking helper.
 
-Foodies is a full-stack web application designed for culinary enthusiasts to discover, create, and share recipes. It provides a centralized platform for users to manage their personal recipes, explore community-contributed dishes, and interact through reviews and ratings. The project solves the common problem of disorganized recipe collections by offering a structured and feature-rich digital cookbook. A key feature is "Foody," an AI-powered assistant that offers real-time cooking advice, making the culinary experience more interactive and accessible.
+It is not a commercial product. It is a learning project that tries to cover real full-stack pieces end to end: auth, database work, file uploads, third-party APIs, role-based admin, and deployment.
 
-## 2. Live Demo & Deployments
+**Live frontend:** [foodies-dusky-sigma.vercel.app](https://foodies-dusky-sigma.vercel.app)
 
-### Frontend (Vercel)
-The React frontend is deployed on Vercel and is accessible here:
-**https://foodies-dusky-sigma.vercel.app**
+Backend runs on AWS EC2 when I have it up. I do not keep the server on 24/7, so if the live site cannot load data, that is usually why. I am trying to explore other option so the backend can keep on running.
 
-### Backend (AWS EC2)
-The Node.js/Express REST API is hosted on an AWS EC2 instance.
+---
 
-> **Note:** As this is a personal cloud deployment for portfolio purposes, the EC2 instance is not running 24/7 to manage costs.
+## What you can do in the app
 
-## 3. Features
+- Register / log in with email and password (JWT)
+- Browse community recipes and search (community recipes + Edamam API results)
+- Create a recipe with image upload
+- Open a recipe, read details, leave a rating and review
+- Save recipes to favorites and organize them in collections
+- Use a personal dashboard for stats and recent activity
+- Chat with “Foody” (AI assistant via https://console.groq.com/ or GROQ) for cooking tips
+- Admins can moderate users, recipes, reviews, and collections
 
-- **User Authentication:** Secure user registration and login system with JWT.
-- **User Profiles:** Personalized user profiles to manage recipes and activity.
-- **Recipe Management:** Full CRUD (Create, Read, Update, Delete) functionality for recipes.
-- **Recipe Browsing & Search:** Explore public recipes with advanced search and filtering by category.
-- **Reviews and Ratings:** Users can rate recipes and leave detailed comments.
-- **Bookmark/Save Recipes:** Save favorite recipes to a personal collection for easy access.
-- **AI Recipe Assistant:** An integrated chatbot ("Foody") powered by the Groq API for instant recipe ideas, cooking tips, and ingredient substitutions.
-- **Image Uploads:** Functionality to upload and associate images with recipes.
-- **Protected Routes:** Secure access to user-specific features and data.
-- **Admin Dashboard:** A dedicated interface for administrators to manage users and content.
+---
 
-## 4. Tech Stack
+## Stack
 
-| Category      | Technology                                       |
-|---------------|--------------------------------------------------|
-| **Frontend**  | React.js, React Router, Context API, Tailwind CSS|
-| **Backend**   | Node.js, Express.js                              |
-| **Database**  | MySQL                                            |
-| **Auth**      | JWT, Passport.js, Express Session                |
-| **AI**        | Groq API                                         |
-| **Deployment**| Vercel (Frontend), AWS EC2 (Backend)             |
-| **API Docs**  | Swagger                                          |
+| Layer | Tools |
+|--------|--------|
+| Frontend | React, React Router, Context API, Tailwind CSS |
+| Backend | Node.js, Express |
+| Database | MySQL |
+| Auth | JWT (main flow), Passport for optional Google/GitHub OAuth |
+| AI | Groq API |
+| Recipe search | Edamam API |
+| Hosting | Vercel (frontend), AWS EC2 (backend) |
 
-## 5. System Architecture
+---
 
-The application follows a decoupled client-server architecture. The React frontend is served statically from Vercel, which communicates with a backend REST API deployed on an AWS EC2 instance. This API handles all business logic and interacts with a MySQL database.
+## Project layout
 
 ```
-User Browser
-      |
-      |
-React Frontend (Vercel)
-      |
-      | (REST API Calls)
-      |
-Express REST API (AWS EC2)
-      |
-      | (Database Queries)
-      |
-MySQL Database
+project/
+├── backend/          Express API, MySQL, uploads, middleware
+│   ├── controllers/
+│   ├── db/           schema SQL files + seed-admin
+│   ├── middleware/
+│   ├── routes/
+│   ├── services/
+│   └── server.js
+├── frontend/         React app
+│   └── src/
+│       ├── components/
+│       ├── contexts/
+│       ├── pages/
+│       └── services/
+├── explain.md        Interview walkthrough (start to finish)
+└── README.md
 ```
 
-## 6. API Documentation
+---
 
-The backend API is documented using Swagger. You can explore the available endpoints and test them live.
+## Run it locally
 
-**Swagger UI:** http://ec2-65-2-57-140.ap-south-1.compute.amazonaws.com:5000/api-docs
+You need **Node.js**, **npm**, and **MySQL**.
 
-## 7. Environment Setup & Local Installation
+### 1. Backend
 
-To run this project locally, you will need Node.js and a MySQL instance.
-
-### 1. Clone Repository
-```bash
-git clone <repository-url>
-cd foodies
-```
-
-### 2. Backend Setup
 ```bash
 cd backend
 npm install
 ```
-Create a `.env` file in the `backend` directory and add the following variables:
-```env
-PORT=5000
-DB_HOST=localhost
-DB_USER=your_mysql_username
-DB_PASSWORD=your_mysql_password
-DB_NAME=foodies_db
-JWT_SECRET=your_jwt_secret_key
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-SESSION_SECRET=your_session_secret
-GROQ_API_KEY=your_groq_api_key
-```
 
-### 3. Database Setup
-Ensure your MySQL server is running. Create a database named `foodies_db` and execute the schema files located in `backend/db/` to set up the required tables.
+Copy the example env (safe to push) into a real `.env` (gitignored — keep secrets here):
 
-### 4. Frontend Setup
 ```bash
-cd ../frontend
-npm install
-```
-Create a `.env` file in the `frontend` directory:
-```env
-REACT_APP_API_URL=http://localhost:5000/api
+cp .env.example .env
 ```
 
-### 5. Run the Application
+Fill in secrets in `backend/.env`. Names match the code (`MYSQL_*`, `JWT_SECRET`, etc.).
 
-**Start Backend Server:**
+**Local vs AWS DB:** the example has two MySQL blocks. Keep only one uncommented — local for daily work, RDS when you want cloud. Same toggle idea as your private `.env`.
+
+Google/GitHub OAuth keys are optional (not fully set up/tested). Email/password login works without them.
+
+Create the MySQL database, then run the SQL files under `backend/db/` (`schema.sql`, `recipes_schema.sql`, `reviews_schema.sql`, `bookmarks_schema.sql`, `collections_schema.sql`, `activity_schema.sql`).
+
+Optional admin seed:
+
 ```bash
-cd backend
-npm run dev
+node db/seed-admin.js
 ```
 
-**Start Frontend Development Server:**
+Default seed (from the script): email `admin@gmail.com`, password `admin` — change this if you use it for anything beyond local demos.
+
+Start the API:
+
+```bash
+npm start
+# or: npm run dev
+```
+
+API base: `http://localhost:5000/api`  
+Swagger (if running): `http://localhost:5000/api-docs`
+
+### 2. Frontend
+
 ```bash
 cd frontend
+npm install
+```
+
+```bash
+cp .env.example .env
+```
+
+Defaults point at local API (`http://localhost:5000`). Comment/uncomment the deploy URLs in `frontend/.env.example` when switching to EC2.
+
+```bash
 npm start
 ```
-The application will be available at `http://localhost:3000`.
 
-## 8. Folder Structure
+App: `http://localhost:3000`
 
-```
-foodies/
-├── backend/
-│   ├── controllers/      # Request/response handlers
-│   ├── db/               # Database connection & schemas
-│   ├── middleware/       # Auth and validation middleware
-│   ├── routes/           # API route definitions
-│   ├── services/         # Business logic
-│   ├── .env.example
-│   └── server.js         # Express server entry point
-└── frontend/
-    ├── public/
-    ├── src/
-    │   ├── components/   # Reusable React components
-    │   ├── contexts/     # Global state management
-    │   ├── pages/        # Page-level components
-    │   ├── services/     # API call functions
-    │   └── App.js
-    ├── .env.example
-    └── package.json
-```
+---
 
-## 9. Future Improvements
+## Main API shapes (recipes)
 
-- **Recipe Collections:** Allow users to create and share public collections of recipes (e.g., "Weekly Dinners," "Holiday Baking").
-- **Real-time Notifications:** Implement WebSockets for real-time notifications on new comments or recipe updates.
-- **Advanced Search:** Integrate a more powerful search solution like Elasticsearch and using vector databases for faster and more relevant search results.
-- **Unit & Integration Testing:** Increase test coverage for both frontend and backend to improve code reliability.
+These are the ones I keep intentional and named clearly:
+
+| Action | Method | Path |
+|--------|--------|------|
+| List community recipes | GET | `/api/recipes` |
+| Create | POST | `/api/recipes/create-recipe` |
+| Update | PUT | `/api/recipes/update-recipe/:id` |
+| Delete | DELETE | `/api/recipes/delete-recipe/:id` |
+| One user recipe | GET | `/api/recipes/user/:id` |
+
+Other groups: `/api/auth`, `/api/users`, `/api/bookmarks`, `/api/admin`, `/api/chat`.
+
+**Auth (security-first):** JWT is stored in an **httpOnly cookie** (not `localStorage`).  
+The browser sends it automatically on API calls via `credentials: 'include'`.  
+JS cannot read the token, which reduces XSS token theft.  
+`Authorization: Bearer` is still accepted for tools like Swagger.
+
+---
+
+## Admin
+
+- Route: `/admin` (admin role only)
+- Tabs: Users, Recipes, Reviews, Collections
+- Stats cards at the top (counts)
+- Frontend gates with `AdminRoute`; backend checks admin role again on `/api/admin/*`
+
+That double check is intentional, because the hiding a button is not security.
+
+---
+
+## Things I would improve next
+
+- Real forgot-password flow (UI exists as of now; backend is not wired yet fully)
+- Email verification
+- Pagination on large admin lists
+- automated tests
+- Stronger production OAuth callback config
+- Potential video sharing option
+- Automated email letter(frequency will be decided)
+- Blogs
+
+---
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+
+MIT — see [LICENSE](./LICENSE).
