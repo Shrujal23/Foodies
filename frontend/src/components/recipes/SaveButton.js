@@ -4,19 +4,20 @@ import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../../config';
+import { apiFetch } from '../../services/apiClient';
 
 export default function SaveButton({ recipe }) {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const recipeId = recipe.uri || recipe._id || recipe.id;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkSaveStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipeId, user]);
 
   const checkSaveStatus = async () => {
@@ -27,18 +28,24 @@ export default function SaveButton({ recipe }) {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipeId)}/status`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const res = await apiFetch(
+        `/recipes/favorites/${encodeURIComponent(recipeId)}/status`
+      );
 
-      if (res.ok) {
-        const data = await res.json();
-        setIsSaved(data.isFavorite || false);
+      if (res.status === 401) {
+        setIsSaved(false);
+        return;
       }
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch save status');
+      }
+
+      const data = await res.json();
+      setIsSaved(data.isFavorite || false);
     } catch (err) {
-      console.error('Failed to check save status:', err);
+      console.error('Failed to check save status');
+      setIsSaved(false);
     } finally {
       setIsLoading(false);
     }
@@ -57,41 +64,37 @@ export default function SaveButton({ recipe }) {
     if (isLoading) return;
 
     setIsLoading(true);
+
     try {
       const method = isSaved ? 'DELETE' : 'POST';
-      const url = isSaved
-        ? `${API_BASE_URL}/recipes/favorites/${encodeURIComponent(recipeId)}`
-        : `${API_BASE_URL}/recipes/favorites`;
+      const path = isSaved
+        ? `/recipes/favorites/${encodeURIComponent(recipeId)}`
+        : `/recipes/favorites`;
 
-      // Normalizes the payload to prevent backend crashes on user-created recipes
       const payload = {
         ...recipe,
         uri: recipeId,
         label: recipe.label || recipe.title,
-        source: recipe.source || 'user'
+        source: recipe.source || 'user',
       };
 
-      const res = await fetch(url, {
+      const res = await apiFetch(path, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: !isSaved ? JSON.stringify({ recipe: payload }) : undefined
+        headers: { 'Content-Type': 'application/json' },
+        body: !isSaved ? JSON.stringify({ recipe: payload }) : undefined,
       });
 
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) {
+        throw new Error('Failed');
+      }
 
       setIsSaved(!isSaved);
+
       toast.success(isSaved ? 'Removed from favorites' : 'Saved to favorites');
 
-      // Notifies the other parts of the app that favorites/collections changed
-      try {
-        window.dispatchEvent(new Event('favorites:updated'));
-      } catch (evErr) {
-        // ignore
-      }
+      window.dispatchEvent(new Event('favorites:updated'));
     } catch (err) {
+      console.error(err);
       toast.error('Something went wrong');
     } finally {
       setIsLoading(false);
@@ -102,33 +105,22 @@ export default function SaveButton({ recipe }) {
     <button
       onClick={handleSaveClick}
       disabled={isLoading}
-      className={`
-        group relative p-4 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 transform
-        ${isSaved
-          ? 'bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50'
-          : 'bg-white/90 dark:bg-gray-800/90 text-orange-600 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl'
-        }
-        ${isLoading ? 'opacity-70 cursor-wait' : 'hover:scale-110 active:scale-95'}
-      `}
+      className={`group relative flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-200 ${
+        isSaved
+          ? 'border-orange-500 bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md shadow-orange-500/25'
+          : 'border-orange-100 bg-white/95 text-orange-600 shadow-sm hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/95 dark:text-orange-300 dark:hover:border-orange-600 dark:hover:bg-gray-700'
+      } ${isLoading ? 'cursor-wait opacity-70' : 'active:scale-95'}`}
       title={isSaved ? 'Remove from favorites' : 'Save to favorites'}
     >
-      {/* Icon with smooth transition */}
-      <div className="relative w-7 h-7">
+      <div className="relative flex h-5 w-5 items-center justify-center">
         {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-          </div>
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current/25 border-t-current" />
         ) : isSaved ? (
-          <BookmarkSolid className="w-7 h-7 drop-shadow-md" />
+          <BookmarkSolid className="h-5 w-5" />
         ) : (
-          <BookmarkIcon className="w-7 h-7" />
+          <BookmarkIcon className="h-5 w-5" />
         )}
       </div>
-
-      {/* Glow on hover (only when not saved) */}
-      {!isSaved && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-400/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      )}
     </button>
   );
 }

@@ -17,7 +17,8 @@ export default function EmptyState({
 }) {
   return (
     <div className={`flex flex-col items-center justify-center py-16 px-6 ${className}`}>
-      {/* Icon */}
+      <div className="w-full max-w-xl rounded-3xl border border-[#f4ddce] bg-[#fffdfb]/90 p-10 shadow-[0_18px_45px_rgba(53,34,26,0.08)]">
+        {/* Icon */}
       <div className="text-7xl mb-6 opacity-80 animate-bounce" aria-hidden="true">
         {icon}
       </div>
@@ -62,6 +63,7 @@ export default function EmptyState({
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

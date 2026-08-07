@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StarIcon, TrashIcon, HandThumbUpIcon } from '@heroicons/react/24/solid';
 import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiFetch } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 
 const ReviewsSection = ({ recipeId }) => {
@@ -35,7 +36,27 @@ const ReviewsSection = ({ recipeId }) => {
         const data = await reviewsRes.json();
         const breakdown = breakdownRes.ok ? await breakdownRes.json() : {};
         
-        setReviews(data.reviews);
+        const normalizedReviews = (data.reviews || []).map((review) => {
+          const trimmedTitle = review.title?.trim();
+          const trimmedComment = review.comment?.trim();
+          const fallbackTitle = trimmedComment
+            ? trimmedComment.slice(0, 60)
+            : `Rated ${review.rating || 0} out of 5`;
+
+          return {
+            ...review,
+            title: trimmedTitle || fallbackTitle,
+            comment: trimmedComment || '',
+            displayTitle: trimmedTitle || fallbackTitle,
+            user_id: review.user_id ?? review.userId ?? null,
+            created_at: review.created_at ?? review.createdAt ?? null,
+            helpful_count: review.helpful_count ?? review.helpfulCount ?? 0,
+            display_name: review.display_name ?? review.user?.displayName ?? review.user?.displayName ?? null,
+            username: review.username ?? review.user?.username ?? null,
+          };
+        });
+
+        setReviews(normalizedReviews);
         setTotalPages(data.pagination.pages);
         setStats({
           ...data.stats,
@@ -63,18 +84,11 @@ const ReviewsSection = ({ recipeId }) => {
 
     try {
       setSubmitLoading(true);
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        toast.error('Authentication token not found. Please sign in again.', { duration: 1000 });
-        return;
-      }
 
-      const res = await fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews`, {
+      const res = await apiFetch(`/recipes/${recipeId}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData)
       });
@@ -84,9 +98,8 @@ const ReviewsSection = ({ recipeId }) => {
         setFormData({ rating: 5, title: '', comment: '' });
         setShowForm(false);
         
-        // If already on page 1, manually fetch to refresh. Otherwise, changing the page automatically triggers the fetch.
         if (page === 1) {
-          fetchReviews();
+          await fetchReviews();
         } else {
           setPage(1);
         }
@@ -105,11 +118,8 @@ const ReviewsSection = ({ recipeId }) => {
     if (!window.confirm('Are you sure you want to delete this review?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews/${reviewId}`, {
+      const res = await apiFetch(`/recipes/${recipeId}/reviews/${reviewId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
 
       if (res.ok) {
@@ -320,11 +330,11 @@ const ReviewsSection = ({ recipeId }) => {
                         />
                       ))}
                     </div>
-                    <span className="font-bold text-gray-900 dark:text-white">{review.title || 'No Title'}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{review.displayTitle || 'Review'}</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    By <span className="font-semibold">{review.display_name || review.username}</span> •{' '}
-                    {new Date(review.created_at).toLocaleDateString()}
+                    By <span className="font-semibold">{review.display_name || review.username || 'Anonymous'}</span> •{' '}
+                    {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Recently added'}
                   </p>
                 </div>
                 {user && user.id === review.user_id && (
@@ -338,8 +348,10 @@ const ReviewsSection = ({ recipeId }) => {
               </div>
 
               {/* Review Comment */}
-              {review.comment && (
+              {review.comment ? (
                 <p className="text-gray-700 dark:text-gray-300 mb-4">{review.comment}</p>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No written review provided.</p>
               )}
 
               {/* Helpful Buttons */}
@@ -349,7 +361,7 @@ const ReviewsSection = ({ recipeId }) => {
                   className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors"
                 >
                   <HandThumbUpIcon className="w-4 h-4" />
-                  Helpful ({review.helpful_count})
+                  Helpful ({review.helpful_count ?? 0})
                 </button>
               </div>
             </div>

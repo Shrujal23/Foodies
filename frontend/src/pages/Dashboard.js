@@ -6,8 +6,8 @@ import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
 import AnimatedStatCard from '../components/common/AnimatedStatCard';
 import Breadcrumbs from '../components/common/Breadcrumbs';
-import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../services/apiClient';
+import { clearClientAuth } from '../services/authService';
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -27,10 +27,13 @@ export default function Dashboard() {
 
     const fetchDashboard = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE_URL}/users/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiFetch('/users/dashboard');
+
+        if (res.status === 401) {
+          clearClientAuth();
+          navigate('/login');
+          return;
+        }
 
         if (!res.ok) throw new Error('Failed to load dashboard');
         const data = await res.json();
@@ -38,10 +41,6 @@ export default function Dashboard() {
       } catch (err) {
         console.error(err);
         setError(err.message);
-        if (err.message.includes('token') || err.message.includes('401')) {
-          localStorage.removeItem('token');
-          navigate('/login');
-        }
       } finally {
         setLoading(false);
       }
@@ -128,7 +127,7 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
               <AnimatedStatCard 
                 value={dashboardData?.totalFavorites || 0} 
                 label="Saved Recipes" 

@@ -78,11 +78,11 @@ function AboutUs() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 dark:to-black">
       
       {/* GLOWING "MADE WITH LOVE" HEADING - VISUALLY STRIKING */}
-      <div className="py-16 px-6 text-center">
+      {/* <div className="py-16 px-6 text-center">
         <div className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold text-2xl shadow-2xl shadow-orange-500/50 animate-pulse-glow mb-8">
           ✨ Made with Love ✨
         </div>
-      </div>
+      </div> */}
       
       {/* HERO SECTION */}
       <section className="py-20 px-6 text-center bg-gray-50 dark:bg-gray-900">

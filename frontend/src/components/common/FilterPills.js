@@ -39,29 +39,27 @@ export default function FilterPills({
   }
 
   return (
-    <div className={`flex flex-wrap gap-3 items-center ${className}`}>
-      {/* Filter Pills */}
+    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       {activeFilters.map(({ key, label }) => (
         <div
           key={key}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-pink-100 dark:from-orange-900/40 dark:to-pink-900/40 text-orange-700 dark:text-orange-300 rounded-full border border-orange-300 dark:border-orange-700/50 shadow-sm hover:shadow-md transition-shadow"
+          className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 dark:border-orange-800/60 dark:bg-orange-900/20 dark:text-orange-300"
         >
-          <span className="text-sm font-medium">{label}</span>
+          <span>{label}</span>
           <button
             onClick={() => onRemoveFilter?.(key)}
-            className="p-0.5 hover:bg-orange-200 dark:hover:bg-orange-900/60 rounded-full transition-colors"
+            className="rounded-full p-0.5 transition-colors hover:bg-orange-100 dark:hover:bg-orange-900/60"
             title="Remove filter"
           >
-            <XMarkIcon className="w-4 h-4" />
+            <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
       ))}
 
-      {/* Clear All Button */}
       {activeFilters.length > 0 && onClearAll && (
         <button
           onClick={onClearAll}
-          className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 px-2 py-1 transition-colors"
+          className="rounded-full px-2 py-1 text-sm font-semibold text-gray-600 transition-colors hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
         >
           Clear all
         </button>

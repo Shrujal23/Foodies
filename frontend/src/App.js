@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -18,10 +18,9 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AddRecipe from './pages/AddRecipe';
-import MyRecipes from './pages/MyRecipes';
+import Recipes from './pages/Recipes';
 import UserRecipeDetail from './pages/UserRecipeDetail';
 import Collections from './pages/Collections';
-import AdminCollections from './pages/AdminCollections';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import ForgotPassword from './pages/ForgotPassword';
@@ -48,15 +47,16 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/recipes" element={<Recipes />} />
                 <Route path="/recipes/add" element={<AddRecipe />} />
-                <Route path="/my-recipes" element={<MyRecipes />} />
                 <Route path="/recipes/user/:id" element={<UserRecipeDetail />} />
+                <Route path="/recipes/:id" element={<UserRecipeDetail />} />
                 <Route path="/collections" element={<Collections />} />
                 <Route path="/profile" element={<Profile />} />
                 
-                {/*Unified Admin Section */}
+                {/* Unified admin — collections live under ?tab=collections */}
                 <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                <Route path="/admin/collections" element={<AdminRoute><AdminCollections /></AdminRoute>} />
+                <Route path="/admin/collections" element={<Navigate to="/admin?tab=collections" replace />} />
                 
                 {/* Standard Public Pages */}
                 <Route path="/about" element={<AboutUs />} />

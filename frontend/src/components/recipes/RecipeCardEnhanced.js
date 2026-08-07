@@ -8,15 +8,11 @@ const RecipeCardEnhanced = ({ recipe }) => {
   const [reviewCount, setReviewCount] = useState(recipe.reviewCount || 0);
 
   const fetchRating = useCallback(async () => {
-    // Skip fetching if the backend already provided the review count
-    if (recipe.reviewCount !== undefined) return;
+    if (recipe.reviewCount !== undefined || recipe.source === 'edamam') return;
 
     try {
       const recipeId = recipe._id || recipe.id;
-      
-      // Skip fetching for external Edamam recipes to prevent the N+1 query problem 
-      // (Edamam recipes don't have local DB reviews anyway)
-      if (!recipeId || recipe.uri || String(recipeId).includes('http') || String(recipeId).includes('#')) {
+      if (!recipeId || String(recipeId).includes('http') || String(recipeId).includes('#')) {
         return;
       }
 
@@ -39,7 +35,6 @@ const RecipeCardEnhanced = ({ recipe }) => {
       }
     } catch (error) {
       console.error('Failed to fetch rating:', error);
-      // Silent fallback - keep default rating
     }
   }, [recipe]);
 
@@ -51,24 +46,50 @@ const RecipeCardEnhanced = ({ recipe }) => {
     ? (recipe.image.startsWith('http') ? recipe.image : `${ASSET_BASE_URL}${recipe.image}`)
     : 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80';
 
-  const recipeLink = recipe.source === 'user' || recipe._id
+  const isUserRecipe = recipe.source === 'user' || recipe._id && !String(recipe._id).startsWith('recipe_');
+  const externalRecipeUrl = recipe.url || recipe.sourceUrl || recipe.recipeUrl;
+  const isExternalRecipe = Boolean(externalRecipeUrl) && recipe.source === 'edamam';
+  const recipeLink = isUserRecipe
     ? `/recipes/user/${recipe._id || recipe.id}`
-    : `/recipes/${recipe.uri ? recipe.uri.split('#')[1] : recipe.id}`;
+    : `/recipes/${recipe._id || recipe.id}`;
+
+  const renderRecipeLink = (children, className = '', extraProps = {}) => {
+    if (isExternalRecipe) {
+      return (
+        <a
+          href={externalRecipeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={className}
+          {...extraProps}
+        >
+          {children}
+        </a>
+      );
+    }
+
+    return (
+      <Link to={recipeLink} state={{ recipe }} className={className} {...extraProps}>
+        {children}
+      </Link>
+    );
+  };
 
   return (
-    <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 overflow-hidden h-full flex flex-col">
-      <div className="relative h-56 overflow-hidden">
-        <Link to={recipeLink} className="block w-full h-full">
+    <div className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-[#f4ddce] bg-[#fffdfb]/95 shadow-[0_12px_32px_rgba(53,34,26,0.08)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_44px_rgba(53,34,26,0.14)] dark:border-gray-700 dark:bg-gray-800/90">
+      <div className="relative h-52 overflow-hidden sm:h-56">
+        {renderRecipeLink(
           <img
             src={imageUrl}
             alt={recipe.title || recipe.label}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        </Link>
+          />,
+          'block w-full h-full'
+        )}
 
         {recipe.difficulty && (
-          <div className="absolute top-4 left-4 px-3 py-1 text-xs font-bold rounded-lg bg-white/90 dark:bg-gray-900/90 backdrop-blur">
+          <div className="absolute left-4 top-4 rounded-full border border-[#f0d8c7] bg-[#fff7f0]/95 px-3 py-1 text-xs font-semibold text-[#9a532d] shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/90 dark:text-orange-300">
             {recipe.difficulty}
           </div>
         )}
@@ -78,41 +99,45 @@ const RecipeCardEnhanced = ({ recipe }) => {
         </div>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col">
-        <Link to={recipeLink} className="flex-1">
-          <h3 className="font-bold text-xl text-gray-900 dark:text-white line-clamp-2 mb-3 group-hover:text-orange-600 transition">
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        {renderRecipeLink(
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-gray-900 transition group-hover:text-orange-600 dark:text-white sm:text-xl">
             {recipe.title || recipe.label}
-          </h3>
-        </Link>
+          </h3>,
+          'flex-1'
+        )}
 
         {recipe.username && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
             By {recipe.display_name || recipe.username}
           </p>
         )}
 
-        <div className="flex flex-wrap gap-2 text-sm mb-4">
+        <div className="mb-4 flex flex-wrap gap-2 text-sm">
           {(recipe.prepTime || recipe.prep_time) && (
-            <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 px-3 py-1 rounded">
+            <span className="rounded-full border border-[#f7d7c2] bg-[#fff0e8] px-3 py-1 text-[#b6542e] dark:border-orange-700/50 dark:bg-orange-900/40 dark:text-orange-300">
                {recipe.prepTime || recipe.prep_time} min
             </span>
           )}
           {recipe.cuisine && (
-            <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-3 py-1 rounded">
+            <span className="rounded-full border border-[#f6c8d7] bg-[#ffe8ee] px-3 py-1 text-[#b53b63] dark:border-rose-700/50 dark:bg-rose-900/40 dark:text-rose-300">
                {recipe.cuisine}
             </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-1 text-yellow-500">
-             <span className="font-semibold">{rating}</span>
+        <div className="mt-auto flex items-center justify-between border-t border-[#f4ddce] pt-4 dark:border-gray-700">
+          <div className="flex items-center gap-1 text-amber-500">
+            <span className="font-semibold">{rating}</span>
             {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount})</span>}
           </div>
 
-          <Link to={recipeLink} className="text-orange-600 hover:text-orange-700 font-medium text-sm">
-            View Recipe →
-          </Link>
+          {renderRecipeLink(
+            <span className="text-sm font-medium text-orange-600 transition hover:text-orange-700">
+              View Recipe →
+            </span>,
+            'text-sm font-medium text-orange-600 transition hover:text-orange-700'
+          )}
         </div>
       </div>
     </div>

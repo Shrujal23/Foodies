@@ -7,19 +7,30 @@ export async function searchRecipes(query, filters = {}) {
       source: 'all'
     });
 
-    // Add optional filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
 
     const response = await fetch(`${API_BASE_URL}/recipes/search?${params.toString()}`);
-    
     if (!response.ok) {
       throw new Error(`Search failed: ${response.status}`);
     }
 
     const result = await response.json();
-    return result.data || { userRecipes: [], edamamRecipes: [] };
+    const data = result.data || { userRecipes: [], edamamRecipes: [] };
+
+    return {
+      userRecipes: (data.userRecipes || []).map(recipe => ({
+        ...recipe,
+        reviewCount: recipe.reviewCount ?? 0,
+        rating: recipe.rating || 4.2,
+      })),
+      edamamRecipes: (data.edamamRecipes || []).map(recipe => ({
+        ...recipe,
+        reviewCount: 0,
+        rating: recipe.rating || 4.2,
+      }))
+    };
   } catch (error) {
     throw new Error(error.message || 'Failed to search recipes');
   }

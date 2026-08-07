@@ -11,7 +11,7 @@ const navigation = [
   { name: 'Home', href: '/', protected: false },
   { name: 'Dashboard', href: '/dashboard', protected: true },
   { name: 'Add Recipe', href: '/recipes/add', protected: true },
-  { name: 'Recipes', href: '/my-recipes', protected: false },
+  { name: 'Recipes', href: '/recipes', protected: false },
   { name: 'Collections', href: '/collections', protected: true },
   { name: 'About Us', href: '/about', protected: false },
   { name: 'Contact Us', href: '/contact', protected: false },
@@ -50,21 +50,21 @@ export default function Navbar() {
   const currentPath = window.location.pathname;
 
   return (
-    <Disclosure as="nav" className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
+    <Disclosure as="nav" className="sticky top-0 z-50 border-b border-orange-100/80 bg-[#fffaf7]/95 backdrop-blur-xl dark:border-gray-800 dark:bg-gray-900/95">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center justify-between">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between gap-3">
               {/* Logo */}
               <Link
                 to="/"
-                className="text-2xl font-bold logo-glow"
+                className="rounded-full px-3 py-2 text-lg font-semibold tracking-tight text-orange-600 transition hover:text-orange-700 logo-glow sm:text-xl"
               >
                 Foodies
               </Link>
 
               {/* Desktop Navigation */}
-              <div className="hidden lg:flex items-center space-x-1">
+              <div className="hidden lg:flex items-center gap-1 rounded-full border border-orange-100 bg-white/80 px-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.04)] dark:border-gray-800 dark:bg-gray-900/80">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
@@ -72,10 +72,10 @@ export default function Navbar() {
                     onClick={(e) => item.protected && handleProtectedClick(e, item.href)}
                     className={classNames(
                       currentPath === item.href
-                        ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-orange-600',
+                        ? 'bg-[#ffe8db] text-[#c85b2d] shadow-sm ring-1 ring-orange-200/70'
+                        : 'text-[#5d3d2f] dark:text-gray-300 hover:text-[#c85b2d]',
                       item.protected && !user ? 'opacity-50 cursor-not-allowed' : '',
-                      'px-3 py-2 rounded text-sm font-medium transition'
+                      'rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:bg-[#fff3e8] hover:text-orange-700 dark:hover:bg-gray-800'
                     )}
                   >
                     {item.name}
@@ -88,7 +88,7 @@ export default function Navbar() {
                 {/* Theme Toggle */}
                 <button
                   onClick={toggleTheme}
-                  className="p-2 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="rounded-full p-2 text-[#5d3d2f] transition hover:bg-[#fff0e8] dark:text-gray-300 dark:hover:bg-gray-800"
                   aria-label="Toggle theme"
                 >
                   {isDarkMode ? (
@@ -101,7 +101,7 @@ export default function Navbar() {
                 {/* User Menu */}
                 {user ? (
                   <Menu as="div" className="relative">
-                    <Menu.Button className="flex items-center gap-2 rounded px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <Menu.Button className="flex items-center gap-2 rounded-full px-2.5 py-2 transition hover:bg-[#fff0e8] dark:hover:bg-gray-800">
                       <img
                         src={user.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}
                         alt={user.username}
@@ -157,34 +157,19 @@ export default function Navbar() {
                         </Menu.Item>
 
                         {user.role === 'admin' && (
-                          <>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <Link
-                                  to="/admin"
-                                  className={classNames(
-                                    active ? 'bg-gray-50 dark:bg-gray-700' : '',
-                                    'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
-                                  )}
-                                >
-                                  Admin Dashboard
-                                </Link>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <Link
-                                  to="/admin/collections"
-                                  className={classNames(
-                                    active ? 'bg-gray-50 dark:bg-gray-700' : '',
-                                    'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
-                                  )}
-                                >
-                                  Manage Collections
-                                </Link>
-                              )}
-                            </Menu.Item>
-                          </>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link
+                                to="/admin"
+                                className={classNames(
+                                  active ? 'bg-gray-50 dark:bg-gray-700' : '',
+                                  'block px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-medium'
+                                )}
+                              >
+                                Admin Dashboard
+                              </Link>
+                            )}
+                          </Menu.Item>
                         )}
 
                         <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
@@ -207,7 +192,7 @@ export default function Navbar() {
                   </Menu>
                 ) : (
                   <Menu as="div" className="relative">
-                    <Menu.Button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition">
+                    <Menu.Button className="rounded-full bg-gradient-to-r from-orange-500 to-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(249,115,22,0.2)] transition hover:from-orange-600 hover:to-pink-700">
                       Sign in
                     </Menu.Button>
 
@@ -252,7 +237,7 @@ export default function Navbar() {
                 )}
 
                 {/* Mobile menu button */}
-                <Disclosure.Button className="lg:hidden p-2 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <Disclosure.Button className="rounded-full p-2 text-[#5d3d2f] transition hover:bg-[#fff0e8] dark:text-gray-300 dark:hover:bg-gray-800 lg:hidden">
                   {open ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
                 </Disclosure.Button>
               </div>
@@ -260,8 +245,8 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu */}
-          <Disclosure.Panel className="lg:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-            <div className="px-4 pt-2 pb-4 space-y-1">
+          <Disclosure.Panel className="border-t border-orange-100 bg-white/95 dark:border-gray-800 dark:bg-gray-900/95 lg:hidden">
+            <div className="px-3 pt-3 pb-4 space-y-2">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -271,13 +256,44 @@ export default function Navbar() {
                     currentPath === item.href
                       ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
-                    'block px-4 py-2 rounded text-sm font-medium transition'
+                    'block rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm'
                   )}
                 >
                   {item.name}
                 </Link>
               ))}
-              {!user && (
+
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
+                <button
+                  onClick={toggleTheme}
+                  className="w-full text-left px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  Toggle {isDarkMode ? 'Light' : 'Dark'} Mode
+                </button>
+              </div>
+
+              {user ? (
+                <div className="space-y-1 pt-3">
+                  <Link
+                    to="/dashboard"
+                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 rounded text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : (
                 <>
                   <Link
                     to="/login"

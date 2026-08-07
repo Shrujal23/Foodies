@@ -1,10 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { API_BASE_URL } from '../config';
 import {
   getCurrentUser as getStoredUser,
-  getToken,
   onAuthStateChanged,
-  setCurrentUser,
+  checkAuthStatus as verifySession,
 } from '../services/authService';
 
 const AuthContext = createContext();
@@ -14,74 +12,33 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Grab initial snapshot cache to render UI immediately
     const existing = getStoredUser();
     if (existing) {
       setUser(existing);
     }
-    
-    // 2. Instantly verify live database permissions/roles over the network
-    checkAuthStatus();
-    
-    // 3. Listen to auth state shifts (Login/Logout triggers)
+
+    // Verifies httpOnly cookie session with the API (no token in JS)
+    (async () => {
+      try {
+        await verifySession();
+      } finally {
+        setLoading(false);
+      }
+    })();
+
     const unsubscribe = onAuthStateChanged((nextUser) => {
       setUser(nextUser);
     });
-    
+
     return () => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        setCurrentUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/auth/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        setCurrentUser(null);
-        return;
-      }
-
-      const data = await response.json();
-      
-      if (data && data.user) {
-        setCurrentUser(data.user, token);
-      } else {
-        const existingUser = getStoredUser();
-        if (existingUser) {
-          setCurrentUser(existingUser, token);
-        } else {
-          setCurrentUser(null);
-        }
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      const existingUser = getStoredUser();
-      if (existingUser) {
-        setCurrentUser(existingUser, getToken());
-      } else {
-        setCurrentUser(null);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const value = {
     user,
     loading,
-    checkAuthStatus,
+    checkAuthStatus: verifySession,
   };
 
   return (

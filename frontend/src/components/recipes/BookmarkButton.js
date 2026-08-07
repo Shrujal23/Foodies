@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../contexts/AuthContext';
+import { setCurrentUser } from '../../services/authService';
+import { apiFetch } from '../../services/apiClient';
 
 const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
   const { user } = useAuth();
@@ -36,17 +37,38 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
     };
   }, [showCollections]);
 
+  const validateAuth = async () => {
+    try {
+      const authRes = await apiFetch('/auth/status');
+      if (!authRes.ok) {
+        setCurrentUser(null);
+        return false;
+      }
+      const authData = await authRes.json();
+      if (!authData.isAuthenticated || !authData.user) {
+        setCurrentUser(null);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setCurrentUser(null);
+      return false;
+    }
+  };
+
   const checkBookmarkStatus = async () => {
     try {
+      const ok = await validateAuth();
+      if (!ok) {
+        setIsBookmarked(false);
+        return;
+      }
+
       const query = recipeId 
         ? `?recipeId=${recipeId}`
         : `?externalRecipeId=${externalRecipeId}`;
       
-      const res = await fetch(`${API_BASE_URL}/bookmarks/check${query}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const res = await apiFetch(`/bookmarks/check${query}`);
       
       if (res.ok) {
         const data = await res.json();
@@ -59,16 +81,17 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
 
   const fetchCollections = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/collections`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const ok = await validateAuth();
+      if (!ok) {
+        setCollections([]);
+        return;
+      }
+
+      const res = await apiFetch('/bookmarks/collections');
       
       if (res.ok) {
         const data = await res.json();
         setCollections(data);
-        // Set first collection as default
         if (data.length > 0) {
           setDefaultCollection(data[0].id);
         }
@@ -86,6 +109,13 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
 
     setLoading(true);
     try {
+      const ok = await validateAuth();
+      if (!ok) {
+        toast.error('Please sign in again to continue');
+        setLoading(false);
+        return;
+      }
+
       const cId = collectionId || defaultCollection;
       
       if (!cId) {
@@ -95,12 +125,9 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
         return;
       }
 
-      const res = await fetch(`${API_BASE_URL}/collections/${cId}/items`, {
+      const res = await apiFetch(`/bookmarks/collections/${cId}/items`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recipeId: recipeId || null,
           externalRecipeId: externalRecipeId || null,
@@ -130,12 +157,15 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
     if (!name) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/collections`, {
+      const ok = await validateAuth();
+      if (!ok) {
+        toast.error('Please sign in again to continue');
+        return;
+      }
+
+      const res = await apiFetch('/bookmarks/collections', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
 

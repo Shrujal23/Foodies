@@ -12,29 +12,29 @@
 
 @layer base {
   :root {
-    /* Warm Neutral Base */
-    --gray-50: #fdfafb;
-    --gray-100: #faf7f5;
-    --gray-200: #f5f0ed;
-    --gray-300: #ede5e0;
-    --gray-400: #e0d6d0;
-    --gray-500: #c7b8b0;
-    --gray-600: #a69389;
-    --gray-700: #857066;
-    --gray-800: #5d4d44;
-    --gray-900: #3a2e27;
+    /* Softer warm light palette */
+    --gray-50: #fffaf7;
+    --gray-100: #fff3eb;
+    --gray-200: #ffe6d8;
+    --gray-300: #f9d8c4;
+    --gray-400: #efc0a3;
+    --gray-500: #c99678;
+    --gray-600: #a16f4f;
+    --gray-700: #7f553e;
+    --gray-800: #5d3d2f;
+    --gray-900: #35221a;
 
-    /* Orange-Pink Accent System */
-    --accent-orange-500: #ff6b40;
-    --accent-orange-600: #ff4d1f;
-    --accent-pink-500: #ec4899;
-    --accent-pink-600: #db2777;
-    --accent-rose-500: #f43f5e;
+    /* Brighter accent system */
+    --accent-orange-500: #ff7a45;
+    --accent-orange-600: #ff5f2d;
+    --accent-pink-500: #f05a9d;
+    --accent-pink-600: #e23c83;
+    --accent-rose-500: #f24d6b;
 
     /* Semantic */
-    --bg-primary: var(--gray-50);
-    --text-primary: var(--gray-900);
-    --text-muted: var(--gray-600);
+    --bg-primary: #fffaf7;
+    --text-primary: #35221a;
+    --text-muted: #7f553e;
   }
 
   .dark {
@@ -50,10 +50,11 @@
 
   body {
     @apply font-sans antialiased transition-all duration-500;
-    background: var(--bg-primary);
+    background: linear-gradient(135deg, #fffaf7 0%, #fff3eb 45%, #fef7f2 100%);
     color: var(--text-primary);
     min-height: 100vh;
     font-feature-settings: "liga" 1, "kern" 1;
+    text-rendering: optimizeLegibility;
   }
 
   /* Smooth dark mode background transition */

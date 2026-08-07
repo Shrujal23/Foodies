@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
+import { setCurrentUser } from '../services/authService';
+import { apiFetch } from '../services/apiClient';
 
 const Collections = () => {
   const { user } = useAuth();
@@ -12,7 +13,90 @@ const Collections = () => {
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const validateAuth = useCallback(async () => {
+    try {
+      const authRes = await apiFetch('/auth/status');
+      if (!authRes.ok) {
+        setCurrentUser(null);
+        return false;
+      }
+      const authData = await authRes.json();
+      if (!authData.isAuthenticated || !authData.user) {
+        setCurrentUser(null);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setCurrentUser(null);
+      return false;
+    }
+  }, []);
+
+  const loadCollectionRecipes = useCallback(async (collectionId) => {
+    if (!collectionId) {
+      setRecipes([]);
+      return;
+    }
+
+    try {
+      const ok = await validateAuth();
+      if (!ok) {
+        setRecipes([]);
+        return;
+      }
+
+      const res = await apiFetch(`/bookmarks/collections/${collectionId}`);
+
+      if (res.ok) {
+        const data = await res.json();
+        setRecipes(data.items || []);
+        return;
+      }
+
+      if (res.status === 401 || res.status === 403) {
+        setRecipes([]);
+        return;
+      }
+
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to load collection');
+    } catch (error) {
+      console.error('Error loading collection recipes:', error);
+      setRecipes([]);
+    }
+  }, [validateAuth]);
+
+  const fetchCollections = useCallback(async () => {
+    try {
+      const ok = await validateAuth();
+      if (!ok) {
+        setCollections([]);
+        setRecipes([]);
+        setSelectedCollection(null);
+        return;
+      }
+
+      const res = await apiFetch('/bookmarks/collections');
+
+      if (res.ok) {
+        const data = await res.json();
+        setCollections(data);
+
+        if (data.length > 0) {
+          const firstCollectionId = data[0].id;
+          setSelectedCollection(firstCollectionId);
+          await loadCollectionRecipes(firstCollectionId);
+        } else {
+          setSelectedCollection(null);
+          setRecipes([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      toast.error('Failed to load collections');
+    }
+  }, [loadCollectionRecipes, validateAuth]);
+
   useEffect(() => {
     if (user) {
       fetchCollections();
@@ -25,55 +109,7 @@ const Collections = () => {
 
     window.addEventListener('favorites:updated', handler);
     return () => window.removeEventListener('favorites:updated', handler);
-  }, [user]);
-
-  const fetchCollections = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/collections`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setCollections(data);
-        if (data.length > 0) {
-          loadCollectionRecipes(data[0].id);
-          setSelectedCollection(data[0].id);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching collections:', error);
-      toast.error('Failed to load collections');
-    }
-  };
-
-  const loadCollectionRecipes = async (collectionId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const collectionMeta = collections.find(c => c.id === collectionId);
-      // If the collection is private and we don't have a token, avoid calling protected endpoint
-      if (collectionMeta && !collectionMeta.isPublic && !token) {
-        toast('Sign in to view private collections');
-        setRecipes([]);
-        return;
-      }
-      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setRecipes(data.items || []);
-      }
-    } catch (error) {
-      console.error('Error loading collection recipes:', error);
-      toast.error('Failed to load collection');
-    }
-  };
+  }, [user, fetchCollections]);
 
   const handleCreateCollection = async (e) => {
     e.preventDefault();
@@ -83,18 +119,15 @@ const Collections = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/collections`, {
+      const res = await apiFetch('/bookmarks/collections', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCollectionName })
       });
 
       if (res.ok) {
         const newCollection = await res.json();
-        setCollections([...collections, newCollection]);
+        setCollections(prev => [...prev, newCollection]);
         setNewCollectionName('');
         setShowNewCollection(false);
         toast.success('Collection created!');
@@ -111,12 +144,7 @@ const Collections = () => {
     if (!window.confirm('Delete this collection?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const res = await apiFetch(`/bookmarks/collections/${collectionId}`, { method: 'DELETE' });
 
       if (res.ok) {
         const updatedCollections = collections.filter(c => c.id !== collectionId);
@@ -138,15 +166,15 @@ const Collections = () => {
 
   const handleRemoveRecipe = async (collectionId, itemId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/collections/${collectionId}/items/${itemId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const res = await apiFetch(`/bookmarks/collections/${collectionId}/items/${itemId}`, { method: 'DELETE' });
 
       if (res.ok) {
-        setRecipes(recipes.filter(r => r.id !== itemId));
+        setRecipes(prev => prev.filter(r => r.id !== itemId));
+        setCollections(prev => prev.map(collection => 
+          collection.id === collectionId
+            ? { ...collection, itemCount: Math.max(0, (collection.itemCount || 0) - 1) }
+            : collection
+        ));
         toast.success('Recipe removed from collection');
       }
     } catch (error) {
