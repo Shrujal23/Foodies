@@ -22,7 +22,6 @@ const {
   removeFromFavorites,
   checkFavoriteStatus,
   createUserRecipe,
-  getUserRecipes,
   getAllPublicUserRecipes,
   getPublicUserRecipeById,
   updateUserRecipe,
@@ -59,16 +58,21 @@ const upload = multer({
 // ====================== ROUTES ======================
 
 // Public Routes
+// GET /api/recipes — list all user-created recipes (community feed)
+router.get('/', getAllPublicUserRecipes);
 router.get('/search', validateRecipeSearch, searchRecipes);
 router.get('/featured', getFeaturedRecipes);
+// Backward-compatible alias for older clients
 router.get('/user-recipes', getAllPublicUserRecipes);
 
 // User Recipe CRUD Routes
-router.post('/', isAuthenticated, upload.single('image'), validateUserRecipeCreation, createUserRecipe);
-router.get('/my-recipes', isAuthenticated, getUserRecipes);
+// POST /api/recipes/create-recipe — create a new user recipe
+router.post('/create-recipe', isAuthenticated, upload.single('image'), validateUserRecipeCreation, createUserRecipe);
+// PUT /api/recipes/update-recipe/:id — update an existing user recipe
+router.put('/update-recipe/:id', isAuthenticated, upload.single('image'), validateUserRecipeCreation, updateUserRecipe);
+// DELETE /api/recipes/delete-recipe/:id — delete a user recipe
+router.delete('/delete-recipe/:id', isAuthenticated, deleteUserRecipe);
 router.get('/user/:id', getPublicUserRecipeById);
-router.put('/user/:id', isAuthenticated, upload.single('image'), validateUserRecipeCreation, updateUserRecipe);
-router.delete('/user/:id', isAuthenticated, deleteUserRecipe);
 
 // Favorites Routes
 router.get('/favorites', isAuthenticated, getFavoriteRecipes);

@@ -10,9 +10,11 @@
 [![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-A full-stack recipe app built as a portfolio project. People can browse recipes, publish their own, leave reviews, save favorites into collections, and chat with a small AI cooking helper.
+Foodies is a full-stack recipe app built as a portfolio project. People can browse recipes, publish their own, leave reviews, save favorites into collections, and chat with a small AI cooking helper.
 
-It is not a commercial product. It is a learning project that tries to cover real full-stack pieces end to end: auth, database work, file uploads, third-party APIs, role-based admin, and deployment.
+It is not a commercial product. It is a learning project that tries to cover real full-stack pieces end to end: auth, database work, file uploads, third-party API, role-based admin, and deployment.
+
+It's aim is to be an open source destinationf for all food and recipe lovers.g
 
 **Live frontend:** [foodies-dusky-sigma.vercel.app](https://foodies-dusky-sigma.vercel.app)
 
@@ -28,7 +30,7 @@ Backend runs on AWS EC2 when I have it up. I do not keep the server on 24/7, so 
 - Open a recipe, read details, leave a rating and review
 - Save recipes to favorites and organize them in collections
 - Use a personal dashboard for stats and recent activity
-- Chat with “Foody” (AI assistant via https://console.groq.com/ or GROQ) for cooking tips
+- Chat with “Foody” (AI assistant via https://console.groq.com/ or GROQ) for cooking tips. The model used here is openai/gpt-oss-20b.
 - Admins can moderate users, recipes, reviews, and collections
 
 ---
@@ -175,7 +177,15 @@ That double check is intentional, because the hiding a button is not security.
 - Stronger production OAuth callback config
 - Potential video sharing option
 - Automated email letter(frequency will be decided)
-- Blogs
+- Blogs section
+
+---
+
+## Contribution
+
+Contributions are welcome! If you want to help improve Foodies, feel free to open an issue or submit a pull request with bug fixes, enhancements, or documentation updates.
+
+Follow the existing code style and add notes about any setup steps or environment changes.
 
 ---
 

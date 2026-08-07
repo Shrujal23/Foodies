@@ -25,28 +25,99 @@ async function searchRecipes(req, res, next) {
       });
     }
 
-    const searchQuery = query.trim();
+    const rawQuery = query?.trim() || '';
+    const searchQuery = rawQuery.toLowerCase();
+    const safeLimit = Math.min(parseInt(limit, 10) || 20, 50);
+    const offset = Math.max((parseInt(page, 10) - 1) * safeLimit, 0);
+
     let results = {
       userRecipes: [],
-      edamamRecipes: [],
-      total: 0
+      edamamRecipes: []
     };
 
     // User Recipes
     if (source === 'all' || source === 'user') {
       try {
-        const safeLimit = Math.min(parseInt(limit, 10) || 20, 50);
+        const whereClauses = [];
+        const queryParams = [];
+
+        if (searchQuery) {
+          const lowerQuery = `%${searchQuery}%`;
+          whereClauses.push('(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ?)');
+          queryParams.push(lowerQuery, lowerQuery);
+        }
+
+        if (cuisineType) {
+          whereClauses.push('LOWER(ur.cuisine) = ?');
+          queryParams.push(cuisineType.toLowerCase());
+        }
+
+        if (diet) {
+          const dietTerm = `%${diet.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(dietTerm, dietTerm, dietTerm);
+        }
+
+        if (health) {
+          const healthTerm = `%${health.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(healthTerm, healthTerm, healthTerm);
+        }
+
+        if (mealType) {
+          const mealTerm = `%${mealType.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(mealTerm, mealTerm, mealTerm);
+        }
+
+        if (whereClauses.length === 0) {
+          whereClauses.push('1 = 1');
+        }
+
+        if (cuisineType) {
+          whereClauses.push('LOWER(ur.cuisine) = ?');
+          queryParams.push(cuisineType.toLowerCase());
+        }
+
+        if (diet) {
+          const dietTerm = `%${diet.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(dietTerm, dietTerm, dietTerm);
+        }
+
+        if (health) {
+          const healthTerm = `%${health.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(healthTerm, healthTerm, healthTerm);
+        }
+
+        if (mealType) {
+          const mealTerm = `%${mealType.toLowerCase()}%`;
+          whereClauses.push(
+            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
+          );
+          queryParams.push(mealTerm, mealTerm, mealTerm);
+        }
+
         const [userRecipes] = await pool.execute(`
           SELECT ur.*, u.username, u.display_name, u.avatar_url,
-                 (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count
+          (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count
           FROM user_recipes ur
           LEFT JOIN users u ON ur.user_id = u.id
-          WHERE LOWER(ur.title) LIKE ? 
-             OR LOWER(ur.description) LIKE ? 
-             OR LOWER(ur.ingredients) LIKE ?
+          WHERE ${whereClauses.join(' AND ')}
           ORDER BY ur.created_at DESC
-          LIMIT ${safeLimit}
-        `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`]);
+          LIMIT ? OFFSET ?
+        `, [...queryParams, safeLimit, offset]);
 
         results.userRecipes = userRecipes.map(recipe => ({
           ...recipe,
@@ -75,9 +146,10 @@ async function searchRecipes(req, res, next) {
         if (mealType) filters.mealType = mealType;
         if (health) filters.health = health;
 
-        const edamamResult = await edamamService.searchRecipes(searchQuery, {
-          from: (page - 1) * limit,
-          to: page * limit,
+        const edamamQuery = searchQuery || cuisineType || diet || mealType || health || 'recipe';
+        const edamamResult = await edamamService.searchRecipes(edamamQuery, {
+          from: (page - 1) * safeLimit,
+          to: page * safeLimit,
           random: true,
           ...filters
         });
@@ -110,7 +182,9 @@ async function getFeaturedRecipes(req, res) {
     const safeLimit = Math.min(parseInt(req.query.limit, 10) || 8, 20);
 
     const [rows] = await pool.execute(`
-      SELECT ur.*, u.username, u.display_name, u.avatar_url
+      SELECT ur.*, u.username, u.display_name, u.avatar_url,
+             (SELECT AVG(rating) FROM reviews WHERE recipe_id = ur.id) as avg_rating,
+             (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count
       FROM user_recipes ur
       LEFT JOIN users u ON ur.user_id = u.id
       ORDER BY ur.created_at DESC
@@ -121,7 +195,9 @@ async function getFeaturedRecipes(req, res) {
       ...recipe,
       _id: recipe.id,
       source: 'user',
-      rating: 4.5,
+      // Provide real data instead of hardcoded values
+      avg_rating: Number(recipe.avg_rating) || null,
+      favorite_count: Number(recipe.favorite_count) || 0,
       prepTime: recipe.prep_time,
       cookTime: recipe.cook_time,
     })));
@@ -314,26 +390,68 @@ async function createUserRecipe(req, res, next) {
     const prep_time = parseInt(req.body.prepTime || req.body.prep_time || 0, 10);
     const cook_time = parseInt(req.body.cookTime || req.body.cook_time || 0, 10);
     const final_servings = parseInt(servings || 1, 10);
+    const calories = parseInt(req.body.calories || 0, 10);
+    const mealType = req.body.mealType || req.body.meal_type || '';
+    const dishType = req.body.dishType || req.body.dish_type || '';
+
+    let dietaryTags = [];
+    try {
+      const parsed = JSON.parse(req.body.dietaryTags || req.body.dietary_tags || '[]');
+      dietaryTags = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      dietaryTags = String(req.body.dietaryTags || req.body.dietary_tags || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
 
     const image = req.file ? `/uploads/${req.file.filename}` : null;
 
-    const [result] = await pool.execute(
-      `INSERT INTO user_recipes 
-       (user_id, title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        req.user.id,
-        title,
-        description,
-        ingredients,
-        instructions,
-        prep_time,
-        cook_time,
-        final_servings,
-        cuisine || 'international',
-        image
-      ]
-    );
+    let result;
+    try {
+      [result] = await pool.execute(
+        `INSERT INTO user_recipes 
+         (user_id, title, description, ingredients, instructions, prep_time, cook_time, servings, cuisine, calories, meal_type, dish_type, dietary_tags, image)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          req.user.id,
+          title,
+          description,
+          ingredients,
+          instructions,
+          prep_time,
+          cook_time,
+          final_servings,
+          cuisine || 'international',
+          Number.isNaN(calories) ? null : calories,
+          mealType || null,
+          dishType || null,
+          dietaryTags.length > 0 ? JSON.stringify(dietaryTags) : null,
+          image
+        ]
+      );
+    } catch (err) {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR' && /cuisine/i.test(err.message || '')) {
+        [result] = await pool.execute(
+          `INSERT INTO user_recipes 
+           (user_id, title, description, ingredients, instructions, prep_time, cook_time, servings, image)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            req.user.id,
+            title,
+            description,
+            ingredients,
+            instructions,
+            prep_time,
+            cook_time,
+            final_servings,
+            image
+          ]
+        );
+      } else {
+        throw err;
+      }
+    }
 
     res.status(201).json({ 
       success: true, 
@@ -448,6 +566,20 @@ async function updateUserRecipe(req, res, next) {
     const prep_time = parseInt(req.body.prepTime || req.body.prep_time || 0, 10);
     const cook_time = parseInt(req.body.cookTime || req.body.cook_time || 0, 10);
     const final_servings = parseInt(servings || 1, 10);
+    const calories = parseInt(req.body.calories || 0, 10);
+    const mealType = req.body.mealType || req.body.meal_type || '';
+    const dishType = req.body.dishType || req.body.dish_type || '';
+
+    let dietaryTags = [];
+    try {
+      const parsed = JSON.parse(req.body.dietaryTags || req.body.dietary_tags || '[]');
+      dietaryTags = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      dietaryTags = String(req.body.dietaryTags || req.body.dietary_tags || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
 
     const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
@@ -458,22 +590,46 @@ async function updateUserRecipe(req, res, next) {
     );
     if (!ownerCheck[0]) return res.status(404).json({ success: false, message: 'Recipe not found' });
 
-    if (image) {
-      await pool.execute(
-        `UPDATE user_recipes
-         SET title = ?, description = ?, ingredients = ?, instructions = ?,
-             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, image = ?
-         WHERE id = ? AND user_id = ?`,
-        [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', image, id, req.user.id]
-      );
-    } else {
-      await pool.execute(
-        `UPDATE user_recipes
-         SET title = ?, description = ?, ingredients = ?, instructions = ?,
-             prep_time = ?, cook_time = ?, servings = ?, cuisine = ?
-         WHERE id = ? AND user_id = ?`,
-        [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', id, req.user.id]
-      );
+    try {
+      if (image) {
+        await pool.execute(
+          `UPDATE user_recipes
+          SET title = ?, description = ?, ingredients = ?, instructions = ?,
+          prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, calories = ?, meal_type = ?, dish_type = ?, dietary_tags = ?, image = ?
+          WHERE id = ? AND user_id = ?`,
+          [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', Number.isNaN(calories) ? null : calories, mealType || null, dishType || null, dietaryTags.length > 0 ? JSON.stringify(dietaryTags) : null, image, id, req.user.id]
+        );
+      } else {
+        await pool.execute(
+          `UPDATE user_recipes
+          SET title = ?, description = ?, ingredients = ?, instructions = ?,
+          prep_time = ?, cook_time = ?, servings = ?, cuisine = ?, calories = ?, meal_type = ?, dish_type = ?, dietary_tags = ?
+          WHERE id = ? AND user_id = ?`,
+          [title, description, ingredients, instructions, prep_time, cook_time, final_servings, cuisine || 'international', Number.isNaN(calories) ? null : calories, mealType || null, dishType || null, dietaryTags.length > 0 ? JSON.stringify(dietaryTags) : null, id, req.user.id]
+        );
+      }
+    } catch (err) {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR' && /cuisine/i.test(err.message || '')) {
+        if (image) {
+          await pool.execute(
+            `UPDATE user_recipes
+             SET title = ?, description = ?, ingredients = ?, instructions = ?,
+                 prep_time = ?, cook_time = ?, servings = ?, image = ?
+             WHERE id = ? AND user_id = ?`,
+            [title, description, ingredients, instructions, prep_time, cook_time, final_servings, image, id, req.user.id]
+          );
+        } else {
+          await pool.execute(
+            `UPDATE user_recipes
+             SET title = ?, description = ?, ingredients = ?, instructions = ?,
+                 prep_time = ?, cook_time = ?, servings = ?
+             WHERE id = ? AND user_id = ?`,
+            [title, description, ingredients, instructions, prep_time, cook_time, final_servings, id, req.user.id]
+          );
+        }
+      } else {
+        throw err;
+      }
     }
 
     res.json({ success: true, message: 'Recipe updated' });

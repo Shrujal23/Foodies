@@ -7,7 +7,7 @@ class EdamamService {
 
   async searchRecipes(query, options = {}) {
     try {
-      // Read credentials at request time so dotenv has a chance to initialize
+      // Reads the credentials at request time so dotenv has a chance to initialize
       const appId = process.env.EDAMAM_APP_ID;
       const appKey = process.env.EDAMAM_APP_KEY;
 
@@ -71,6 +71,25 @@ class EdamamService {
       const appId = process.env.EDAMAM_APP_ID;
       const appKey = process.env.EDAMAM_APP_KEY;
 
+      if (!appId || !appKey) {
+        return this.formatRecipe({
+          uri: `https://www.edamam.com/recipe/${id}`,
+          label: 'Recipe details unavailable',
+          image: null,
+          source: 'Community recipe source',
+          url: null,
+          ingredientLines: [],
+          ingredients: [],
+          calories: 0,
+          totalTime: 0,
+          cuisineType: ['international'],
+          mealType: [],
+          dishType: [],
+          dietLabels: [],
+          healthLabels: []
+        });
+      }
+
       const response = await axios.get(`${this.baseURL}/${id}`, {
         params: {
           type: 'public',
@@ -86,7 +105,22 @@ class EdamamService {
       return this.formatRecipe(response.data.recipe);
     } catch (error) {
       console.error('Edamam Get Recipe Error:', error.message);
-      throw new Error('Failed to get recipe details');
+      return this.formatRecipe({
+        uri: `https://www.edamam.com/recipe/${id}`,
+        label: 'Recipe details unavailable',
+        image: null,
+        source: 'Community recipe source',
+        url: null,
+        ingredientLines: [],
+        ingredients: [],
+        calories: 0,
+        totalTime: 0,
+        cuisineType: ['international'],
+        mealType: [],
+        dishType: [],
+        dietLabels: [],
+        healthLabels: []
+      });
     }
   }
 
