@@ -65,7 +65,8 @@ async function createUserWithPassword(username, email, password) {
   try {
     const connection = await pool.getConnection();
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // 12 rounds: stronger than default 10; still reasonable for signup latency
+      const hashedPassword = await bcrypt.hash(password, 12);
       const id = Date.now().toString();
 
       await connection.execute(

@@ -9,19 +9,18 @@ class UserService {
           return await connection.execute(sql, params);
         } catch (err) {
           if (err && err.code === 'ER_NO_SUCH_TABLE') {
-            return [fallback];
+            return [Array.isArray(fallback) ? fallback : [fallback]];
           }
           throw err;
         }
       };
 
-      // Get total favorites count
       const [favoritesCount] = await safeExecute(
         'SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ?',
-        [userId]
+        [userId],
+        [{ count: 0 }]
       );
 
-      // Get recently favorited recipes
       const [recentFavorites] = await safeExecute(
         `SELECT r.*, uf.created_at as favorited_at 
          FROM recipes r
@@ -29,22 +28,31 @@ class UserService {
          WHERE uf.user_id = ?
          ORDER BY uf.created_at DESC
          LIMIT 5`,
-        [userId]
+        [userId],
+        []
       );
 
-      // Get recent activity
       const [recentActivity] = await safeExecute(
         `SELECT * FROM user_activity 
          WHERE user_id = ?
          ORDER BY created_at DESC
          LIMIT 10`,
-        [userId]
+        [userId],
+        []
       );
 
-      // Collections feature is optional; skip querying if not implemented
-      const collections = [];
+      const [collectionsRows] = await safeExecute(
+        `SELECT c.id, c.name, c.description, c.is_public, c.created_at, c.updated_at,
+                COALESCE(COUNT(ci.id), 0) AS item_count
+         FROM collections c
+         LEFT JOIN collection_items ci ON ci.collection_id = c.id
+         WHERE c.user_id = ?
+         GROUP BY c.id
+         ORDER BY c.created_at DESC`,
+        [userId],
+        []
+      );
 
-      // Get most viewed recipe categories (from activity)
       const [topCategories] = await safeExecute(
         `SELECT 
           JSON_EXTRACT(details, '$.category') as category,
@@ -54,18 +62,45 @@ class UserService {
          GROUP BY category
          ORDER BY count DESC
          LIMIT 5`,
-        [userId]
+        [userId],
+        []
       );
 
+      const collections = (collectionsRows || []).map((collection) => ({
+        id: collection.id,
+        name: collection.name,
+        description: collection.description,
+        isPublic: Boolean(collection.is_public),
+        createdAt: collection.created_at,
+        updatedAt: collection.updated_at,
+        itemCount: Number(collection.item_count || 0)
+      }));
+
+      const categories = (topCategories || [])
+        .map((entry) => {
+          const rawCategory = entry?.category;
+          if (!rawCategory) return null;
+
+          let categoryValue = rawCategory;
+          try {
+            categoryValue = typeof rawCategory === 'string' ? JSON.parse(rawCategory) : rawCategory;
+          } catch {
+            categoryValue = rawCategory;
+          }
+
+          return {
+            category: categoryValue,
+            count: Number(entry.count || 0)
+          };
+        })
+        .filter(Boolean);
+
       return {
-        totalFavorites: favoritesCount[0].count,
+        totalFavorites: Number(favoritesCount?.[0]?.count || 0),
         recentFavorites,
         recentActivity,
         collections,
-        topCategories: topCategories.map(c => ({
-          category: JSON.parse(c.category),
-          count: c.count
-        }))
+        topCategories: categories
       };
     } finally {
       connection.release();

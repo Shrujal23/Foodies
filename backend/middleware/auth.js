@@ -1,53 +1,72 @@
 const jwt = require('jsonwebtoken');
 const { findUserById } = require('../db/database');
+const { extractToken } = require('../utils/authToken');
 
-async function isAuthenticated(req, res, next) {
+async function attachUser(req, res, next, requireAuth) {
   try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        success: false,
-        statusCode: 401,
-        message: 'No token provided' 
-      });
+    const token = extractToken(req);
+
+    if (!token) {
+      if (requireAuth) {
+        return res.status(401).json({
+          success: false,
+          statusCode: 401,
+          message: 'Authentication required',
+        });
+      }
+      req.user = null;
+      return next();
     }
 
-    const token = authHeader.split(' ')[1];
-    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await findUserById(decoded.userId);
-    
+
     if (!user) {
-      return res.status(401).json({ 
-        success: false,
-        statusCode: 401,
-        message: 'User not found' 
-      });
+      if (requireAuth) {
+        return res.status(401).json({
+          success: false,
+          statusCode: 401,
+          message: 'User not found',
+        });
+      }
+      req.user = null;
+      return next();
     }
 
-    // strip password and other sensitive fields before attaching user to request
     const { password_hash, ...userWithoutPassword } = user;
     req.user = userWithoutPassword;
     next();
   } catch (err) {
+    // Never log the token value — only error type
     console.error('Auth middleware error:', err.name, err.message);
 
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ 
+    if (requireAuth) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          statusCode: 401,
+          message: 'Session expired. Please sign in again.',
+        });
+      }
+      return res.status(401).json({
         success: false,
         statusCode: 401,
-        message: 'Token expired' 
+        message: 'Invalid session. Please sign in again.',
       });
     }
 
-    // If token is invalid, respond 401 so the client can re-authenticate
-    return res.status(401).json({
-      success: false,
-      statusCode: 401,
-      message: 'Invalid token'
-    });
+    req.user = null;
+    next();
   }
 }
 
+async function isAuthenticated(req, res, next) {
+  return attachUser(req, res, next, true);
+}
+
+async function optionalAuth(req, res, next) {
+  return attachUser(req, res, next, false);
+}
+
 module.exports = isAuthenticated;
+module.exports.optionalAuth = optionalAuth;

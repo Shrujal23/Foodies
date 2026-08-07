@@ -30,6 +30,13 @@ bower_components/
 # User uploaded files
 backend/uploads/
 
-# Edamam and DB secrets
+# Secrets — real env files stay local; commit *.env.example only
 .env
 backend/.env
+frontend/.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Do not ignore explain.md (interview notes)
+# .explain.md

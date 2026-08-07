@@ -10,6 +10,7 @@ const {
   findUserById
 } = require('../db/database');
 const { validateLogin, validateRegister } = require('../middleware/validation');
+const { extractToken, setAuthCookie, clearAuthCookie } = require('../utils/authToken');
 const router = express.Router();
 
 /**
@@ -25,23 +26,22 @@ const router = express.Router();
  *         description: Authentication status
  */
 // ====================== AUTH STATUS ======================
+// Reads JWT from httpOnly cookie OR Authorization Bearer (no token echoed back)
 router.get('/status', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = extractToken(req);
+
+  if (!token) {
     return res.json({
       success: true,
       isAuthenticated: false,
       user: null
     });
   }
-  
+
   try {
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
     const user = await findUserById(decoded.userId);
-    
+
     if (user) {
       const { password_hash, ...userWithoutPassword } = user;
       return res.json({
@@ -49,14 +49,10 @@ router.get('/status', async (req, res) => {
         isAuthenticated: true,
         user: userWithoutPassword
       });
-    // } else {
-    //   // If user not found, still return isAuthenticated: false
-    //   return res.json({ success: true, isAuthenticated: false, user: null });
-    // }
     }
   } catch (err) {
-    console.error('Auth status error:', err.message);
-    // For any token error, treat as unauthenticated
+    // Do not log token; treat as signed out
+    console.error('Auth status error:', err.name, err.message);
   }
 
   res.json({
@@ -88,37 +84,46 @@ router.get('/status', async (req, res) => {
  *         description: Login successful
  */
 router.post('/login', validateLogin, async (req, res) => {
+  // Generic failure message — avoid user enumeration
+  const invalidMsg = 'Invalid username/email or password';
+
   try {
-    const { identifier, password } = req.body;
+    let { identifier, password } = req.body;
+    identifier = String(identifier || '').trim();
+    // Normalize email lookups (usernames stay case-sensitive as stored)
+    if (identifier.includes('@')) {
+      identifier = identifier.toLowerCase();
+    }
 
     const user = await findUserByEmailOrUsername(identifier);
     if (!user || !user.password_hash) {
-      return res.status(401).json({ success: false,
-        message: 'Invalid username/email or password'
-      });
+      return res.status(401).json({ success: false, message: invalidMsg });
     }
 
     const isValidPassword = await verifyPassword(user, password);
     if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+      return res.status(401).json({ success: false, message: invalidMsg });
     }
 
     const { password_hash, ...userWithoutPassword } = user;
 
+    const rememberMe = Boolean(req.body.rememberMe);
+    const expiresIn = rememberMe ? '7d' : '24h';
+
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn }
     );
 
+    // Textbook: put JWT in httpOnly cookie — not readable by document.cookie / XSS
+    setAuthCookie(res, token, rememberMe);
+
+    // Do NOT return token in JSON body (would be readable by any JS on the page)
     res.json({
       success: true,
       message: 'Login successful',
-      user: userWithoutPassword,
-      token
+      user: userWithoutPassword
     });
 
   } catch (error) {
@@ -155,13 +160,24 @@ router.post('/login', validateLogin, async (req, res) => {
  */
 router.post('/register', validateRegister, async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const username = String(req.body.username || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = req.body.password;
 
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
+    const existingByEmail = await findUserByEmail(email);
+    if (existingByEmail) {
       return res.status(409).json({
         success: false,
-        message: 'User with this email already exists'
+        message: 'An account with this email already exists'
+      });
+    }
+
+    // Username uniqueness (same helper works for exact username match)
+    const existingByUsername = await findUserByEmailOrUsername(username);
+    if (existingByUsername) {
+      return res.status(409).json({
+        success: false,
+        message: 'This username is already taken'
       });
     }
 
@@ -178,6 +194,13 @@ router.post('/register', validateRegister, async (req, res) => {
     });
   } catch (error) {
     console.error('Register error:', error);
+    // Duplicate key safety net
+    if (error && error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email or username already exists'
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'Registration failed. Please try again.'
@@ -213,14 +236,30 @@ router.get('/google/callback',
   }
 );
 
-// Logout
+// Logout — always clear JWT cookie (even if passport session fails)
 router.get('/logout', (req, res) => {
-  req.logout(function(err) {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Logout failed' });
-    }
+  clearAuthCookie(res);
+
+  const finish = () => {
     res.json({ success: true, message: 'Logged out successfully' });
-  });
+  };
+
+  if (typeof req.logout === 'function') {
+    req.logout(function (err) {
+      if (err) {
+        console.error('Passport logout error:', err.message);
+      }
+      finish();
+    });
+  } else {
+    finish();
+  }
+});
+
+// Also support POST logout (same behavior)
+router.post('/logout', (req, res) => {
+  clearAuthCookie(res);
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ const { pool } = require('../db/database');
 async function getRecipeReviews(req, res) {
   try {
     const { recipeId } = req.params;
+    const recipeIdNum = parseInt(recipeId, 10);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
     const offset = (page - 1) * limit;
@@ -20,34 +21,44 @@ async function getRecipeReviews(req, res) {
        JOIN users u ON r.user_id = u.id
        WHERE r.recipe_id = ?
        ORDER BY ${orderBy}
-       LIMIT ? OFFSET ?`,
-      [recipeId, limit, offset]
+       LIMIT ${limit} OFFSET ${offset}`,
+      [recipeIdNum]
     );
 
     const [countRow] = await pool.execute(
       'SELECT COUNT(*) as total FROM reviews WHERE recipe_id = ?',
-      [recipeId]
+      [recipeIdNum]
     );
     const total = countRow[0]?.total || 0;
 
     const [avgRow] = await pool.execute(
       'SELECT AVG(rating) as avgRating, COUNT(*) as ratingCount FROM reviews WHERE recipe_id = ?',
-      [recipeId]
+      [recipeIdNum]
     );
-    const avgRating = avgRow[0]?.avgRating ?? 0;
+    const avgRatingValue = avgRow[0]?.avgRating ?? 0;
     const ratingCount = avgRow[0]?.ratingCount ?? 0;
+    const avgRating = Number(avgRatingValue) || 0;
 
     const reviews = rows.map(r => ({
       id: r.id,
       recipeId: r.recipe_id,
+      recipe_id: r.recipe_id,
       userId: r.user_id,
+      user_id: r.user_id,
       rating: r.rating,
       title: r.title,
       comment: r.comment,
       helpfulCount: r.helpful_count,
+      helpful_count: r.helpful_count,
       unhelpfulCount: r.unhelpful_count,
+      unhelpful_count: r.unhelpful_count,
       createdAt: r.created_at,
+      created_at: r.created_at,
       updatedAt: r.updated_at,
+      updated_at: r.updated_at,
+      username: r.username,
+      display_name: r.display_name,
+      avatar_url: r.avatar_url,
       user: {
         username: r.username,
         displayName: r.display_name,
@@ -62,7 +73,11 @@ async function getRecipeReviews(req, res) {
     });
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    res.status(500).json({ error: 'Failed to fetch reviews' });
+    res.json({
+      reviews: [],
+      pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+      stats: { averageRating: 0, totalRatings: 0 }
+    });
   }
 }
 
@@ -131,14 +146,23 @@ async function createOrUpdateReview(req, res) {
     const out = {
       id: rev.id,
       recipeId: rev.recipe_id,
+      recipe_id: rev.recipe_id,
       userId: rev.user_id,
+      user_id: rev.user_id,
       rating: rev.rating,
       title: rev.title,
       comment: rev.comment,
       helpfulCount: rev.helpful_count,
+      helpful_count: rev.helpful_count,
       unhelpfulCount: rev.unhelpful_count,
+      unhelpful_count: rev.unhelpful_count,
       createdAt: rev.created_at,
+      created_at: rev.created_at,
       updatedAt: rev.updated_at,
+      updated_at: rev.updated_at,
+      username: rev.username,
+      display_name: rev.display_name,
+      avatar_url: rev.avatar_url,
       user: { username: rev.username, displayName: rev.display_name, avatarUrl: rev.avatar_url }
     };
 

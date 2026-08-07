@@ -20,8 +20,8 @@ class ChatController {
         .filter(msg => msg && typeof msg.role === 'string' && typeof msg.content === 'string' && msg.content.trim())
         .map(msg => ({ role: msg.role, content: msg.content.trim() }));
 
-      // Trim conversation history to the most recent N messages to limit token usage
-      const MAX_HISTORY = 12;
+      // Keep recent turns so replies stay complete without huge context
+      const MAX_HISTORY = 10;
       if (cleanedMessages.length > MAX_HISTORY) {
         cleanedMessages = cleanedMessages.slice(-MAX_HISTORY);
       }

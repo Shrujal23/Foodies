@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const passport = require('./config/passport');
 const swaggerUi = require('swagger-ui-express');
@@ -19,10 +20,10 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-// Logging
+// Logging (redacts tokens/passwords — see middleware/logger.js)
 app.use(requestLogger);
 
-// CORS
+// CORS — credentials:true required so browser sends httpOnly auth cookie
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
@@ -56,6 +57,9 @@ app.use(cors({
         "Accept"
     ]
 }));
+
+// Parse cookies (JWT lives in httpOnly cookie)
+app.use(cookieParser());
 
 // Body parser
 app.use(express.json({
@@ -176,6 +180,20 @@ async function ensureSchema() {
         const [columns] = await pool.execute("SHOW COLUMNS FROM user_recipes LIKE 'cuisine'");
         if (columns.length === 0) {
             await pool.execute("ALTER TABLE user_recipes ADD COLUMN cuisine VARCHAR(100) DEFAULT 'international'");
+        }
+
+        const migrationChecks = [
+            ['calories', "ALTER TABLE user_recipes ADD COLUMN calories INT DEFAULT NULL"],
+            ['meal_type', "ALTER TABLE user_recipes ADD COLUMN meal_type VARCHAR(100) DEFAULT NULL"],
+            ['dish_type', "ALTER TABLE user_recipes ADD COLUMN dish_type VARCHAR(100) DEFAULT NULL"],
+            ['dietary_tags', "ALTER TABLE user_recipes ADD COLUMN dietary_tags JSON DEFAULT NULL"]
+        ];
+
+        for (const [columnName, statement] of migrationChecks) {
+            const [existingColumns] = await pool.execute(`SHOW COLUMNS FROM user_recipes LIKE '${columnName}'`);
+            if (existingColumns.length === 0) {
+                await pool.execute(statement);
+            }
         }
     } catch (err) {
         // Non-fatal: log the error so developer can apply migrations manually if needed
