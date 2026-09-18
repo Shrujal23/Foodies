@@ -1,194 +1,241 @@
 # Foodies
 
-[![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
-[![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-Foodies is a full-stack recipe app built as a portfolio project. People can browse recipes, publish their own, leave reviews, save favorites into collections, and chat with a small AI cooking helper.
+Foodies is a full-stack recipe-sharing app for home cooks. People can discover recipes, publish their own dishes, save favourites, leave ratings and cooking notes, and organise recipes into collections.
 
-It is not a commercial product. It is a learning project that tries to cover real full-stack pieces end to end: auth, database work, file uploads, third-party API, role-based admin, and deployment.
+I built this project while learning full-stack development. It is a practical space to explore how a React frontend, an Express API, MySQL, authentication, uploads, and external APIs work together. It is still growing, but the main user flows are usable today.
 
-It's aim is to be an open source destinationf for all food and recipe lovers.g
+**Live app:** [foodies-dusky-sigma.vercel.app](https://foodies-dusky-sigma.vercel.app)
 
-**Live frontend:** [foodies-dusky-sigma.vercel.app](https://foodies-dusky-sigma.vercel.app)
+> The hosted API may occasionally be offline while I work on a more reliable hosting setup. If the live site has no data, running the project locally is the best option.
 
-Backend runs on AWS EC2 when I have it up. I do not keep the server on 24/7, so if the live site cannot load data, that is usually why. I am trying to explore other option so the backend can keep on running.
+## Why this project exists
 
----
+Food is one of the easiest ways for people to share culture, memories, and everyday knowledge. Foodies aims to make recipe discovery and sharing simple for people of different ages, different communities and background, cooking experience levels, and backgrounds—from someone learning their first meal to someone passing on a family favourite.
 
-## What you can do in the app
+This project is intended to stay open source. The code is available under the MIT License, so people can learn from it, suggest improvements, and build on it. The longer-term goal is to grow it into a friendly, community-led place for discovering and sharing recipes, without making the experience feel difficult or exclusive.
 
-- Register / log in with email and password (JWT)
-- Browse community recipes and search (community recipes + Edamam API results)
-- Create a recipe with image upload
-- Open a recipe, read details, leave a rating and review
-- Save recipes to favorites and organize them in collections
-- Use a personal dashboard for stats and recent activity
-- Chat with “Foody” (AI assistant via https://console.groq.com/ or GROQ) for cooking tips. The model used here is openai/gpt-oss-20b.
-- Admins can moderate users, recipes, reviews, and collections
+### Principles I want Foodies to follow
 
----
+- **Simple to use:** Recipes and core actions should be easy to understand, even for a first-time visitor.
+- **Open to learn from:** The code, setup notes, and decisions should be understandable for learners and contributors.
+- **Community-first:** People should be able to share their own recipes, tips, and cooking experiences respectfully.
+- **Inclusive by design:** The interface should work well on phones, use clear language, and keep improving for different needs and abilities.
+- **Respectful of creators:** Contributors should share original content or clearly credit sources. Do not copy recipe articles, photos, or instructions from other sites without permission.
 
-## Stack
+## What is available as of now
 
-| Layer | Tools |
-|--------|--------|
+- Create an account and sign in with email and password
+- Browse recipes shared by the community
+- Search community recipes and, when configured, Edamam recipe results
+- Add, edit, and delete your own recipes with an image
+- Save recipes to favourites and collections
+- Rate recipes and add cooking notes in the discussion section
+- View your profile, dashboard, and recent activity
+- Ask the optional “Foody” AI helper for cooking ideas or anything     related to cooking
+- Use the admin area to manage users, recipes, reviews, and collections
+
+## Built with
+
+| Area | Technology |
+| --- | --- |
 | Frontend | React, React Router, Context API, Tailwind CSS |
 | Backend | Node.js, Express |
 | Database | MySQL |
-| Auth | JWT (main flow), Passport for optional Google/GitHub OAuth |
-| AI | Groq API |
-| Recipe search | Edamam API |
-| Hosting | Vercel (frontend), AWS EC2 (backend) |
+| Authentication | JWT stored in an httpOnly cookie; Passport for optional OAuth |
+| File uploads | Multer |
+| Recipe search | Edamam API (optional) |
+| AI helper | Groq API (optional) |
+| Local containers | Docker Compose |
 
----
+## Project structure
 
-## Project layout
-
-```
+```text
 project/
-├── backend/          Express API, MySQL, uploads, middleware
-│   ├── controllers/
-│   ├── db/           schema SQL files + seed-admin
-│   ├── middleware/
-│   ├── routes/
-│   ├── services/
+├── backend/                 # Express API
+│   ├── controllers/         # Request handling and app logic
+│   ├── db/                  # Database schemas and seed script
+│   ├── middleware/          # Auth, validation, rate limiting, logging
+│   ├── routes/              # API routes
+│   ├── services/            # External API integrations
 │   └── server.js
-├── frontend/         React app
+├── frontend/                # React application
 │   └── src/
 │       ├── components/
 │       ├── contexts/
 │       ├── pages/
 │       └── services/
-├── explain.md        Interview walkthrough (start to finish)
+├── docker-compose.yml       # Local Docker setup
 └── README.md
 ```
 
----
+## Run locally
 
-## Run it locally
+You can run Foodies in either of two ways:
 
-You need **Node.js**, **npm**, and **MySQL**.
+- **Docker Compose** is the quickest route if Docker Desktop is installed. It starts the database, API, and frontend together.
+- **Manual setup** is useful if you want to run and debug each part yourself.
 
-### 1. Backend
+### Option 1: Docker Compose
+
+Requirements: [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+From the project root:
+
+```bash
+cp .env.docker.example .env
+docker compose up --build
+```
+
+On Windows PowerShell, use this for the first command:
+
+```powershell
+Copy-Item .env.docker.example .env
+```
+
+Then open:
+
+- Frontend: `http://localhost:3000`
+- API: `http://localhost:5000/api`
+- API documentation: `http://localhost:5000/api-docs`
+
+The first start creates a local MySQL database using the SQL files in `backend/db/`. The values in `.env.docker.example` are for local development only. Use strong, private secrets for any deployed environment.
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+To completely reset the Docker database and uploaded files:
+
+```bash
+docker compose down -v
+```
+
+### Option 2: Manual setup
+
+Requirements:
+
+- Node.js 20 or newer
+- npm
+- MySQL 8 or newer
+
+#### 1. Set up MySQL
+
+Create a database named `foodies`. Then run these files in order:
+
+```text
+backend/db/schema.sql
+backend/db/recipes_schema.sql
+backend/db/reviews_schema.sql
+backend/db/collections_schema.sql
+backend/db/bookmarks_schema.sql
+backend/db/activity_schema.sql
+```
+
+#### 2. Start the backend
 
 ```bash
 cd backend
 npm install
-```
-
-Copy the example env (safe to push) into a real `.env` (gitignored — keep secrets here):
-
-```bash
 cp .env.example .env
 ```
 
-Fill in secrets in `backend/.env`. Names match the code (`MYSQL_*`, `JWT_SECRET`, etc.).
-
-**Local vs AWS DB:** the example has two MySQL blocks. Keep only one uncommented — local for daily work, RDS when you want cloud. Same toggle idea as your private `.env`.
-
-Google/GitHub OAuth keys are optional (not fully set up/tested). Email/password login works without them.
-
-Create the MySQL database, then run the SQL files under `backend/db/` (`schema.sql`, `recipes_schema.sql`, `reviews_schema.sql`, `bookmarks_schema.sql`, `collections_schema.sql`, `activity_schema.sql`).
-
-Optional admin seed:
-
-```bash
-node db/seed-admin.js
-```
-
-Default seed (from the script): email `admin@gmail.com`, password `admin` — change this if you use it for anything beyond local demos.
+In `backend/.env`, add your MySQL credentials and replace `JWT_SECRET` and `SESSION_SECRET` with long random values. Edamam, Groq, and OAuth values are optional.
 
 Start the API:
 
 ```bash
 npm start
-# or: npm run dev
 ```
 
-API base: `http://localhost:5000/api`  
-Swagger (if running): `http://localhost:5000/api-docs`
+For automatic restart while developing:
 
-### 2. Frontend
+```bash
+npm run dev
+```
+
+The API runs at `http://localhost:5000`, and Swagger documentation is available at `http://localhost:5000/api-docs`.
+
+#### 3. Start the frontend
+
+Open another terminal:
 
 ```bash
 cd frontend
 npm install
-```
-
-```bash
 cp .env.example .env
-```
-
-Defaults point at local API (`http://localhost:5000`). Comment/uncomment the deploy URLs in `frontend/.env.example` when switching to EC2.
-
-```bash
 npm start
 ```
 
-App: `http://localhost:3000`
+On PowerShell, replace `cp` with `Copy-Item`. The frontend opens at `http://localhost:3000`.
 
----
+If React chooses another port, that is fine: the backend accepts local `localhost` and `127.0.0.1` development origins.
 
-## Main API shapes (recipes)
+## Environment variables
 
-These are the ones I keep intentional and named clearly:
+Do not commit real `.env` files. The example files are safe to copy and explain every value.
 
-| Action | Method | Path |
-|--------|--------|------|
-| List community recipes | GET | `/api/recipes` |
-| Create | POST | `/api/recipes/create-recipe` |
-| Update | PUT | `/api/recipes/update-recipe/:id` |
-| Delete | DELETE | `/api/recipes/delete-recipe/:id` |
-| One user recipe | GET | `/api/recipes/user/:id` |
+| File | Purpose |
+| --- | --- |
+| `backend/.env.example` | Server port, MySQL connection, JWT/session secrets, and optional external API keys |
+| `frontend/.env.example` | Frontend API address only; never place private keys here |
+| `.env.docker.example` | Local Docker Compose secrets and optional external API keys |
 
-Other groups: `/api/auth`, `/api/users`, `/api/bookmarks`, `/api/admin`, `/api/chat`.
+## API overview
 
-**Auth (security-first):** JWT is stored in an **httpOnly cookie** (not `localStorage`).  
-The browser sends it automatically on API calls via `credentials: 'include'`.  
-JS cannot read the token, which reduces XSS token theft.  
-`Authorization: Bearer` is still accepted for tools like Swagger.
+The backend API is under `/api`. Swagger provides the full list when the backend is running.
 
----
+| Feature | Example endpoint |
+| --- | --- |
+| Authentication | `POST /api/auth/login` |
+| Community recipes | `GET /api/recipes` |
+| Create recipe | `POST /api/recipes/create-recipe` |
+| Update recipe | `PUT /api/recipes/update-recipe/:id` |
+| Recipe discussion and ratings | `GET` / `POST /api/recipes/:id/reviews` |
+| Collections and favourites | `/api/bookmarks` |
+| Admin tools | `/api/admin` |
+| AI helper | `/api/chat` |
 
-## Admin
+## Security notes
 
-- Route: `/admin` (admin role only)
-- Tabs: Users, Recipes, Reviews, Collections
-- Stats cards at the top (counts)
-- Frontend gates with `AdminRoute`; backend checks admin role again on `/api/admin/*`
+- Login tokens are stored in **httpOnly cookies**, so browser JavaScript cannot read them.
+- Protected routes verify the logged-in user on the backend.
+- Requests are validated and rate limited.
+- Recipe uploads accept JPEG, PNG, and WebP images up to 5 MB.
+- External API keys belong in `backend/.env`, not in the frontend.
 
-That double check is intentional, because the hiding a button is not security.
+These are helpful safeguards, but this is a learning project and should be reviewed carefully before use with real production users or sensitive data.
 
----
+## Current limitations and next steps
 
-## Things I would improve next
+Foodies is actively being improved. Planned work includes:
 
-- Real forgot-password flow (UI exists as of now; backend is not wired yet fully)
-- Email verification
-- Pagination on large admin lists
-- automated tests
-- Stronger production OAuth callback config
-- Potential video sharing option
-- Automated email letter(frequency will be decided)
-- Blogs section
+- Blogs
+- Automated frontend and backend tests
+- Email verification and a completed password-reset flow
+- Better reporting and moderation tools for community content
+- Pagination for larger admin lists
+- Stronger production OAuth and deployment configuration
+- Contributor guides, issue templates, and a code of conduct
 
----
+## Contributing
 
-## Contribution
+Contributions, bug reports, and ideas are welcome. If you would like to help:
 
-Contributions are welcome! If you want to help improve Foodies, feel free to open an issue or submit a pull request with bug fixes, enhancements, or documentation updates.
+1. Check existing issues or open one to discuss a larger change.
+2. Create a branch with a clear name.
+3. Keep the change focused and explain how you tested it.
+4. Update the README if your change adds a setup step or environment variable.
 
-Follow the existing code style and add notes about any setup steps or environment changes.
-
----
+Please avoid committing secrets, `.env` files, build folders, or `node_modules`.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Foodies is released under the [MIT License](LICENSE).
