@@ -1,7 +1,7 @@
 -- Bookmarks/Collections table
 CREATE TABLE IF NOT EXISTS collections (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT NOT NULL,
+  user_id VARCHAR(255) NOT NULL,
   name VARCHAR(100) NOT NULL,
   description TEXT,
   is_public BOOLEAN DEFAULT FALSE,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS dietary_preferences (
 -- User dietary filters
 CREATE TABLE IF NOT EXISTS user_dietary_filters (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT NOT NULL,
+  user_id VARCHAR(255) NOT NULL,
   dietary_id INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -61,7 +61,7 @@ INSERT IGNORE INTO dietary_preferences (name, label, icon) VALUES
 CREATE TABLE IF NOT EXISTS recipe_photos (
   id INT PRIMARY KEY AUTO_INCREMENT,
   review_id INT,
-  user_id INT NOT NULL,
+  user_id VARCHAR(255) NOT NULL,
   recipe_id INT NOT NULL,
   photo_url VARCHAR(500) NOT NULL,
   caption TEXT,

@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', protected: true },
   { name: 'Add Recipe', href: '/recipes/add', protected: true },
   { name: 'Recipes', href: '/recipes', protected: false },
+  { name: 'Blog', href: '/blog', protected: false },
   { name: 'Collections', href: '/collections', protected: true },
   { name: 'About Us', href: '/about', protected: false },
   { name: 'Contact Us', href: '/contact', protected: false },

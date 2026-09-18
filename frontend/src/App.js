@@ -28,6 +28,7 @@ import Subscriptions from './pages/Subscriptions';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Profile from './pages/Profile';
+import Blogs from './pages/Blogs';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/common/AdminRoute';
 
@@ -52,6 +53,7 @@ function App() {
                 <Route path="/recipes/user/:id" element={<UserRecipeDetail />} />
                 <Route path="/recipes/:id" element={<UserRecipeDetail />} />
                 <Route path="/collections" element={<Collections />} />
+                <Route path="/blog" element={<Blogs />} />
                 <Route path="/profile" element={<Profile />} />
                 
                 {/* Unified admin — collections live under ?tab=collections */}

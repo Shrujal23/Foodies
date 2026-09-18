@@ -94,13 +94,28 @@ async function getRatingBreakdown(req, res) {
       [recipeId]
     );
 
-    const stats = { five: 0, four: 0, three: 0, two: 0, one: 0 };
+    // Numeric keys are the public API contract used by recipe cards. Keep the
+    // named keys during the transition so older clients continue to work.
+    const stats = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      one: 0,
+      two: 0,
+      three: 0,
+      four: 0,
+      five: 0
+    };
     breakdown.forEach(b => {
-      if (b.rating === 5) stats.five = b.count;
-      if (b.rating === 4) stats.four = b.count;
-      if (b.rating === 3) stats.three = b.count;
-      if (b.rating === 2) stats.two = b.count;
-      if (b.rating === 1) stats.one = b.count;
+      const count = Number(b.count) || 0;
+      stats[b.rating] = count;
+      if (b.rating === 5) stats.five = count;
+      if (b.rating === 4) stats.four = count;
+      if (b.rating === 3) stats.three = count;
+      if (b.rating === 2) stats.two = count;
+      if (b.rating === 1) stats.one = count;
     });
 
     res.json(stats);
