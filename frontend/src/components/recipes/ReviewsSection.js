@@ -1,399 +1,156 @@
-import React, { useState, useEffect } from 'react';
-import { StarIcon, TrashIcon, HandThumbUpIcon } from '@heroicons/react/24/solid';
-import { API_BASE_URL } from '../../config';
+import React, { useEffect, useState } from 'react';
+import { ChatBubbleOvalLeftIcon, HeartIcon, StarIcon, TrashIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { StarIcon as SolidStarIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 
+const EMPTY_FORM = { rating: 5, title: '', comment: '' };
+
+const timeAgo = (value) => {
+  if (!value) return 'now';
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  if (seconds < 60) return 'now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+  return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
+const Avatar = ({ name, src, large = false }) => (
+  <div className={`${large ? 'h-11 w-11' : 'h-10 w-10'} shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-rose-500 text-sm font-semibold text-white`}>
+    {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center">{(name || 'F').trim().slice(0, 1).toUpperCase()}</span>}
+  </div>
+);
+
 const ReviewsSection = ({ recipeId }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
-  const [stats, setStats] = useState({ averageRating: 0, totalRatings: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+  const [stats, setStats] = useState({ averageRating: 0, totalRatings: 0 });
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('recent');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [showRating, setShowRating] = useState(false);
+  const [posting, setPosting] = useState(false);
 
-  // Form states
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ rating: 5, title: '', comment: '' });
-  const [submitLoading, setSubmitLoading] = useState(false);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchReviews();
-  }, [recipeId, sortBy, page]);
-
-  const fetchReviews = async () => {
+  const loadComments = async () => {
     try {
       setLoading(true);
-      const [reviewsRes, breakdownRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews?page=${page}&limit=10&sort=${sortBy}`),
-        fetch(`${API_BASE_URL}/recipes/${recipeId}/rating-breakdown`)
-      ]);
-
-      if (reviewsRes.ok) {
-        const data = await reviewsRes.json();
-        const breakdown = breakdownRes.ok ? await breakdownRes.json() : {};
-        
-        const normalizedReviews = (data.reviews || []).map((review) => {
-          const trimmedTitle = review.title?.trim();
-          const trimmedComment = review.comment?.trim();
-          const fallbackTitle = trimmedComment
-            ? trimmedComment.slice(0, 60)
-            : `Rated ${review.rating || 0} out of 5`;
-
-          return {
-            ...review,
-            title: trimmedTitle || fallbackTitle,
-            comment: trimmedComment || '',
-            displayTitle: trimmedTitle || fallbackTitle,
-            user_id: review.user_id ?? review.userId ?? null,
-            created_at: review.created_at ?? review.createdAt ?? null,
-            helpful_count: review.helpful_count ?? review.helpfulCount ?? 0,
-            display_name: review.display_name ?? review.user?.displayName ?? review.user?.displayName ?? null,
-            username: review.username ?? review.user?.username ?? null,
-          };
-        });
-
-        setReviews(normalizedReviews);
-        setTotalPages(data.pagination.pages);
-        setStats({
-          ...data.stats,
-          1: breakdown[1] || 0,
-          2: breakdown[2] || 0,
-          3: breakdown[3] || 0,
-          4: breakdown[4] || 0,
-          5: breakdown[5] || 0
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch reviews:', error);
-      toast.error('Failed to load reviews');
+      const response = await apiFetch(`/recipes/${recipeId}/reviews?page=${page}&limit=10&sort=${sortBy}`);
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setReviews(data.reviews || []);
+      setStats(data.stats || { averageRating: 0, totalRatings: 0 });
+      setTotalPages(data.pagination?.pages || 1);
+    } catch {
+      toast.error('Failed to load comments');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      toast.error('Please sign in to leave a review', { duration: 1000 });
-      return;
-    }
+  useEffect(() => {
+    loadComments();
+    // loadComments intentionally follows the discussion query state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipeId, sortBy, page]);
 
+  const postComment = async (event) => {
+    event.preventDefault();
+    if (!user) return toast.error('Please sign in to join the conversation');
+    if (!form.comment.trim()) return toast.error('Write a comment before posting');
     try {
-      setSubmitLoading(true);
-
-      const res = await apiFetch(`/recipes/${recipeId}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (res.ok) {
-        toast.success('Review submitted successfully!');
-        setFormData({ rating: 5, title: '', comment: '' });
-        setShowForm(false);
-        
-        if (page === 1) {
-          await fetchReviews();
-        } else {
-          setPage(1);
-        }
-      } else {
-        const error = await res.json();
-        toast.error(error.error || 'Failed to submit review');
-      }
-    } catch (error) {
-      toast.error('Failed to submit review: ' + error.message);
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) return;
-
-    try {
-      const res = await apiFetch(`/recipes/${recipeId}/reviews/${reviewId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        toast.success('Review deleted');
-        fetchReviews();
-      } else {
-        toast.error('Failed to delete review');
-      }
-    } catch (error) {
-      console.error('Error deleting review:', error);
-      toast.error('Failed to delete review');
-    }
-  };
-
-  const handleMarkHelpful = async (reviewId, helpful) => {
-    try {
-      await fetch(`${API_BASE_URL}/recipes/${recipeId}/reviews/${reviewId}/helpful`, {
+      setPosting(true);
+      const response = await apiFetch(`/recipes/${recipeId}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ helpful })
+        body: JSON.stringify(form),
       });
-      fetchReviews();
+      if (!response.ok) throw new Error((await response.json()).error || 'Could not post comment');
+      setForm(EMPTY_FORM);
+      setShowRating(false);
+      toast.success('Comment posted');
+      page === 1 ? loadComments() : setPage(1);
     } catch (error) {
-      console.error('Error marking helpful:', error);
+      toast.error(error.message || 'Could not post comment');
+    } finally {
+      setPosting(false);
     }
   };
 
+  const markHelpful = async (reviewId) => {
+    try {
+      const response = await apiFetch(`/recipes/${recipeId}/reviews/${reviewId}/helpful`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ helpful: true }) });
+      if (!response.ok) throw new Error();
+      loadComments();
+    } catch { toast.error('Could not register that reaction'); }
+  };
+
+  const deleteComment = async (reviewId) => {
+    if (!window.confirm('Delete this comment?')) return;
+    const response = await apiFetch(`/recipes/${recipeId}/reviews/${reviewId}`, { method: 'DELETE' });
+    response.ok ? (toast.success('Comment deleted'), loadComments()) : toast.error('Could not delete comment');
+  };
+
+  const share = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title: 'Foodies recipe discussion', url: window.location.href });
+      else { await navigator.clipboard.writeText(window.location.href); toast.success('Recipe link copied'); }
+    } catch (error) { if (error.name !== 'AbortError') toast.error('Could not share this recipe'); }
+  };
+
+  const name = user?.display_name || user?.displayName || user?.username || 'You';
+  const avatar = user?.avatar_url || user?.avatarUrl;
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Rating Summary */}
-      <div className="mb-12 p-8 bg-gradient-to-r from-orange-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Average Rating */}
-          <div className="flex flex-col items-center justify-center">
-            <div className="text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2">
-              {stats.averageRating.toFixed(1)}
-            </div>
-            <div className="flex gap-1 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <StarIcon
-                  key={i}
-                  className={`w-5 h-5 ${
-                    i < Math.round(stats.averageRating)
-                      ? 'text-yellow-400 fill-yellow-400'
-                      : 'text-gray-300 dark:text-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-gray-600 dark:text-gray-400">
-              Based on {stats.totalRatings} {stats.totalRatings === 1 ? 'review' : 'reviews'}
-            </p>
-          </div>
-
-          {/* Write Review Button */}
-          <div className="flex items-center justify-center">
-            {!showForm && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors"
-              >
-                Write a Review
-              </button>
-            )}
-          </div>
-
-          {/* Rating Distribution */}
-          <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map(stars => (
-              <div key={stars} className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400 w-12">
-                  {stars} ⭐
-                </span>
-                <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full flex-1 overflow-hidden">
-                  {stats.totalRatings > 0 && (
-                    <div
-                      className="h-full bg-yellow-400"
-                      style={{ width: `${(stats[stars] / stats.totalRatings) * 100}%` }}
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+    <section className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-[#f4ddce] bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f4ddce] px-5 py-4 dark:border-gray-700 sm:px-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Discussion</h2>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{stats.totalRatings || 0} {(stats.totalRatings || 0) === 1 ? 'comment' : 'comments'}{stats.totalRatings > 0 && ` · ${Number(stats.averageRating || 0).toFixed(1)} average rating`}</p>
         </div>
-      </div>
+        <select aria-label="Sort comments" value={sortBy} onChange={(event) => { setSortBy(event.target.value); setPage(1); }} className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 outline-none focus:border-orange-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+          <option value="recent">Latest</option><option value="helpful">Top</option><option value="rating-high">Highest rated</option><option value="rating-low">Lowest rated</option>
+        </select>
+      </header>
 
-      {/* Review Form */}
-      {showForm && (
-        <div className="mb-12 p-6 bg-white dark:bg-gray-800 rounded-lg border-2 border-orange-200 dark:border-orange-700">
-          <h3 className="text-xl font-bold mb-6">Share Your Experience</h3>
-          <form onSubmit={handleSubmitReview} className="space-y-4">
-            {/* Rating */}
-            <div>
-              <label className="block text-sm font-semibold mb-3">Rating</label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, rating: star })}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <StarIcon
-                      className={`w-8 h-8 ${
-                        star <= formData.rating
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-300 dark:text-gray-600'
-                      }`}
-                    />
-                  </button>
-                ))}
+      <div className="border-b border-[#f4ddce] px-5 py-4 dark:border-gray-700 sm:px-6">
+        {user ? (
+          <form onSubmit={postComment} className="flex gap-3">
+            <Avatar name={name} src={avatar} large />
+            <div className="min-w-0 flex-1">
+              <textarea value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} placeholder="Share a tip, substitution, or how it went…" rows={2} maxLength={1000} className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] text-gray-900 placeholder:text-gray-400 outline-none focus:ring-0 dark:text-white" />
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                <button type="button" onClick={() => setShowRating(!showRating)} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-orange-600 dark:text-gray-400"><StarIcon className="h-4 w-4" />{showRating ? `${form.rating} stars` : 'Add rating'}</button>
+                <button type="submit" disabled={posting || !form.comment.trim()} className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-45">{posting ? 'Posting…' : 'Post'}</button>
               </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">Title (Optional)</label>
-              <input
-                type="text"
-                placeholder="Summarize your experience..."
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            {/* Comment */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">Comment (Optional)</label>
-              <textarea
-                placeholder="Share your experience with this recipe..."
-                value={formData.comment}
-                onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitLoading}
-                className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
-              >
-                {submitLoading ? 'Posting...' : 'Post Review'}
-              </button>
+              {showRating && <div className="mt-3 flex items-center gap-1" aria-label="Choose rating">{[1, 2, 3, 4, 5].map((star) => <button key={star} type="button" onClick={() => setForm({ ...form, rating: star })} className="rounded p-1 focus:outline-none focus:ring-2 focus:ring-orange-400"><SolidStarIcon className={`h-5 w-5 ${star <= form.rating ? 'text-amber-400' : 'text-gray-200 dark:text-gray-600'}`} /></button>)}</div>}
             </div>
           </form>
-        </div>
-      )}
-
-      {/* Sort Options */}
-      <div className="mb-6 flex justify-between items-center">
-        <h3 className="text-xl font-bold">Reviews ({stats.totalRatings})</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => {
-            setSortBy(e.target.value);
-            setPage(1);
-          }}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white focus:outline-none"
-        >
-          <option value="recent">Most Recent</option>
-          <option value="rating-high">Highest Rating</option>
-          <option value="rating-low">Lowest Rating</option>
-          <option value="helpful">Most Helpful</option>
-        </select>
+        ) : (
+          <button onClick={() => toast('Sign in to add a comment')} className="flex w-full items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-left text-sm text-orange-800 transition hover:bg-orange-100 dark:bg-orange-950/30 dark:text-orange-200"><ChatBubbleOvalLeftIcon className="h-5 w-5 shrink-0" /><span><strong>Join the conversation.</strong> Sign in to share your cooking notes.</span></button>
+        )}
       </div>
 
-      {/* Reviews List */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : reviews.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-gray-600 dark:text-gray-400">No reviews yet. Be the first to review!</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {reviews.map(review => (
-            <div
-              key={review.id}
-              className="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              {/* Review Header */}
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < review.rating
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-300 dark:text-gray-600'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="font-bold text-gray-900 dark:text-white">{review.displayTitle || 'Review'}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    By <span className="font-semibold">{review.display_name || review.username || 'Anonymous'}</span> •{' '}
-                    {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Recently added'}
-                  </p>
-                </div>
-                {user && user.id === review.user_id && (
-                  <button
-                    onClick={() => handleDeleteReview(review.id)}
-                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
-                  >
-                    <TrashIcon className="w-5 h-5 text-red-500" />
-                  </button>
-                )}
-              </div>
-
-              {/* Review Comment */}
-              {review.comment ? (
-                <p className="text-gray-700 dark:text-gray-300 mb-4">{review.comment}</p>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 mb-4">No written review provided.</p>
-              )}
-
-              {/* Helpful Buttons */}
-              <div className="flex items-center gap-4 text-sm">
-                <button
-                  onClick={() => handleMarkHelpful(review.id, true)}
-                  className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors"
-                >
-                  <HandThumbUpIcon className="w-4 h-4" />
-                  Helpful ({review.helpful_count ?? 0})
-                </button>
-              </div>
+      {loading ? <div className="flex justify-center py-12"><div className="h-7 w-7 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" /></div>
+        : reviews.length === 0 ? <div className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">No comments yet. Be the first to share how this recipe turned out.</div>
+        : <div>{reviews.map((review) => {
+          const author = review.display_name || review.username || 'Foodie';
+          return <article key={review.id} className="flex gap-3 border-b border-[#f4ddce] px-5 py-4 transition hover:bg-orange-50/40 dark:border-gray-700 dark:hover:bg-gray-700/40 sm:px-6">
+            <Avatar name={author} src={review.avatar_url} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1 text-[15px] leading-5"><span className="truncate font-semibold text-gray-900 dark:text-white">{author}</span>{review.username && <span className="truncate text-gray-500 dark:text-gray-400">@{review.username}</span>}<span className="text-gray-400">·</span><time className="shrink-0 text-gray-500 dark:text-gray-400" title={new Date(review.created_at).toLocaleString()}>{timeAgo(review.created_at)}</time></div>
+              {review.title && <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">{review.title}</p>}
+              <p className="mt-1 whitespace-pre-wrap break-words text-[15px] leading-6 text-gray-800 dark:text-gray-200">{review.comment || `Gave this recipe ${review.rating} out of 5 stars.`}</p>
+              <div className="mt-2 flex items-center gap-5 text-sm text-gray-500 dark:text-gray-400"><span className="flex items-center gap-1" title={`${review.rating} out of 5 stars`}><SolidStarIcon className="h-4 w-4 text-amber-400" />{review.rating}</span><button onClick={() => markHelpful(review.id)} className="flex items-center gap-1.5 transition hover:text-rose-500" aria-label="Mark comment helpful"><HeartIcon className="h-4 w-4" />{review.helpful_count || 0}</button><button onClick={share} className="transition hover:text-orange-600" aria-label="Share recipe"><ArrowUpTrayIcon className="h-4 w-4" /></button>{user?.id === review.user_id && <button onClick={() => deleteComment(review.id)} className="ml-auto transition hover:text-red-500" aria-label="Delete comment"><TrashIcon className="h-4 w-4" /></button>}</div>
             </div>
-          ))}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
-              {page > 1 && (
-                <button
-                  onClick={() => setPage(page - 1)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Previous
-                </button>
-              )}
-              <span className="px-4 py-2">
-                Page {page} of {totalPages}
-              </span>
-              {page < totalPages && (
-                <button
-                  onClick={() => setPage(page + 1)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Next
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+          </article>;
+        })}
+        {totalPages > 1 && <div className="flex items-center justify-between px-5 py-4 text-sm sm:px-6"><button disabled={page === 1} onClick={() => setPage(page - 1)} className="font-medium text-orange-600 disabled:opacity-40">Previous</button><span className="text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</span><button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="font-medium text-orange-600 disabled:opacity-40">Next</button></div>}
+        </div>}
+    </section>
   );
 };
 

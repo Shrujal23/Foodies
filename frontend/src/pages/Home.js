@@ -475,6 +475,8 @@ export default function Home() {
                 (Number(recipe.prepTime) || 0) + (Number(recipe.cookTime) || 0) ||
                 recipe.totalTime ||
                 '—';
+              const rating = Number(recipe.avg_rating ?? recipe.rating);
+              const hasRating = Number.isFinite(rating) && rating > 0;
               return (
                 <div
                   key={recipe._id || recipe.id}
@@ -509,10 +511,14 @@ export default function Home() {
                         {recipe.description}
                       </p>
                       <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <StarIcon className="w-3.5 h-3.5 text-amber-500" />
-                          <span className="font-semibold">{recipe.rating ?? '—'}</span>
-                        </div>
+                        {hasRating ? (
+                          <div className="flex items-center gap-1" aria-label={`${rating.toFixed(1)} out of 5 stars`}>
+                            <StarIcon className="w-3.5 h-3.5 text-amber-500" />
+                            <span className="font-semibold">{rating.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">No ratings yet</span>
+                        )}
                         <span className="font-medium">
                           {totalMin === '—' ? '—' : `${totalMin} min`}
                         </span>

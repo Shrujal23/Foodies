@@ -28,16 +28,27 @@ const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://foodies-dusky-sigma.vercel.app",
-    "https://foodies-o39vn46h3-shrujal23s-projects.vercel.app"
+    "https://foodies-o39vn46h3-shrujal23s-projects.vercel.app",
+    ...(process.env.FRONTEND_URL || '').split(',').map((origin) => origin.trim()).filter(Boolean)
 ];
 
+const isLocalDevelopmentOrigin = (origin) => {
+    if (process.env.NODE_ENV === 'production') return false;
+
+    try {
+        const { protocol, hostname } = new URL(origin);
+        return protocol === 'http:' && ['localhost', '127.0.0.1', '::1'].includes(hostname);
+    } catch {
+        return false;
+    }
+};
 
 app.use(cors({
     origin: function(origin, callback){
 
         if(!origin) return callback(null,true);
 
-        if(allowedOrigins.includes(origin)){
+        if(allowedOrigins.includes(origin) || isLocalDevelopmentOrigin(origin)){
             return callback(null,true);
         }
 

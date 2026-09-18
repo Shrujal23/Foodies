@@ -80,35 +80,6 @@ async function searchRecipes(req, res, next) {
           whereClauses.push('1 = 1');
         }
 
-        if (cuisineType) {
-          whereClauses.push('LOWER(ur.cuisine) = ?');
-          queryParams.push(cuisineType.toLowerCase());
-        }
-
-        if (diet) {
-          const dietTerm = `%${diet.toLowerCase()}%`;
-          whereClauses.push(
-            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
-          );
-          queryParams.push(dietTerm, dietTerm, dietTerm);
-        }
-
-        if (health) {
-          const healthTerm = `%${health.toLowerCase()}%`;
-          whereClauses.push(
-            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
-          );
-          queryParams.push(healthTerm, healthTerm, healthTerm);
-        }
-
-        if (mealType) {
-          const mealTerm = `%${mealType.toLowerCase()}%`;
-          whereClauses.push(
-            '(LOWER(ur.title) LIKE ? OR LOWER(ur.description) LIKE ? OR LOWER(ur.ingredients) LIKE ?)'
-          );
-          queryParams.push(mealTerm, mealTerm, mealTerm);
-        }
-
         const [userRecipes] = await pool.execute(`
           SELECT ur.*, u.username, u.display_name, u.avatar_url,
           (SELECT COUNT(*) FROM user_favorites WHERE recipe_id = ur.id) as favorite_count
