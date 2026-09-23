@@ -7,17 +7,16 @@ import { apiFetch } from '../services/apiClient';
 import ReviewsSection from '../components/recipes/ReviewsSection';
 import ServingsMultiplier from '../components/recipes/ServingsMultiplier';
 import BookmarkButton from '../components/recipes/BookmarkButton';
+import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 import {
   FacebookShareButton,
   TwitterShareButton,
   WhatsappShareButton,
   EmailShareButton,
-  PinterestShareButton,
   FacebookIcon,
   TwitterIcon,
   WhatsappIcon,
-  EmailIcon,
-  PinterestIcon
+  EmailIcon
 } from 'react-share';
 
 const UserRecipeDetail = () => {
@@ -40,7 +39,30 @@ const UserRecipeDetail = () => {
   };
 
   const shareUrl = recipe ? getShareUrl(recipe) : window.location.href;
-  const shareTitle = recipe?.title ? `${recipe.title} on Foodies` : 'Check out this recipe on Foodies';
+  const shareTitle = recipe?.title
+    ? `I found "${recipe.title}" on Foodies. It looks worth making!`
+    : 'I found a recipe worth trying on Foodies!';
+
+  const handleCopyLink = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const input = document.createElement('textarea');
+        input.value = shareUrl;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      toast.success('Recipe link copied');
+    } catch (error) {
+      toast.error('Could not copy the recipe link');
+    }
+  };
 
   const normalizeTextValue = (...values) => {
     for (const value of values) {
@@ -339,12 +361,19 @@ const UserRecipeDetail = () => {
                 <WhatsappShareButton url={shareUrl} title={shareTitle}>
                   <WhatsappIcon size={40} round />
                 </WhatsappShareButton>
-                <PinterestShareButton url={shareUrl} media={recipe.image} description={shareTitle}>
-                  <PinterestIcon size={40} round />
-                </PinterestShareButton>
                 <EmailShareButton url={shareUrl} subject={shareTitle}>
                   <EmailIcon size={40} round />
                 </EmailShareButton>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  aria-label="Copy recipe link"
+                  title="Copy recipe link"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-[#ddc9bc] bg-white px-3 text-sm font-semibold text-[#765648] transition hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-orange-600 dark:hover:bg-gray-800"
+                >
+                  <ClipboardDocumentIcon className="h-5 w-5" />
+                  <span className="hidden sm:inline">Copy link</span>
+                </button>
               </div>
 
             <div className="flex items-center gap-2 border-l border-gray-300 pl-6 dark:border-gray-700">

@@ -71,51 +71,58 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 text-gray-900 dark:text-white min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Your Profile</h1>
-        <p className="text-gray-500 mt-2">Edit your account information and update your profile photo.</p>
+    <div className="min-h-screen bg-[#fffaf7] px-4 py-8 text-gray-900 dark:bg-gray-950 dark:text-white sm:px-6 sm:py-12">
+      <div className="mx-auto max-w-6xl">
+      <div className="mb-8 border-b border-[#eadbd1] pb-8 dark:border-gray-800">
+        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">Your corner of Foodies</p>
+        <h1 className="text-4xl font-bold tracking-tight text-[#35221a] dark:text-white sm:text-5xl">Make it yours.</h1>
+        <p className="mt-3 max-w-xl text-base leading-relaxed text-[#7f665a] dark:text-gray-400">
+          Keep your details current so your recipes, reviews, and conversations feel like they belong to you.
+        </p>
       </div>
 
       <ProfileHeader user={user} avatarPreview={formValues.avatar_url} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.25fr,0.75fr]">
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">Account details</h2>
+      <div className="grid gap-8 lg:grid-cols-[1.25fr,0.75fr]">
+        <div className="border border-[#eadbd1] bg-white p-6 dark:border-gray-800 dark:bg-gray-900 sm:p-8">
+          <div className="mb-7 border-b border-[#eadbd1] pb-5 dark:border-gray-800">
+            <h2 className="text-2xl font-semibold text-[#35221a] dark:text-white">Your details</h2>
+            <p className="mt-2 text-sm text-[#8f7568] dark:text-gray-500">These are the details other cooks may see when you share something.</p>
+          </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Username</label>
+              <label className="mb-2 block text-sm font-semibold text-[#5d463b] dark:text-gray-200">Username</label>
               <input
                 name="username"
                 value={formValues.username}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="w-full rounded-lg border border-[#ddc9bc] bg-[#fffaf7] px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Display name</label>
+              <label className="mb-2 block text-sm font-semibold text-[#5d463b] dark:text-gray-200">Display name</label>
               <input
                 name="display_name"
                 value={formValues.display_name}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="w-full rounded-lg border border-[#ddc9bc] bg-[#fffaf7] px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Email</label>
+              <label className="mb-2 block text-sm font-semibold text-[#5d463b] dark:text-gray-200">Email</label>
               <input
                 name="email"
                 type="email"
                 value={formValues.email}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="w-full rounded-lg border border-[#ddc9bc] bg-[#fffaf7] px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Profile photo</label>
+              <label className="mb-2 block text-sm font-semibold text-[#5d463b] dark:text-gray-200">Profile photo</label>
               <div className="flex flex-col gap-3">
                 <input
                   type="file"
@@ -123,8 +130,8 @@ export default function Profile() {
                   onChange={handleFileChange}
                   className="text-sm text-gray-600 dark:text-gray-300"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Upload a new profile image or leave blank to keep your current avatar.
+                <p className="text-xs leading-relaxed text-[#8f7568] dark:text-gray-400">
+                  Choose a photo that feels like you. Leave this blank to keep your current picture.
                 </p>
               </div>
             </div>
@@ -132,39 +139,41 @@ export default function Profile() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center justify-center rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-700 transition disabled:cursor-not-allowed disabled:bg-orange-300"
+              className="inline-flex items-center justify-center rounded-lg bg-orange-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50 disabled:cursor-not-allowed disabled:bg-orange-300"
             >
               {saving ? 'Saving…' : 'Save profile'}
             </button>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">Quick actions</h2>
-          <div className="space-y-4 text-gray-600 dark:text-gray-300 text-sm">
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Change password</p>
-              <p className="mt-1">Update your password from your account settings.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Manage recipes</p>
-              <p className="mt-1">View your recipes from the dashboard.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Collections</p>
-              <p className="mt-1">Visit your saved collections for quick access.</p>
-            </div>
+        <div className="border border-[#eadbd1] bg-white p-6 dark:border-gray-800 dark:bg-gray-900 sm:p-8">
+          <h2 className="text-2xl font-semibold text-[#35221a] dark:text-white">Keep cooking</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[#8f7568] dark:text-gray-500">A few useful places to go from here.</p>
+          <div className="mt-6 divide-y divide-[#eadbd1] border-y border-[#eadbd1] dark:divide-gray-800 dark:border-gray-800">
+            <Link to="/forgot-password" className="block py-4 transition hover:text-orange-700 dark:hover:text-orange-300">
+              <p className="font-semibold text-[#35221a] dark:text-gray-100">Change password</p>
+              <p className="mt-1 text-sm text-[#8f7568] dark:text-gray-400">Keep your account secure.</p>
+            </Link>
+            <Link to="/recipes" className="block py-4 transition hover:text-orange-700 dark:hover:text-orange-300">
+              <p className="font-semibold text-[#35221a] dark:text-gray-100">Manage recipes</p>
+              <p className="mt-1 text-sm text-[#8f7568] dark:text-gray-400">See what the community is cooking.</p>
+            </Link>
+            <Link to="/collections" className="block py-4 transition hover:text-orange-700 dark:hover:text-orange-300">
+              <p className="font-semibold text-[#35221a] dark:text-gray-100">Your collections</p>
+              <p className="mt-1 text-sm text-[#8f7568] dark:text-gray-400">Return to the recipes you saved.</p>
+            </Link>
           </div>
 
           <div className="mt-6">
             <Link
               to="/dashboard"
-              className="inline-flex items-center justify-center rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-700 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50"
             >
-              Open dashboard
+              Back to your kitchen
             </Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

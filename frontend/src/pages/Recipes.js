@@ -34,9 +34,25 @@ const dishTypeOptions = [
   { value: 'Side Dish', label: 'Side Dish' },
 ];
 
+const quickBrowseOptions = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'dessert', label: 'Something sweet' },
+];
+
+const getCachedRecipes = () => {
+  try {
+    const cached = sessionStorage.getItem('foodiesRecipes');
+    return cached ? JSON.parse(cached) : [];
+  } catch {
+    return [];
+  }
+};
+
 const Recipes = () => {
-  const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [recipes, setRecipes] = useState(getCachedRecipes);
+  const [loading, setLoading] = useState(() => getCachedRecipes().length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCuisine, setFilterCuisine] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
@@ -75,8 +91,6 @@ const Recipes = () => {
 
   const fetchRecipes = useCallback(async () => {
     try {
-      setLoading(true);
-      
       const allRecipesRes = await fetch(`${API_BASE_URL}/recipes`);
 
       if (!allRecipesRes.ok) {
@@ -87,6 +101,7 @@ const Recipes = () => {
 
       const allProcessed = processRecipes(allRecipesData);
       setRecipes(allProcessed);
+      sessionStorage.setItem('foodiesRecipes', JSON.stringify(allProcessed));
 
       const cuisineSet = new Set();
       allProcessed.forEach(r => {
@@ -126,7 +141,10 @@ const Recipes = () => {
       const q = searchQuery.toLowerCase();
       result = result.filter(recipe =>
         recipe.title?.toLowerCase().includes(q) ||
-        recipe.description?.toLowerCase().includes(q)
+        recipe.description?.toLowerCase().includes(q) ||
+        recipe.cuisine?.toLowerCase().includes(q) ||
+        recipe.mealType?.toLowerCase().includes(q) ||
+        recipe.dishType?.toLowerCase().includes(q)
       );
     }
 
@@ -177,27 +195,49 @@ const Recipes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fffaf7] py-8 dark:bg-gray-950 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            Community Recipes
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Discover all recipes created by our community
+        <div className="mb-8 border-b border-[#eadbd1] pb-8 dark:border-gray-800 sm:mb-10 sm:pb-10">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">
+            From the Foodies kitchen
           </p>
+          <h1 className="max-w-3xl text-4xl font-bold leading-tight text-[#35221a] dark:text-white sm:text-5xl">
+            Recipes worth making again.
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-[#7f665a] dark:text-gray-400 sm:text-lg">
+            Browse dishes shared by our community, or follow your appetite and see where it takes you.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-sm text-[#8f7568] dark:text-gray-500">I&apos;m looking for</span>
+            {quickBrowseOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilterMealType(option.value)}
+                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-orange-400/40 ${
+                  filterMealType === option.value
+                    ? 'border-orange-600 bg-orange-600 text-white'
+                    : 'border-[#e7d4c7] bg-white text-[#765648] hover:border-orange-400 hover:bg-orange-50 hover:text-orange-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 dark:hover:text-orange-300'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="group relative flex-1">
             <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by recipe name, ingredients, or cuisine..."
+              aria-label="Search community recipes"
+              placeholder="Search by dish, cuisine, or meal type..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full rounded-xl border border-[#ddc9bc] bg-white py-3.5 pl-12 pr-4 text-gray-900 shadow-[0_8px_24px_rgba(53,34,26,0.06)] transition placeholder:text-[#a58d80] hover:border-[#cdb2a3] focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-400/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
             />
           </div>
 
@@ -205,7 +245,7 @@ const Recipes = () => {
             <button
               type="button"
               onClick={() => setShowFilters(prev => !prev)}
-              className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-orange-400 hover:text-orange-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+              className="flex items-center gap-2 rounded-xl border border-[#ddc9bc] bg-white px-4 py-3 text-sm font-semibold text-[#765648] shadow-sm transition hover:border-orange-400 hover:text-orange-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
             >
               <FunnelIcon className="h-5 w-5" />
               Filters
@@ -229,14 +269,14 @@ const Recipes = () => {
         </div>
 
         {showFilters && (
-          <div className="mb-8 rounded-[1.5rem] border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="mb-8 border-y border-[#eadbd1] bg-white/60 px-1 py-6 dark:border-gray-800 dark:bg-gray-900/40 sm:px-2">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Cuisine</label>
                 <select
                   value={filterCuisine}
                   onChange={(e) => setFilterCuisine(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Cuisines</option>
                   {cuisines.map(cuisine => (
@@ -252,7 +292,7 @@ const Recipes = () => {
                 <select
                   value={filterDifficulty}
                   onChange={(e) => setFilterDifficulty(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Levels</option>
                   <option value="easy">Easy</option>
@@ -266,10 +306,10 @@ const Recipes = () => {
                 <select
                   value={filterMealType}
                   onChange={(e) => setFilterMealType(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Meals</option>
-                  {mealTypeOptions.map(option => (
+                  {mealTypeOptions.filter(option => option.value !== 'all').map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -282,10 +322,10 @@ const Recipes = () => {
                 <select
                   value={filterDishType}
                   onChange={(e) => setFilterDishType(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Dishes</option>
-                  {dishTypeOptions.map(option => (
+                  {dishTypeOptions.filter(option => option.value !== 'all').map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -298,7 +338,7 @@ const Recipes = () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="newest">Newest First</option>
                   <option value="rating">Top Rated</option>
@@ -309,9 +349,9 @@ const Recipes = () => {
           </div>
         )}
 
-        <div className="mb-8 flex justify-between items-center">
-          <p className="text-gray-600 dark:text-gray-400">
-            Showing <span className="font-semibold text-gray-900 dark:text-white">{processedRecipes.length}</span> recipes
+        <div className="mb-8 flex flex-col gap-3 border-b border-[#eadbd1] pb-5 dark:border-gray-800 sm:flex-row sm:items-end sm:justify-between">
+          <p className="text-sm text-[#8f7568] dark:text-gray-400">
+            Showing <span className="font-semibold text-[#35221a] dark:text-white">{processedRecipes.length}</span> of {recipes.length} recipes
           </p>
 
           {(searchQuery || filterCuisine !== 'all' || filterDifficulty !== 'all' || filterMealType !== 'all' || filterDishType !== 'all' || sortBy !== 'newest') && (
@@ -325,10 +365,17 @@ const Recipes = () => {
         </div>
 
         {processedRecipes.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-6xl mb-6">😕</p>
-            <p className="text-2xl text-gray-600 dark:text-gray-400">No recipes found</p>
-            <p className="text-gray-500 mt-3">Try adjusting your search or filters</p>
+          <div className="border border-[#eadbd1] bg-white px-6 py-16 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-3xl" aria-hidden="true">🍽️</p>
+            <p className="mt-5 text-2xl font-semibold text-[#35221a] dark:text-white">Nothing matches this search yet.</p>
+            <p className="mx-auto mt-3 max-w-md text-[#8f7568] dark:text-gray-400">Try a broader ingredient, or clear a filter and see what the community has been cooking.</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-6 rounded-lg bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:ring-offset-2"
+            >
+              Show all recipes
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

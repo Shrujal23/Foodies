@@ -49,16 +49,16 @@ export default function SearchBar({ onSearch }) {
           {({ open }) => (
             <>
               <div className="relative">
-                <div className="group-focus-within:ring-2 group-focus-within:ring-orange-200/80 group-focus-within:ring-offset-2 group-focus-within:ring-offset-white dark:group-focus-within:ring-offset-gray-950">
-                  <div className="overflow-hidden rounded-[1.5rem] border border-gray-200 bg-white/90 shadow-[0_12px_35px_rgba(53,34,26,0.08)] transition-all duration-300 hover:shadow-[0_16px_45px_rgba(53,34,26,0.12)] dark:border-gray-700 dark:bg-gray-800/90">
-                    <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5 sm:py-5">
-                      <div className="flex flex-1 items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50/80 px-4 py-3 transition focus-within:border-orange-400 focus-within:bg-white dark:border-gray-700 dark:bg-gray-900/70 dark:focus-within:border-orange-500">
+                <div className="group rounded-2xl border border-[#ddc9bc] bg-white p-2 shadow-[0_8px_24px_rgba(53,34,26,0.07)] transition hover:border-[#cdb2a3] focus-within:border-orange-400 focus-within:ring-4 focus-within:ring-orange-400/10 dark:border-gray-700 dark:bg-gray-900">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <div className="flex min-h-[48px] flex-1 items-center gap-3 rounded-xl px-3 transition dark:bg-gray-900/70">
                         <MagnifyingGlassIcon className="h-6 w-6 shrink-0 text-orange-500 sm:h-7 sm:w-7" />
                         <input
                           type="text"
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
                           placeholder="Search recipes, ingredients, cuisines..."
+                          aria-label="Search recipes"
                           className="w-full bg-transparent text-base text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white sm:text-lg"
                         />
                       </div>
@@ -67,7 +67,7 @@ export default function SearchBar({ onSearch }) {
                         <Disclosure.Button
                           className={`flex min-h-[46px] items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold transition-all duration-300 ${
                             open || activeFilterCount > 0
-                              ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-sm'
+                              ? 'bg-orange-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                           }`}
                         >
@@ -82,13 +82,12 @@ export default function SearchBar({ onSearch }) {
 
                         <button
                           type="submit"
-                          className="min-h-[46px] whitespace-nowrap rounded-2xl bg-gradient-to-r from-orange-500 to-pink-600 px-5 py-3 text-base font-bold text-white shadow-sm transition-all duration-300 hover:from-orange-600 hover:to-pink-700"
+                          className="min-h-[46px] whitespace-nowrap rounded-xl bg-orange-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:ring-offset-2"
                         >
                           Search
                         </button>
                       </div>
                     </div>
-                  </div>
                 </div>
               </div>
 
@@ -110,7 +109,7 @@ export default function SearchBar({ onSearch }) {
                       <select
                         value={filters.diet}
                         onChange={(e) => handleFilterChange('diet', e.target.value)}
-                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 text-gray-900 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       >
                         <option value="">Any Diet</option>
                         <option value="balanced">Balanced</option>
@@ -129,7 +128,7 @@ export default function SearchBar({ onSearch }) {
                       <select
                         value={filters.health}
                         onChange={(e) => handleFilterChange('health', e.target.value)}
-                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 text-gray-900 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       >
                         <option value="">Any Health</option>
                         <option value="vegan">Vegan</option>
@@ -148,7 +147,7 @@ export default function SearchBar({ onSearch }) {
                       <select
                         value={filters.cuisineType}
                         onChange={(e) => handleFilterChange('cuisineType', e.target.value)}
-                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 text-gray-900 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       >
                         <option value="">Any Cuisine</option>
                         <option value="american">American</option>
@@ -169,7 +168,7 @@ export default function SearchBar({ onSearch }) {
                       <select
                         value={filters.mealType}
                         onChange={(e) => handleFilterChange('mealType', e.target.value)}
-                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 text-gray-900 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       >
                         <option value="">Any Meal</option>
                         <option value="breakfast">Breakfast</option>
@@ -190,7 +189,7 @@ export default function SearchBar({ onSearch }) {
                       <select
                         value={filters.dishType}
                         onChange={(e) => handleFilterChange('dishType', e.target.value)}
-                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-5 py-4 text-gray-900 transition focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       >
                         <option value="">Any Dish</option>
                         <option value="Main Course">Main Course</option>

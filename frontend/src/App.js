@@ -29,6 +29,7 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Profile from './pages/Profile';
 import Blogs from './pages/Blogs';
+import { NotFoundPage } from './pages/ErrorPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/common/AdminRoute';
 
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
 

@@ -215,39 +215,49 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#fffaf7] dark:bg-gray-950">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-700 via-orange-600 to-orange-500">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.12),_transparent_55%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#fffaf7] dark:from-gray-950 to-transparent" />
-        <div className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center">
-          <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-            <div className="mx-auto max-w-4xl rounded-[2rem] border border-white/20 bg-white/10 p-8 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-md ring-1 ring-white/10 sm:p-10 lg:p-14">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-1.5 text-sm font-semibold">
-                <FireIcon className="h-4 w-4" />
-                <span>Cook, save & share with Foodies</span>
+      <section
+        className="relative isolate overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1547592180-85f173990554?w=1800&q=85)' }}
+      >
+        <div className="absolute inset-0 bg-[#24140d]/65" />
+        <div className="relative z-10 mx-auto flex min-h-[600px] max-w-7xl items-end px-4 pb-14 pt-28 sm:px-6 sm:pb-20 lg:px-8">
+          <div className="max-w-3xl text-white">
+            <p className="mb-5 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-orange-200">
+              <FireIcon className="h-4 w-4" />
+              Food for real life
+            </p>
+            <h1 className="max-w-2xl font-display text-4xl font-bold leading-[1.05] sm:text-6xl lg:text-7xl">
+              What are you cooking today?
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+              Find something comforting, learn from home cooks, and keep the recipes you want to make again.
+            </p>
+
+            <div className="mt-8 max-w-2xl">
+              <div className="flex flex-col gap-2 rounded-xl bg-white p-2 shadow-[0_18px_50px_rgba(0,0,0,0.25)] sm:flex-row">
+                <div className="flex min-h-[50px] flex-1 items-center gap-3 rounded-lg px-3">
+                  <MagnifyingGlassIcon className="h-5 w-5 shrink-0 text-orange-600" />
+                  <input
+                    type="text"
+                    aria-label="Search recipes"
+                    placeholder="Try “something quick with potatoes”"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
+                    className="w-full bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={commitSearch}
+                  className="rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
+                >
+                  Find a recipe
+                </button>
               </div>
-
-              <h1 className="mb-5 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-                Discover your next favorite recipe
-              </h1>
-
-              <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">
-                Browse community dishes, save collections, leave reviews, and publish your own —
-                all in one place.
-              </p>
-
-              <div className="mx-auto flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-                <Link
-                  to="/search"
-                  className="rounded-2xl bg-white px-8 py-3.5 text-center font-semibold text-orange-700 shadow-lg transition duration-200 hover:-translate-y-0.5 hover:bg-orange-50"
-                >
-                  Explore recipes
-                </Link>
-                <Link
-                  to="/recipes/add"
-                  className="rounded-2xl border-2 border-white/60 bg-white/10 px-8 py-3.5 text-center font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/20"
-                >
-                  Share a recipe
-                </Link>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/80">
+                <Link to="/recipes" className="underline decoration-white/40 underline-offset-4 hover:text-white">Browse the community</Link>
+                <Link to="/recipes/add" className="underline decoration-white/40 underline-offset-4 hover:text-white">Share something you make</Link>
               </div>
             </div>
           </div>
@@ -255,7 +265,7 @@ export default function Home() {
       </section>
 
       {/* Community carousel */}
-      <section className="relative z-10 -mt-8 px-4 pb-10 sm:-mt-10 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
+      <section className="relative z-10 mt-4 px-4 pb-10 sm:mt-6 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
         <div className="mx-auto max-w-6xl rounded-[2rem] border border-orange-100/80 bg-white/95 p-5 shadow-[0_20px_60px_rgba(100,43,19,0.08)] backdrop-blur dark:border-gray-900 dark:bg-gray-900/100 sm:p-8 lg:p-10">
           {communityLoading ? (
             <>
@@ -273,14 +283,14 @@ export default function Home() {
               renderItem={(recipe) => (
                 <Link
                   to={`/recipes/user/${recipe.id || recipe._id}`}
-                  className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border-2 border-orange-100 dark:border-gray-700 shadow-md hover:shadow-xl hover:border-orange-300 dark:hover:border-orange-700/60 hover:-translate-y-1 transition-all duration-300 block w-full h-full"
+                  className="group block h-full min-w-0 overflow-hidden rounded-2xl border-2 border-orange-100 bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:border-orange-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:border-orange-700/60"
                 >
-                  <div className="relative h-56 sm:h-72 overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  <div className="relative h-52 w-full overflow-hidden bg-gray-100 dark:bg-gray-700 sm:h-64">
                     <img
                       src={recipeImage(recipe.image)}
                       alt={recipe.title}
                       loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                   <div className="p-5 sm:p-6">
@@ -314,38 +324,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="relative z-10 mx-auto mb-20 max-w-7xl -mt-4 px-4 sm:-mt-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            { value: '50K+', label: 'Active members', sub: 'Community cooks' },
-            { value: '10K+', label: 'Recipes shared', sub: 'User-created dishes' },
-            { value: '100K+', label: 'Reviews', sub: 'Real feedback' },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-[1.5rem] border border-orange-100/80 bg-white/95 px-6 py-6 text-center shadow-[0_16px_40px_rgba(100,43,19,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-[0_20px_48px_rgba(100,43,19,0.1)] dark:border-gray-800 dark:bg-gray-900/95 dark:hover:border-orange-700/50"
-            >
-              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                {stat.value}
-              </div>
-              <div className="text-gray-800 dark:text-gray-200 font-semibold text-sm">
-                {stat.label}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.sub}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Why Foodies */}
       <section className="mx-auto mb-24 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Why Foodies?
+        <div className="mb-10 max-w-2xl">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-300">The useful bits</p>
+          <h2 className="mb-2 text-3xl font-bold text-[#35221a] dark:text-white sm:text-4xl">
+            Keep the good ideas close.
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
-            Simple tools for discovering, saving, and sharing recipes.
+          <p className="max-w-xl text-base leading-relaxed text-[#7f665a] dark:text-gray-400">
+            Foodies is made for the meals you actually cook: save the winners, leave a note for next time, and share the ones people ask you for.
           </p>
         </div>
 
@@ -355,9 +342,9 @@ export default function Home() {
             return (
               <div
                 key={feature.title}
-                className="rounded-[1.5rem] border border-orange-100/80 bg-white p-6 shadow-[0_16px_40px_rgba(100,43,19,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-[0_22px_48px_rgba(100,43,19,0.1)] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-orange-700/50"
+                className="border-b border-[#eadbd1] bg-white p-6 transition-colors hover:bg-[#fff8f2] dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/80 sm:border sm:border-[#eadbd1] sm:dark:border-gray-800"
               >
-                <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4 border border-orange-100 dark:border-orange-900/40 group-hover:bg-orange-100">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/40 dark:bg-orange-950/40 dark:text-orange-400">
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -401,61 +388,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Search + filters */}
-      <section className="mx-auto mb-20 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-[0_14px_40px_rgba(87,43,19,0.06)] transition-colors hover:border-orange-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700 sm:p-8">
-          <div className="relative max-w-3xl mx-auto mb-8">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-600" />
-            <input
-              type="text"
-              placeholder="Search pasta, vegan, 30 minutes…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
-              className="w-full pl-12 pr-28 py-3.5 text-base rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/25 hover:border-orange-200 dark:hover:border-gray-600 transition"
-            />
-            <button
-              type="button"
-              onClick={commitSearch}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 hover:shadow-md transition"
-            >
-              Search
-            </button>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-              Browse by cuisine
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {CUISINES.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setActiveFilter(f.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold border-2 transition duration-200 ${
-                    activeFilter === f.id
-                      ? 'bg-orange-600 text-white border-orange-600 shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-700 dark:hover:text-orange-300'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Featured grid */}
       <section className="mx-auto mb-24 max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-              Popular recipes
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-300">Choose your table</p>
+            <h2 className="mb-1 text-2xl font-bold text-[#35221a] dark:text-white sm:text-3xl">
+              A few places to start
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Trending dishes from the community
+            <p className="text-sm text-[#7f665a] dark:text-gray-400">
+              Popular dishes from the community
             </p>
           </div>
           <Link
@@ -464,6 +406,24 @@ export default function Home() {
           >
             View all →
           </Link>
+        </div>
+
+        <div className="mb-8 flex flex-wrap items-center gap-2 border-b border-[#eadbd1] pb-6 dark:border-gray-800">
+          <span className="mr-1 text-sm text-[#8f7568] dark:text-gray-500">Browse by cuisine</span>
+          {CUISINES.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setActiveFilter(f.id)}
+              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-orange-400/40 ${
+                activeFilter === f.id
+                  ? 'border-orange-600 bg-orange-600 text-white'
+                  : 'border-[#e7d4c7] bg-white text-[#765648] hover:border-orange-400 hover:bg-orange-50 hover:text-orange-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 dark:hover:text-orange-300'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {loading ? (
@@ -551,34 +511,24 @@ export default function Home() {
 
       {/* Newsletter */}
       <section className="mx-auto mb-16 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-orange-400/30 bg-gradient-to-br from-orange-600 via-orange-500 to-pink-500 px-6 py-12 text-center text-white shadow-[0_20px_60px_rgba(231,90,40,0.25)] sm:px-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
-            Get weekly recipe inspiration
-          </h2>
-          <p className="text-white/90 mb-8 max-w-2xl mx-auto text-sm sm:text-base">
-            Join 20,000+ home cooks getting fresh, delicious recipe ideas every Sunday.
-            Free — unsubscribe anytime.
-          </p>
-          <form
-            className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              className="flex-1 px-5 py-3.5 rounded-xl text-gray-900 placeholder-gray-500 border-2 border-white/80 focus:outline-none focus:ring-2 focus:ring-white focus:border-white shadow-sm"
-            />
-            <button
-              type="submit"
-              className="px-8 py-3.5 bg-white text-orange-700 font-bold rounded-xl hover:bg-orange-50 hover:shadow-md hover:-translate-y-0.5 transition duration-200 border-2 border-white"
+        <div className="border-y border-[#eadbd1] py-10 dark:border-gray-800 sm:py-12">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-2xl">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-300">Your turn</p>
+              <h2 className="mb-3 text-2xl font-bold text-[#35221a] dark:text-white sm:text-3xl lg:text-4xl">
+                What do you make when people ask for the recipe?
+              </h2>
+              <p className="text-sm leading-relaxed text-[#7f665a] dark:text-gray-400 sm:text-base">
+                Put it somewhere your friends can find it. Share a family favourite, a weeknight fix, or the dish you keep making without measuring.
+              </p>
+            </div>
+            <Link
+              to="/recipes/add"
+              className="inline-flex shrink-0 rounded-lg bg-orange-600 px-6 py-3.5 font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:ring-offset-2"
             >
-              Subscribe free
-            </button>
-          </form>
-          <p className="text-xs text-white/70 mt-4">No spam. Only tasty ideas.</p>
+              Share your recipe
+            </Link>
+          </div>
         </div>
       </section>
     </div>

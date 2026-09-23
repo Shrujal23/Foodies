@@ -89,11 +89,11 @@ export default function RecommendationCarousel({
   if (!items.length) return null;
 
   return (
-    <section className={`py-12 ${className}`}>
+    <section className={`${isSingleView ? 'py-5 sm:py-8' : 'py-12'} ${className}`}>
       {/* Header */}
-      <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className={`${isSingleView ? 'mb-5 sm:mb-7' : 'mb-10'} flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
         <div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+          <h2 className={`${isSingleView ? 'text-3xl sm:text-4xl' : 'text-4xl lg:text-5xl'} font-bold text-gray-900 dark:text-white`}>
             {title}
           </h2>
           {subtitle && (
@@ -110,7 +110,7 @@ export default function RecommendationCarousel({
             <button
               onClick={() => scroll('left')}
               disabled={!canScrollLeft}
-              className={`p-3.5 rounded-2xl transition-all duration-300 ${
+              className={`rounded-xl p-2.5 transition-all duration-300 sm:p-3.5 ${
                 canScrollLeft
                   ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700 active:scale-95'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
@@ -122,7 +122,7 @@ export default function RecommendationCarousel({
             <button
               onClick={() => scroll('right')}
               disabled={!canScrollRight}
-              className={`p-3.5 rounded-2xl transition-all duration-300 ${
+              className={`rounded-xl p-2.5 transition-all duration-300 sm:p-3.5 ${
                 canScrollRight
                   ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700 active:scale-95'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'

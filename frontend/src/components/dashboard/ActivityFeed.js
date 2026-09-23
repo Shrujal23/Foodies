@@ -42,7 +42,7 @@ export default function ActivityFeed({ activities }) {
                 </div>
                 <div className="flex min-w-0 flex-1 justify-between gap-x-4 py-1.5">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{getActivityText(activity)}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{getActivityText(activity)}</p>
                   </div>
                   <div className="whitespace-nowrap text-right">
                     <time 

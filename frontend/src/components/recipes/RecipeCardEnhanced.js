@@ -4,7 +4,7 @@ import { API_BASE_URL, ASSET_BASE_URL } from '../../config';
 import SaveButton from './SaveButton';
 
 const RecipeCardEnhanced = ({ recipe }) => {
-  const [rating, setRating] = useState(recipe.rating || 4.2);
+  const [rating, setRating] = useState(recipe.rating ?? null);
   const [reviewCount, setReviewCount] = useState(recipe.reviewCount || 0);
 
   const fetchRating = useCallback(async () => {
@@ -29,8 +29,8 @@ const RecipeCardEnhanced = ({ recipe }) => {
           totalScore += i * count;
         }
 
-        const avg = totalRatings > 0 ? (totalScore / totalRatings).toFixed(1) : 4.2;
-        setRating(parseFloat(avg));
+        const avg = totalRatings > 0 ? (totalScore / totalRatings).toFixed(1) : null;
+        setRating(avg ? parseFloat(avg) : null);
         setReviewCount(totalRatings);
       }
     } catch (error) {
@@ -128,8 +128,14 @@ const RecipeCardEnhanced = ({ recipe }) => {
 
         <div className="mt-auto flex items-center justify-between border-t border-[#f4ddce] pt-4 dark:border-gray-700">
           <div className="flex items-center gap-1 text-amber-500">
-            <span className="font-semibold">{rating}</span>
-            {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount})</span>}
+            {rating !== null ? (
+              <>
+                <span className="font-semibold">{rating}</span>
+                {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount})</span>}
+              </>
+            ) : (
+              <span className="text-xs text-gray-500 dark:text-gray-400">No ratings yet</span>
+            )}
           </div>
 
           {renderRecipeLink(

@@ -1,23 +1,23 @@
 export default function ProfileHeader({ user, avatarPreview }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-6 mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+    <div className="mb-8 border border-[#eadbd1] bg-[#fff4e9] p-6 dark:border-gray-800 dark:bg-orange-950/20 sm:p-8">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
           <img
             src={avatarPreview || user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.display_name || user?.username || 'User')}&size=200`}
             alt={user?.display_name || user?.username || 'User avatar'}
-            className="w-32 h-32 rounded-full object-cover shadow-sm"
+            className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-sm dark:border-gray-800 sm:h-28 sm:w-28"
           />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user?.display_name || user?.username}</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">{user?.email}</p>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Member since {new Date().toLocaleDateString()}</p>
+            <h2 className="text-2xl font-bold text-[#35221a] dark:text-white">{user?.display_name || user?.username}</h2>
+            <p className="mt-1 text-sm text-[#7f665a] dark:text-gray-300">{user?.email}</p>
+            <p className="mt-3 text-sm text-[#8f7568] dark:text-gray-400">This is how your profile appears around Foodies.</p>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-orange-50 dark:bg-orange-950/20 p-5 text-sm text-orange-700 dark:text-orange-200">
-          <p className="font-semibold">Tip</p>
-          <p className="mt-2 leading-relaxed">Updating your profile here refreshes your session and immediately applies your new display name and avatar across the app.</p>
+        <div className="border-l-2 border-orange-300 pl-5 text-sm text-[#765648] dark:border-orange-800 dark:text-orange-200 sm:ml-auto sm:max-w-xs">
+          <p className="font-semibold">A small note</p>
+          <p className="mt-2 leading-relaxed">Your display name and profile photo update across the app as soon as you save.</p>
         </div>
       </div>
     </div>

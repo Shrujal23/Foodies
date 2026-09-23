@@ -51,8 +51,8 @@ export default function Navbar() {
   const currentPath = window.location.pathname;
 
   return (
-    <Disclosure as="nav" className="sticky top-0 z-50 border-b border-orange-100/80 bg-[#fffaf7]/95 backdrop-blur-xl dark:border-gray-800 dark:bg-gray-900/95">
-      {({ open }) => (
+    <Disclosure as="nav" className="sticky top-0 z-50 border-b border-orange-100/80 bg-[#fffaf7]/95 dark:border-gray-800 dark:bg-gray-900/95">
+      {({ open, close }) => (
         <>
           <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between gap-3">
@@ -65,12 +65,15 @@ export default function Navbar() {
               </Link>
 
               {/* Desktop Navigation */}
-              <div className="hidden lg:flex items-center gap-1 rounded-full border border-orange-100 bg-white/80 px-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.04)] dark:border-gray-800 dark:bg-gray-900/80">
+              <div className="hidden xl:flex items-center gap-1 rounded-full border border-orange-100 bg-white/80 px-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.04)] dark:border-gray-800 dark:bg-gray-900/80">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={(e) => item.protected && handleProtectedClick(e, item.href)}
+                    onClick={(e) => {
+                      if (item.protected) handleProtectedClick(e, item.href);
+                      close();
+                    }}
                     className={classNames(
                       currentPath === item.href
                         ? 'bg-[#ffe8db] text-[#c85b2d] shadow-sm ring-1 ring-orange-200/70'
@@ -238,80 +241,112 @@ export default function Navbar() {
                 )}
 
                 {/* Mobile menu button */}
-                <Disclosure.Button className="rounded-full p-2 text-[#5d3d2f] transition hover:bg-[#fff0e8] dark:text-gray-300 dark:hover:bg-gray-800 lg:hidden">
+                <Disclosure.Button className="rounded-full p-2 text-[#5d3d2f] transition hover:bg-[#fff0e8] dark:text-gray-300 dark:hover:bg-gray-800 xl:hidden">
                   {open ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
                 </Disclosure.Button>
               </div>
             </div>
           </div>
 
-          {/* Mobile Menu */}
-          <Disclosure.Panel className="border-t border-orange-100 bg-white/95 dark:border-gray-800 dark:bg-gray-900/95 lg:hidden">
-            <div className="px-3 pt-3 pb-4 space-y-2">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={(e) => item.protected && handleProtectedClick(e, item.href)}
-                  className={classNames(
-                    currentPath === item.href
-                      ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
-                    'block rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm'
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
+          {/* Universal mobile drawer */}
+          {open && (
+            <Disclosure.Button
+              as="button"
+              className="fixed inset-0 z-[55] bg-[#24140d]/45 xl:hidden"
+              aria-label="Close navigation menu"
+            />
+          )}
 
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
+          <Transition
+            as={Fragment}
+            show={open}
+            enter="transition-transform duration-300 ease-out"
+            enterFrom="-translate-x-full"
+            enterTo="translate-x-0"
+            leave="transition-transform duration-200 ease-in"
+            leaveFrom="translate-x-0"
+            leaveTo="-translate-x-full"
+          >
+            <Disclosure.Panel
+              static
+              className="fixed inset-y-0 left-0 z-[60] w-[min(84vw,21rem)] overflow-y-auto border-r border-[#eadbd1] bg-[#fffaf7] p-5 shadow-2xl dark:border-gray-800 dark:bg-gray-950 xl:hidden"
+            >
+              <div className="flex items-center justify-between border-b border-[#eadbd1] pb-5 dark:border-gray-800">
+                <div>
+                  <p className="text-lg font-bold text-[#35221a] dark:text-white">Foodies</p>
+                  <p className="mt-1 text-sm text-[#8f7568] dark:text-gray-500">A good place to start</p>
+                </div>
+                <Disclosure.Button
+                  className="rounded-lg p-2 text-[#765648] hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  aria-label="Close navigation menu"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </Disclosure.Button>
+              </div>
+
+              <nav className="mt-5 space-y-1">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={(e) => item.protected && handleProtectedClick(e, item.href)}
+                    className={classNames(
+                      currentPath === item.href
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300'
+                        : 'text-[#5d463b] hover:bg-orange-50 hover:text-orange-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-orange-300',
+                      'block rounded-lg px-3 py-3 text-sm font-semibold transition-colors'
+                    )}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="mt-5 border-t border-[#eadbd1] pt-4 dark:border-gray-800">
                 <button
                   onClick={toggleTheme}
-                  className="w-full text-left px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="w-full rounded-lg px-3 py-3 text-left text-sm font-semibold text-[#5d463b] transition hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
-                  Toggle {isDarkMode ? 'Light' : 'Dark'} Mode
+                  Switch to {isDarkMode ? 'light' : 'dark'} mode
                 </button>
               </div>
 
               {user ? (
-                <div className="space-y-1 pt-3">
-                  <Link
-                    to="/dashboard"
-                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    Dashboard
-                  </Link>
+                <div className="mt-3 space-y-1 border-t border-[#eadbd1] pt-4 dark:border-gray-800">
                   <Link
                     to="/profile"
-                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={close}
+                    className="block rounded-lg px-3 py-3 text-sm font-semibold text-[#5d463b] hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     Profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 rounded text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    className="w-full rounded-lg px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
                   >
                     Sign out
                   </button>
                 </div>
               ) : (
-                <>
+                <div className="mt-3 space-y-1 border-t border-[#eadbd1] pt-4 dark:border-gray-800">
                   <Link
                     to="/login"
-                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={close}
+                    className="block rounded-lg px-3 py-3 text-sm font-semibold text-[#5d463b] hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     Sign in
                   </Link>
                   <Link
                     to="/register"
-                    className="block px-4 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={close}
+                    className="block rounded-lg px-3 py-3 text-sm font-semibold text-[#5d463b] hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     Create account
                   </Link>
-                </>
+                </div>
               )}
-            </div>
-          </Disclosure.Panel>
+            </Disclosure.Panel>
+          </Transition>
         </>
       )}
     </Disclosure>

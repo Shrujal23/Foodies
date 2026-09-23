@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeCardEnhanced from '../components/recipes/RecipeCardEnhanced';
 import EmptyState from '../components/common/EmptyState';
-import AnimatedStatCard from '../components/common/AnimatedStatCard';
 import Breadcrumbs from '../components/common/Breadcrumbs';
 import { apiFetch } from '../services/apiClient';
 import { clearClientAuth } from '../services/authService';
@@ -16,6 +15,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const res = await apiFetch('/users/dashboard');
+
+      if (res.status === 401) {
+        clearClientAuth();
+        navigate('/login');
+        return;
+      }
+
+      if (!res.ok) throw new Error('Failed to load dashboard');
+      const data = await res.json();
+      setDashboardData(data);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -25,36 +46,24 @@ export default function Dashboard() {
       return;
     }
 
-    const fetchDashboard = async () => {
-      try {
-        const res = await apiFetch('/users/dashboard');
-
-        if (res.status === 401) {
-          clearClientAuth();
-          navigate('/login');
-          return;
-        }
-
-        if (!res.ok) throw new Error('Failed to load dashboard');
-        const data = await res.json();
-        setDashboardData(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboard();
-  }, [user, authLoading, navigate]);
+
+    const refreshDashboard = () => fetchDashboard();
+    window.addEventListener('favorites:updated', refreshDashboard);
+    window.addEventListener('collections:updated', refreshDashboard);
+
+    return () => {
+      window.removeEventListener('favorites:updated', refreshDashboard);
+      window.removeEventListener('collections:updated', refreshDashboard);
+    };
+  }, [user, authLoading, fetchDashboard]);
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#fffaf7] dark:bg-gray-950">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-          <p className="text-xl font-medium text-gray-700 dark:text-gray-300">Loading your kitchen dashboard...</p>
+          <p className="text-base text-[#7f665a] dark:text-gray-300">Getting your kitchen ready...</p>
         </div>
       </div>
     );
@@ -62,7 +71,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 flex items-center justify-center px-6">
+      <div className="flex min-h-screen items-center justify-center bg-[#fffaf7] px-6 dark:bg-gray-950">
         <EmptyState
           title="Something went wrong"
           description={error}
@@ -76,8 +85,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50 dark:from-gray-950 dark:via-gray-900 py-12">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fffaf7] py-8 dark:bg-gray-950 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {!dashboardData?.isAuthenticated ? (
           <div className="max-w-md mx-auto mt-20">
@@ -115,64 +124,88 @@ export default function Dashboard() {
           <div>
             <Breadcrumbs />
 
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl mb-6">
-                <span className="font-medium text-orange-600">Welcome back</span>
+            <div className="mb-10 flex flex-col gap-6 border-b border-[#eadbd1] pb-8 dark:border-gray-800 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">Your kitchen</p>
+                <h1 className="text-4xl font-bold leading-tight text-[#35221a] dark:text-white sm:text-5xl">
+                  Welcome back, {user?.display_name || user?.username}.
+                </h1>
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-[#7f665a] dark:text-gray-400 sm:text-lg">
+                  Keep the recipes you love close, and find something good for the next meal.
+                </p>
               </div>
-              <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-4">
-                Namaste, {user?.display_name || user?.username}!
-              </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-400">
-                Ready to cook something amazing today?
-              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => navigate('/search')}
+                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50"
+                >
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                  Find a recipe
+                </button>
+                <button
+                  onClick={() => navigate('/recipes/add')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#ddc9bc] bg-white px-4 py-3 text-sm font-semibold text-[#765648] transition hover:border-orange-400 hover:text-orange-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Add your own
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-              <AnimatedStatCard 
-                value={dashboardData?.totalFavorites || 0} 
-                label="Saved Recipes" 
-                color="pink"
-              />
-              <AnimatedStatCard 
-                value={dashboardData?.collections?.length || 0} 
-                label="Collections"             
-                color="orange"
-              />
-              <AnimatedStatCard 
-                value={dashboardData?.recentActivity?.length || 0} 
-                label="Recent Activity"
-                color="blue"
-              />
-              <AnimatedStatCard 
-                value={dashboardData?.recentFavorites?.length || 0}
-                label="This Month" 
-                color="emerald"
-              />
+            <div className="mb-16 grid grid-cols-2 border-y border-[#eadbd1] bg-white dark:border-gray-800 dark:bg-gray-900 sm:grid-cols-4">
+              {[
+                { value: dashboardData?.totalFavorites || 0, label: 'saved recipes' },
+                { value: dashboardData?.collections?.length || 0, label: 'collections' },
+                { value: dashboardData?.recentActivity?.length || 0, label: 'recent activities' },
+              ].map((stat, index) => (
+                <div key={stat.label} className={`px-4 py-5 sm:px-6 ${index > 0 ? 'border-l border-[#eadbd1] dark:border-gray-800' : ''}`}>
+                  <p className="text-3xl font-bold tabular-nums text-[#35221a] dark:text-white">{stat.value}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#8f7568] dark:text-gray-500">{stat.label}</p>
+                </div>
+              ))}
             </div>
 
             {dashboardData?.recentFavorites?.length > 0 && (
               <section className="mb-20">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Recently Saved
-                  </h2>
+                <div className="mb-8 flex items-end justify-between gap-4 border-b border-[#eadbd1] pb-5 dark:border-gray-800">
+                  <div>
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-300">Your shelf</p>
+                    <h2 className="text-2xl font-bold text-[#35221a] dark:text-white sm:text-3xl">
+                      Saved for later
+                    </h2>
+                  </div>
                   <button
                     onClick={() => navigate('/collections')}
-                    className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-2"
+                    className="text-sm font-semibold text-orange-700 hover:text-orange-800 dark:text-orange-300"
                   >
-                    View All →
+                    See all <span aria-hidden="true">→</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {dashboardData.recentFavorites.slice(0, 8).map((recipe) => (
                     <RecipeCardEnhanced 
                       key={recipe.recipe_id || recipe.id} 
-                      recipe={recipe} 
-                      isSaved={true}
+                      recipe={recipe}
                     />
                   ))}
                 </div>
+              </section>
+            )}
+
+            {!dashboardData?.recentFavorites?.length && (
+              <section className="border border-[#eadbd1] bg-white px-6 py-12 dark:border-gray-800 dark:bg-gray-900 sm:px-10">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-300">A blank shelf is a beginning</p>
+                <h2 className="mt-3 text-2xl font-bold text-[#35221a] dark:text-white sm:text-3xl">Save a recipe for your next meal.</h2>
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-[#7f665a] dark:text-gray-400">
+                  Search for something you already know you love, or wander a little and keep the good surprises.
+                </p>
+                <button
+                  onClick={() => navigate('/search')}
+                  className="mt-6 rounded-lg bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400/50"
+                >
+                  Browse recipes
+                </button>
               </section>
             )}
           </div>

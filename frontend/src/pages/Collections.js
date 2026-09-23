@@ -130,6 +130,7 @@ const Collections = () => {
         setCollections(prev => [...prev, newCollection]);
         setNewCollectionName('');
         setShowNewCollection(false);
+        window.dispatchEvent(new Event('collections:updated'));
         toast.success('Collection created!');
       } else {
         const error = await res.json();
@@ -157,6 +158,7 @@ const Collections = () => {
             setRecipes([]);
           }
         }
+        window.dispatchEvent(new Event('collections:updated'));
         toast.success('Collection deleted');
       }
     } catch (error) {
@@ -175,6 +177,7 @@ const Collections = () => {
             ? { ...collection, itemCount: Math.max(0, (collection.itemCount || 0) - 1) }
             : collection
         ));
+          window.dispatchEvent(new Event('collections:updated'));
         toast.success('Recipe removed from collection');
       }
     } catch (error) {

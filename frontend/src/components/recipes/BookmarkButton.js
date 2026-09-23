@@ -138,6 +138,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
       if (res.ok) {
         setIsBookmarked(true);
         setShowCollections(false);
+        window.dispatchEvent(new Event('collections:updated'));
         toast.success('Added to collection!');
         onBookmarkChange?.(true);
       } else {
@@ -173,6 +174,7 @@ const BookmarkButton = ({ recipeId, externalRecipeId, onBookmarkChange }) => {
         const newCollection = await res.json();
         setCollections([...collections, newCollection]);
         setDefaultCollection(newCollection.id);
+        window.dispatchEvent(new Event('collections:updated'));
         toast.success('Collection created!');
         // Auto-bookmark to new collection
         handleBookmarkClick(newCollection.id);

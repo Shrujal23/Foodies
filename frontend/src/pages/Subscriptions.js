@@ -84,7 +84,7 @@ export default function Subscriptions() {
     },
     {
       q: "How does the AI Chef work?",
-      a: "Our Masala AI Chef is powered by Google Gemini and is deeply trained on Indian cuisine."
+      a: "Masala AI uses the Groq API to help turn the ingredients, flavours, and time you have into practical cooking ideas."
     },
     {
       q: "Can I switch plans later?",
@@ -108,31 +108,35 @@ export default function Subscriptions() {
       toast.success("You're already on the Free plan!");
       return;
     }
-    toast.success(`Redirecting to checkout for ${planId} plan...`);
-    setTimeout(() => {
-      toast.error('Payment integration coming soon!');
-    }, 1200);
+    toast('Payments are not connected yet. Your plan choice has been noted.', {
+      icon: '📝',
+      duration: 4000,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 pb-20">
+    <div className="min-h-screen bg-[#fffaf7] pb-20 dark:bg-gray-950">
       
       {/* Hero Section */}
-      <div className="pt-20 pb-12 px-6 text-center">
-        <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-          Simple, Transparent Pricing
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Choose the perfect plan for your cooking journey. Cancel anytime, no questions asked.
+      <div className="mx-auto max-w-4xl border-b border-[#eadbd1] px-6 pb-12 pt-14 text-center dark:border-gray-800 sm:pt-20">
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">
+          Make more of the meals you love
         </p>
+        <h1 className="text-4xl font-bold leading-tight text-[#35221a] dark:text-white lg:text-5xl">
+          A little more help in the kitchen.
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-[#7f665a] dark:text-gray-400">
+          Keep your favourite recipes close, plan meals with less guesswork, and get back to cooking the way you like it.
+        </p>
+        <p className="mt-5 text-sm text-[#8f7568] dark:text-gray-500">Cancel anytime · Prices shown in Indian rupees · No surprise fees</p>
       </div>
 
       {/* Billing Toggle */}
-      <div className="flex justify-center mb-12">
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
+      <div className="flex justify-center px-6 py-8 sm:py-10">
+        <div className="flex rounded-xl border border-[#ddc9bc] bg-white p-1 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <button
             onClick={() => setBillingCycle('monthly')}
-            className={`px-6 py-2 rounded transition-colors font-medium ${
+              className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
               billingCycle === 'monthly'
                 ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -142,7 +146,7 @@ export default function Subscriptions() {
           </button>
           <button
             onClick={() => setBillingCycle('yearly')}
-            className={`px-6 py-2 rounded transition-colors font-medium relative ${
+              className={`relative rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
               billingCycle === 'yearly'
                 ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -150,37 +154,38 @@ export default function Subscriptions() {
           >
             Yearly
             {billingCycle === 'yearly' && (
-              <span className="ml-2 text-sm text-orange-600 font-semibold">Save 33%</span>
+              <span className="ml-2 text-xs font-semibold text-orange-600">Save 33%</span>
             )}
           </button>
         </div>
       </div>
 
       {/* Pricing Cards */}
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-6">
+      <div className="mx-auto max-w-6xl px-6">
+        <p className="mb-6 text-center text-sm text-[#8f7568] dark:text-gray-500">Choose the kind of help you want at home.</p>
+        <div className="grid gap-5 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`rounded-xl p-8 border transition-all duration-300 backdrop-blur-sm ${
+              className={`flex flex-col rounded-2xl border p-7 transition-all duration-300 ${
                 plan.highlighted
-                  ? 'border-orange-600 bg-orange-50/50 dark:bg-orange-900/20 hover:shadow-lg hover:shadow-orange-200/50 dark:hover:shadow-orange-900/50 hover:-translate-y-1'
-                  : 'border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:-translate-y-1'
+                  ? 'border-orange-600 bg-[#fff3e8] shadow-[0_16px_40px_rgba(194,91,37,0.12)] dark:bg-orange-950/30'
+                  : 'border-[#eadbd1] bg-white dark:border-gray-700 dark:bg-gray-900 hover:border-[#cdb2a3] hover:shadow-md'
               }`}
             >
               {plan.badge && (
-                <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-4">
+                <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700 dark:text-orange-300">
                   {plan.badge}
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <h3 className="mb-2 text-2xl font-bold text-[#35221a] dark:text-white">{plan.name}</h3>
+              <p className="mb-6 text-sm leading-relaxed text-[#7f665a] dark:text-gray-400">
                 {plan.description}
               </p>
 
               <div className="mb-8">
-                <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                <span className="text-4xl font-bold text-[#35221a] dark:text-white">
                   {plan.price === 0 ? 'Free' : `₹${plan.price}`}
                 </span>
                 {plan.price > 0 && (
@@ -192,27 +197,27 @@ export default function Subscriptions() {
 
               <button
                 onClick={() => handleSubscribe(plan.id)}
-                className={`w-full py-3 rounded font-medium mb-8 transition-all duration-300 ${
+                className={`mb-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
                   plan.highlighted
                     ? 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/30'
-                    : 'border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
+                    : 'border border-[#ddc9bc] text-[#35221a] hover:border-orange-400 hover:bg-orange-50 dark:border-gray-600 dark:text-white dark:hover:bg-gray-800'
                 }`}
               >
                 {plan.cta}
               </button>
 
               {/* Features */}
-              <div className="space-y-3 mb-8">
+              <div className="mb-8 flex-1 space-y-3">
                 {plan.features.map((feature, idx) => (
                   <div key={idx} className="flex gap-3 items-start text-sm">
-                    <span className="text-orange-600 font-bold mt-0.5">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                    <span className="mt-0.5 font-bold text-orange-600">✓</span>
+                    <span className="text-sm text-[#5d463b] dark:text-gray-300">{feature}</span>
                   </div>
                 ))}
               </div>
 
               {plan.notIncluded?.length > 0 && (
-                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="border-t border-[#eadbd1] pt-6 dark:border-gray-700">
                   {plan.notIncluded.map((feature, idx) => (
                     <div key={idx} className="flex gap-3 items-start text-sm opacity-50 text-gray-600 dark:text-gray-400 mb-2">
                       <span className="mt-0.5">–</span>
@@ -227,45 +232,46 @@ export default function Subscriptions() {
       </div>
 
       {/* FAQ Section */}
-      <div className="max-w-4xl mx-auto px-6 mt-24">
-        <h2 className="text-3xl font-bold text-center mb-3 text-gray-900 dark:text-white">
-          Questions?
+      <div className="mx-auto mt-24 max-w-3xl px-6">
+        <h2 className="mb-3 text-center text-3xl font-bold text-[#35221a] dark:text-white">
+          Before you decide
         </h2>
-        <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
-          We have answers.
+        <p className="mb-10 text-center text-[#7f665a] dark:text-gray-400">
+          A few practical answers, without the fine-print feeling.
         </p>
 
-        <div className="space-y-4">
+        <div className="divide-y divide-[#eadbd1] border-y border-[#eadbd1] dark:divide-gray-800 dark:border-gray-800">
           {faqs.map((faq, idx) => (
-            <div 
+            <details
               key={idx} 
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-300"
+              className="group py-5"
             >
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-[#35221a] marker:hidden dark:text-white">
                 {faq.q}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-xl font-normal text-orange-600 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p className="mt-3 max-w-2xl pr-8 text-sm leading-relaxed text-[#7f665a] dark:text-gray-400">
                 {faq.a}
               </p>
-            </div>
+            </details>
           ))}
         </div>
       </div>
 
       {/* Upcoming Features */}
-      <div className="max-w-6xl mx-auto px-6 mt-24">
-        <h2 className="text-3xl font-bold text-center mb-3 text-gray-900 dark:text-white">
-          Coming Soon
+      <div className="mx-auto mt-24 max-w-6xl px-6">
+        <h2 className="mb-3 text-center text-3xl font-bold text-[#35221a] dark:text-white">
+          What we&apos;re cooking next
         </h2>
-        <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
-          We're building more ways to improve your cooking experience.
+        <p className="mb-12 text-center text-[#7f665a] dark:text-gray-400">
+          New tools will arrive as they become genuinely useful, not just because they sound impressive.
         </p>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {upcomingFeatures.map((feature, idx) => (
-            <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-500">{feature.availability}</p>
+            <div key={idx} className="border border-[#eadbd1] bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+              <h4 className="mb-2 font-semibold text-[#35221a] dark:text-white">{feature.title}</h4>
+              <p className="text-sm text-[#8f7568] dark:text-gray-500">Planned for {feature.availability}</p>
             </div>
           ))}
         </div>
